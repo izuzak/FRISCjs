@@ -44,8 +44,8 @@ function getBitString(number, start, end) {
 //
 
 FRISC.MEM = {
-  _frequency = 10*000*000;
-  _size: 8*1024,
+  /* Memory has size 256KB, i.e. from 0x00000000 to 0x0003FFFF */
+  _size: 256*1024,
   _memory: [],
   
   /* Read 8-bit byte from a given address */
@@ -135,7 +135,8 @@ FRISC.CPU = {
   _r: {r0:0, r1:0, r2:0, r3:0, r4:0, r5:0, r6:0, r7:0, pc:0, sr:0, iif:1},
   _regMap: { "000" : "r0", "001" : "r1", "010" : "r2", "011" : "r3", "100" : "r4", "101" : "r5", "110" : "r6", "111" : "r7" },
   _f: {INT2:1024, INT1:512, INT0:256, GIE:128, EINT2:64, EINT1:32, EINT0:16, Z:8, V:4, C:2, N:1},   //C=prijenos, V=preljev, Z=ništica, N=predznak
-
+  _frequency : 10*000*000,
+  
   _setFlag: function(flag, value) {
     FRISC.CPU._r.sr = value ? (FRISC.CPU._r.sr | flag) : (FRISC.CPU._r.sr & ~(flag));
   },
@@ -361,13 +362,13 @@ FRISC.CPU = {
   
   _i: {
     POP: function(dest) {
-      FRISC.CPU._r[dest] = FRISC.MEM.read(FRISC.CPU._r.r7);
+      FRISC.CPU._r[dest] = FRISC.MEM.read(FRISC.CPU._r.r7 & 0x03);
       FRISC.CPU._r.r7 += 4;
     },
     
     PUSH: function(src) {
       FRISC.CPU._r.r7 -= 4;
-      FRISC.MEM.write(FRISC.CPU._r.r7, FRISC.CPU._r[src]);
+      FRISC.MEM.write(FRISC.CPU._r.r7, FRISC.CPU._r[src] & 0x03);
     },
     
     ADD: function(src1, src2, dest) {        
@@ -606,7 +607,13 @@ FRISC.CPU = {
     },
     
     MOVE: function(src, dest) {
-      FRISC.CPU._r[dest] = (typeof src === 'number' ? src : FRISC.CPU._r[src]); 
+      if (src === "sr") {
+        FRISC.CPU._r[dest] = FRISC.CPU._r[src] & 0xFF; 
+      } else if (dest === "sr") {
+        FRISC.CPU._r[dest] = (typeof src === 'number' ? src : FRISC.CPU._r[src]) & 0xFF; 
+      } else {    
+        FRISC.CPU._r[dest] = (typeof src === 'number' ? src : FRISC.CPU._r[src]); 
+      }
     },
     
     LOAD: function(addr, offset, reg) {
@@ -658,7 +665,7 @@ FRISC.CPU = {
     CALL: function(cond, dest) {
       if (FRISC.CPU._testCond(cond)) {
         FRISC.CPU._r.r7 -= 4;
-        FRISC.MEM.write(FRISC.CPU._r.r7, FRISC.CPU._r._pc);
+        FRISC.MEM.write(FRISC.CPU._r.r7, FRISC.CPU._r._pc & ~(0x03));
         FRISC.CPU._r._pc = (typeof dest === 'string' ? FRISC.CPU._r[dest] : dest) & ~(0x03);
       }
     },
