@@ -2305,7 +2305,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, alusrc1, alusrc2, aludest) {
-                return { op : op, alusrc1 : alusrc1, alusrc2 : alusrc2, aludest : aludest };
+                return { op : op, optype : 'aluop', alusrc1 : alusrc1, alusrc2 : alusrc2, aludest : aludest };
               })(result1[0], result1[2], result1[4], result1[6])
           : null;
         
@@ -2380,7 +2380,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, alusrc1, alusrc2) {
-                return { op : op, alusrc1 : alusrc1, alusrc2 : alusrc2 };
+                return { op : op, optype : 'cmpop', alusrc1 : alusrc1, alusrc2 : alusrc2 };
               })(result1[0], result1[2], result1[4])
           : null;
         
@@ -2470,7 +2470,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, alusrc2, aludest) {
-                return { op : op, alusrc2 : alusrc2, aludest : aludest };
+                return { op : op, optype : 'moveop', alusrc2 : alusrc2, aludest : aludest };
               })(result1[0], result1[2], result1[4])
           : null;
         
@@ -2540,7 +2540,7 @@ module.exports = (function(){
         var result5 = result6 !== null
           ? (function(op, fl, addr) {
                 if (op in jmpops ) {
-                  return { op : op, flag : fl, addr : addr};
+                  return { op : op, optype : 'jmpop', flag : fl, addr : addr};
                 } else { 
                   return null;
                 }
@@ -2566,7 +2566,7 @@ module.exports = (function(){
           var result1 = result2 !== null
             ? (function(op, fl) {
                   if (!(op in jmpops)) {
-                      return { op : op, flag : fl};
+                      return { op : op, optype : 'uprop', flag : fl};
                   } else { 
                       return null;
                   }
@@ -2709,7 +2709,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, reg, mem) {
-                return { op : op, reg : reg, mem : mem };
+                return { op : op, optype : 'memop', reg : reg, mem : mem };
               })(result1[0], result1[2], result1[4])
           : null;
         
@@ -2762,7 +2762,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, reg) {
-                return { op : op, reg : reg };
+                return { op : op, optype : 'stackop', reg : reg };
               })(result1[0], result1[2])
           : null;
         
@@ -2815,7 +2815,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, value) {
-                return { op : op, value : value };
+                return { op : op, optype : 'orgop', value : value };
               })(result1[0], result1[2])
           : null;
         
@@ -2997,7 +2997,7 @@ module.exports = (function(){
                   vals.push(values[i][0]);
                 }
                 
-                return { op : op, values : vals };
+                return { op : op, optype : 'dwop', values : vals };
               })(result1[0], result1[2])
           : null;
         
@@ -3050,7 +3050,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, value) {
-                return { op : op, value : value };
+                return { op : op, optype : 'equop', value : value };
               })(result1[0], result1[2])
           : null;
         
@@ -3103,7 +3103,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, value) {
-                return { op : op, value : value };
+                return { op : op, optype : 'dsop', value : value };
               })(result1[0], result1[2])
           : null;
         
@@ -3127,7 +3127,7 @@ module.exports = (function(){
         
         var result1 = parse_endop_name();
         var result0 = result1 !== null
-          ? (function(op) { return { op : op}; })(result1)
+          ? (function(op) { return { op : op, optype : 'endop'}; })(result1)
           : null;
         
         
@@ -3179,7 +3179,7 @@ module.exports = (function(){
         }
         var result0 = result1 !== null
           ? (function(op, base) {
-                return { op : op, base : base };
+                return { op : op, optype : 'baseop', base : base};
               })(result1[0], result1[2])
           : null;
         
@@ -3363,7 +3363,7 @@ module.exports = (function(){
           
                 var size = op === "DW" ? 4 : (op === "DH" ? 2 : 1);
                 
-                return { op : op, values : vals, size : size};
+                return { op : op, optype : 'dwhbop', values : vals, size : size};
               })(result1[0], result1[2])
           : null;
         

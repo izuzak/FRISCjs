@@ -294,29 +294,29 @@ flag_name = "M" / "NN" / "NV" / "NZ" / "NE" / "NC" / "N" / "P" / "C" / "ULT" / "
 
 aluop
   = op:aluop_name whitespace+ alusrc1:regaddr delimiter alusrc2:(regaddr / immaddr) delimiter aludest:register {
-      return { op : op, alusrc1 : alusrc1, alusrc2 : alusrc2, aludest : aludest };
+      return { op : op, optype : 'aluop', alusrc1 : alusrc1, alusrc2 : alusrc2, aludest : aludest };
     }
     
 cmpop
   = op:cmpop_name whitespace+ alusrc1:regaddr delimiter alusrc2:(regaddr / immaddr) {
-      return { op : op, alusrc1 : alusrc1, alusrc2 : alusrc2 };
+      return { op : op, optype : 'cmpop', alusrc1 : alusrc1, alusrc2 : alusrc2 };
     }
 
 moveop
   = op:moveop_name whitespace+ alusrc2:(regaddr / sraddr / immaddr) delimiter aludest:(regaddr / sraddr) {
-      return { op : op, alusrc2 : alusrc2, aludest : aludest };
+      return { op : op, optype : 'moveop', alusrc2 : alusrc2, aludest : aludest };
     }
 
 uprop 
   = op:uprop_name fl:flag whitespace+ addr:(absaddr_upr / rinaddr) {
       if (op in jmpops ) {
-        return { op : op, flag : fl, addr : addr};
+        return { op : op, optype : 'jmpop', flag : fl, addr : addr};
       } else { 
         return null;
       }
     } / op:uprop_name fl:flag {
       if (!(op in jmpops)) {
-          return { op : op, flag : fl};
+          return { op : op, optype : 'uprop', flag : fl};
       } else { 
           return null;
       }
@@ -327,17 +327,17 @@ flag
 
 memop
   = op:memop_name whitespace+ reg:regaddr delimiter mem:(rinaddroff / absaddr_mem) {
-      return { op : op, reg : reg, mem : mem };
+      return { op : op, optype : 'memop', reg : reg, mem : mem };
     }
     
 stackop
   = op:stackop_name whitespace+ reg:impaddr {
-      return { op : op, reg : reg };
+      return { op : op, optype : 'stackop', reg : reg };
     }    
 
 orgop
   = op:orgop_name whitespace+ value:number {
-      return { op : op, value : value };
+      return { op : op, optype : 'orgop', value : value };
     }
 
 dwop
@@ -348,25 +348,25 @@ dwop
         vals.push(values[i][0]);
       }
       
-      return { op : op, values : vals };
+      return { op : op, optype : 'dwop', values : vals };
     }
 
 equop
   = op:equop_name whitespace+ value:number {
-      return { op : op, value : value };
+      return { op : op, optype : 'equop', value : value };
     }
     
 dsop
   = op:dsop_name whitespace+ value:number {
-      return { op : op, value : value };
+      return { op : op, optype : 'dsop', value : value };
     }
     
 endop
-  = op:endop_name { return { op : op}; }
+  = op:endop_name { return { op : op, optype : 'endop'}; }
 
 baseop
   = op:baseop_name whitespace+ base:base {
-      return { op : op, base : base };
+      return { op : op, optype : 'baseop', base : base};
     }
     
 dwhbop
@@ -379,7 +379,7 @@ dwhbop
 
       var size = op === "DW" ? 4 : (op === "DH" ? 2 : 1);
       
-      return { op : op, values : vals, size : size};
+      return { op : op, optype : 'dwhbop', values : vals, size : size};
     }
  
 commentPart
