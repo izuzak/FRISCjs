@@ -1,6 +1,6 @@
 {
   var defaultBase = 16;
-  var location = 0;
+  var curloc = 0;
   var labels = {};
   var instructions = [];
   var instruction = {};
@@ -109,21 +109,143 @@
     "SGE"  : "1101",
     "SGT"  : "1110"
   };
+
+  var allops = {
+    aluop : aluops, moveop : moveops, cmpop : cmpops, memop : memops, stackop : stackops,
+    jmpop : jmpops, uprop : uprops, equop : equops, dwop : dwops, orgop : orgops, dsop : dsops, 
+    endop : endops, dwhbop : dwhbops, baseop : baseops
+  };
+
+  var generateMachineCode = function(node) {
+    var machineCode = "00000000000000000000000000000000".split("");
+
+    if (typeof node === 'undefined' || typeof node.op === 'undefined' || typeof node.optype === 'undefined' ||
+        typeof allops[node.optype] === 'undefined' || typeof allops[node.optype][node.op] === 'undefined') {
+      throw new Error("Undefined instruction, operation or operation type." + JSON.stringify(node));
+    }
+
+    // set opcode
+    setBits(machineCode, 27, 31, allops[node.optype][node.op]);
+
+    switch(node.optype) {
+      case 'cmpop':
+      case 'aluop':
+        if (node.optype === 'aluop') {
+          setBits(machineCode, 23, 25, convertToBinaryString(node.aludest.value));
+        }
+        setBits(machineCode, 20, 22, convertToBinaryString(node.alusrc1.value));
+        
+        if (node.alusrc2.type === "reg") {
+          setBits(machineCode, 26, 26, "0");
+          setBits(machineCode, 17, 19, convertToBinaryString(node.alusrc2.value));
+          setBits(machineCode, 0, 16, "00000000000000000");
+        } else {
+          setBits(machineCode, 26, 26, "1");
+          setBits(machineCode, 0, 19, convertToBinaryString(node.alusrc2.value));
+        }
+
+        break;
+      case 'moveop':
+        if (node.aludest.type === "reg" && (node.alusrc2.type === "reg" || node.alusrc2.type === "num")) {
+          // Kada je odredište opći registar, a izvor opći registar ili podatak:
+          setBits(machineCode, 23, 25, convertToBinaryString(node.aludest.value));
+          setBits(machineCode, 20, 22, "000");
+          if (node.alusrc2.type === "reg") {
+            setBits(machineCode, 26, 26, "0");
+            setBits(machineCode, 17, 19, convertToBinaryString(node.alusrc2.value));
+          } else {
+            setBits(machineCode, 26, 26, "1");
+            setBits(machineCode, 0, 19, convertToBinaryString(node.alusrc2.value));
+          }
+        } else if (node.aludest.type === "sr") {
+          // Kada je odredište registar SR:
+          setBits(machineCode, 20, 22, "001");
+          if (node.alusrc2.type === "reg") {
+            setBits(machineCode, 26, 26, "0");
+            setBits(machineCode, 17, 19, convertToBinaryString(node.alusrc2.value));
+          } else {
+            setBits(machineCode, 26, 26, "1");
+            setBits(machineCode, 0, 19, convertToBinaryString(node.alusrc2.value));
+          }
+        } else if (node.alusrc2.type === "sr") {
+          // Kada je izvor registar SR:
+          setBits(machineCode, 20, 22, "010");
+          setBits(machineCode, 23, 25, convertToBinaryString(node.aludest.value));
+          setBits(machineCode, 0, 19, "00000000000000000000");
+        }
+
+        break;
+      case 'jmpop':
+        setBits(machineCode, 20, 21, "00");
+        setBits(machineCode, 22, 25, flags[node.flag]);
+        if (node.addr.type === "num") {
+          setBits(machineCode, 26, 26, "1");
+          setBits(machineCode, 0, 19, convertToBinaryString(node.addr.value));
+        } else { 
+          setBits(machineCode, 26, 26, "0");
+          setBits(machineCode, 17, 19, convertToBinaryString(node.addr.value));
+        }
+        break;
+      case 'uprop':
+        setBits(machineCode, 22, 25, flags[node.flag]);
+        if (node.op === 'RET') {
+          setBits(machineCode, 0, 0, "0");
+          setBits(machineCode, 1, 1, "0");
+        } else if (node.op === 'RETI') {
+          setBits(machineCode, 0, 0, "1");
+          setBits(machineCode, 1, 1, "0");
+        } else if (node.op === 'RETN') {
+          setBits(machineCode, 0, 0, "1");
+          setBits(machineCode, 1, 1, "1");
+        }
+
+        break;
+      case 'memop':
+        setBits(machineCode, 23, 25, convertToBinaryString(node.reg.value));
+        if (node.mem.type === "reg") {
+          setBits(machineCode, 26, 26, "1");
+          setBits(machineCode, 20, 22, convertToBinaryString(node.mem.value));
+          setBits(machineCode, 0, 19, convertToBinaryString(node.mem.offset));
+        } else {
+          setBits(machineCode, 26, 26, "0");
+          setBits(machineCode, 0, 19, convertToBinaryString(node.mem.value));
+        }
+        break;
+      case 'stackop':
+        setBits(machineCode, 23, 25, convertToBinaryString(node.reg.value));
+        break;
+    }
+    node.machineCode = machineCode.join("");
+  };
+
+  var setBits = function(oldBits, from, to, newBits) {
+    var len = oldBits.length;
+    
+    for (var i=0; i<from-to+1 || i<newBits.length; i++) {
+      oldBits[len-to-1+i] = newBits[i];
+    }
+
+    return oldBits;
+  };
+
+  var convertToBinaryString = function(number) {
+    return parseInt(number).toString(2);
+  };
 }
 
 instructions
-  = i1:instruction_or_end i2:(newline i3:instruction_or_end )* {
+  = i1:instruction_or_end i2:(nl:newline &{linecounter++; return true;} i3:instruction_or_end )* {
     var instrs = [];
     var machinecode = [];
     var unknownlabels = [];
-    
+
     if (typeof i1.op !== "undefined" && i1.op !== "") {
       instrs.push(i1);
     }
     
     for (var i=0; i<i2.length; i++) {
-      if (typeof i2[i][1].op !== "undefined" && i2[i][1].op !== "") {
-        instrs.push(i2[i][1]);
+      if (typeof i2[i][2].op !== "undefined" && i2[i][2].op !== "") {
+        instrs.push(i2[i][2]);
       }
     }
 
@@ -132,7 +254,7 @@ instructions
         var labelValue = labels[element.value];
 
         if (typeof labelValue !== "undefined") {
-          element.type = "number";
+          element.type = "num";
           element.value = labelValue;
         } else {
           unknownlabels.push(element.value);
@@ -160,24 +282,25 @@ instructions
     if (unknownlabels.length > 0) {
       throw new Error("Unknown labels:" + unknownlabels.toString());
     }
-    
+   
     // generate machine code
     for (var i=0; i<instrs.length; i++) {
+      generateMachineCode(instrs[i]);
       machinecode.push(instrs[i]);
     }
     
-    return instrs;
+    return machinecode;
   }
 
 newline
-  = "\n" { linecounter++; return "\n"; }
+  = "\n" / "\r\n" / "\r" / "\n\r"
 
 instruction_or_end
   = i:instruction_end { var ins = i; ins.line = linecounter-1; return ins;} /
     i:instruction { var ins = i; ins.line = linecounter; return ins;} 
 
 instruction_end
-  = l:labelPart? whitespace+ o:endop c:commentPart? ("\n" .*)? {
+  = l:labelPart? whitespace+ o:endop c:commentPart? (newline .*)? {
       return o;
     }
  
@@ -188,35 +311,39 @@ instruction
     }
 
     if (!(o.op in dwops || o.op in equops || o.op in endops)) {
-      location = location % 4 === 0 ? location : location + (4-location%4);
+      curloc = curloc % 4 === 0 ? curloc : curloc + (4-curloc%4);
     }
     
     if (l !== "") {
       if (!(o.op in baseops || o.op in endops || o.op in orgops || o.op in equops)) {
-        labels[l] = location;
+        labels[l] = curloc;
       } else if (o.op in equops) {
         labels[l] = o.value;
       }
     }
     
-    o.location = location;
+    o.curloc = curloc;
     
     if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in uprops || o.op in memops) {
-      location += 4
+      curloc += 4
     } else if (o.op in orgops) {
-      location = o.value;
+      curloc = o.value;
     } else if (o.op in dwops) {
-      location += o.values.length;
+      curloc += o.values.length;
     } else if (o.op in equops) {
-      location = location;
+      curloc = curloc;
     } else if (o.op in endops) {
-      location = location;
+      curloc = curloc;
     } else if (o.op in dsops) {
-      location += o.value;
+      curloc += o.value;
     } else if (o.op in dwhbops) {   
-      location += o.size*o.values.length;
+      curloc += o.size*o.values.length;
     }
-    
+
+    if (o.op in baseops) {
+      defaultBase = o.value;
+    }    
+
     if (o.op in endops || o.op in equops || o.op in orgops) {
       return {};
     } else {
@@ -238,15 +365,15 @@ operationPart
 operation
   = dwhbop / baseop / dsop / equop / dwop / orgop / stackop / memop / uprop / moveop / cmpop / aluop
 
-regaddr = value:register { return {type : "register", value : value} };
+regaddr = value:register { return {type : "reg", value : value}; }
 
-sraddr = value:([sS][rR]) { return {type : "sr"} };
+sraddr = value:([sS][rR]) { return {type : "sr", value : "sr"}; }
 
-immaddr = value:number { return {type : "number", value : value} }
-        / value:label  { return {type : "label", value : value} }
+immaddr = value:number { return {type : "num", value : value}; }
+        / value:label  { return {type : "label", value : value}; }
 
-absaddr_mem = "(" value:label ")"  { return {type : "label", value : value} }
-            / "(" value:number ")" { return {type : "number", value : value} }
+absaddr_mem = "(" value:label ")"  { return {type : "label", value : value}; }
+            / "(" value:number ")" { return {type : "num", value : value}; }
 
 absaddr_upr = immaddr
 
@@ -255,7 +382,7 @@ reladdr = immaddr
 rinaddr = "(" value:regaddr ")" { return value; }
 
 rinaddroff = "(" reg:register val:((&numberWithoutBase numberWithoutBase) / (!numberWithoutBase "")) ")" { 
-      return {type : "regval", register : reg, val : val[1] === "" ? 0 : val[1]  };
+      return {type : "regoff", value : reg, offset : val[1] === "" ? 0 : val[1]  };
     }
 
 impaddr = regaddr
@@ -268,7 +395,7 @@ aluop_name = "OR" / "AND" / "XOR" / "ADD" / "ADC" / "SUB" / "SBC" / "ROTL" / "RO
   
 cmpop_name = "CMP"
 
-uprop_name = "JP" / "CALL" / "JR" / "RETI" / "RETN" / "RET" / "HALT"
+nonjmpop_name = "RETI" / "RETN" / "RET" / "HALT"
   
 jmpop_name = "JP" / "CALL" / "JR"
   
@@ -293,7 +420,7 @@ dwhbop_name = "DW" / "DH" / "DB"
 flag_name = "M" / "NN" / "NV" / "NZ" / "NE" / "NC" / "N" / "P" / "C" / "ULT" / "UGE" / "V" / "Z" / "EQ" / "ULE" / "UGT" / "SLT" / "SLE" / "SGE" / "SGT"
 
 aluop
-  = op:aluop_name whitespace+ alusrc1:regaddr delimiter alusrc2:(regaddr / immaddr) delimiter aludest:register {
+  = op:aluop_name whitespace+ alusrc1:regaddr delimiter alusrc2:(regaddr / immaddr) delimiter aludest:regaddr {
       return { op : op, optype : 'aluop', alusrc1 : alusrc1, alusrc2 : alusrc2, aludest : aludest };
     }
     
@@ -308,22 +435,14 @@ moveop
     }
 
 uprop 
-  = op:uprop_name fl:flag whitespace+ addr:(absaddr_upr / rinaddr) {
-      if (op in jmpops ) {
-        return { op : op, optype : 'jmpop', flag : fl, addr : addr};
-      } else { 
-        return null;
-      }
-    } / op:uprop_name fl:flag {
-      if (!(op in jmpops)) {
-          return { op : op, optype : 'uprop', flag : fl};
-      } else { 
-          return null;
-      }
+  = op:jmpop_name fl:flag whitespace+ addr:(absaddr_upr / rinaddr) {
+      return { op : op, optype : 'jmpop', flag : fl, addr : addr}; 
+    } / op:nonjmpop_name fl:flag {
+      return { op : op, optype : 'uprop', flag : fl};
     } 
 
 flag
-  = "_" flag_name / ""
+  = "_" fl:flag_name {return fl;} / fl:"" {return fl;}
 
 memop
   = op:memop_name whitespace+ reg:regaddr delimiter mem:(rinaddroff / absaddr_mem) {
@@ -366,7 +485,7 @@ endop
 
 baseop
   = op:baseop_name whitespace+ base:base {
-      return { op : op, optype : 'baseop', base : base};
+      return { op : op, optype : 'baseop', value : base};
     }
     
 dwhbop
