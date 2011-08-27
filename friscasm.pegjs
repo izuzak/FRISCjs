@@ -117,15 +117,20 @@
   };
 
   var generateMachineCode = function(node) {
-    var machineCode = "00000000000000000000000000000000".split("");
-
     if (typeof node === 'undefined' || typeof node.op === 'undefined' || typeof node.optype === 'undefined' ||
         typeof allops[node.optype] === 'undefined' || typeof allops[node.optype][node.op] === 'undefined') {
       throw new Error("Undefined instruction, operation or operation type." + JSON.stringify(node));
     }
 
-    // set opcode
-    setBits(machineCode, 27, 31, allops[node.optype][node.op]);
+    var machineCode = null;
+
+    if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, uprop : null}) {
+      // set opcode
+      machineCode = "00000000000000000000000000000000".split("");
+      setBits(machineCode, 27, 31, allops[node.optype][node.op]);
+    } else {
+      machineCode = [];
+    }
 
     switch(node.optype) {
       case 'cmpop':
@@ -214,8 +219,27 @@
       case 'stackop':
         setBits(machineCode, 23, 25, convertToBinaryString(node.reg.value));
         break;
+      case 'dwop':
+        for (var i=0; i<node.values.length; i++) {
+          machineCode.push(convertToBinaryString(node.values[i], 8));
+        }
+        break;
+      case 'dsop':
+        for (var i=0; i<node.value; i++) {
+          machineCode.push(convertToBinaryString(0, 8));
+        }
+        break;
+      case 'dwhbop':
+        for (var i=0; i<node.values.length; i++) {
+          machineCode.push(convertToBinaryString(node.values[i], node.size*8));
+        }
+        break;
     }
-    node.machineCode = machineCode.join("");
+    if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, uprop : null}) {
+      node.machineCode = machineCode.join("");
+    } else {
+      node.machineCode = machineCode;
+    }
   };
 
   var setBits = function(oldBits, from, to, newBits) {
@@ -228,8 +252,18 @@
     return oldBits;
   };
 
-  var convertToBinaryString = function(number) {
-    return parseInt(number).toString(2);
+  var convertToBinaryString = function(number, length) {
+    var str = parseInt(number).toString(2);
+    
+    if (typeof length !== "undefined") {
+      while (length > str.length) {
+        str = "0" + str;
+      }
+    }
+ 
+    // check to see if length < str.length
+
+    return str;    
   };
 }
 
@@ -272,9 +306,14 @@ instructions
       } else if (instrs[i].op in memops) {
         replaceLabel(instrs[i].mem);
       } else if (instrs[i].op in dwhbops) {
+        var vals = [];
+        
         for (var j=0; j<instrs[i].values.length; j++) {
           replaceLabel(instrs[i].values[j]);
+          vals.push(instrs[i].values[j].value);
         }
+
+        instrs[i].values = vals;
       }
     }
     
@@ -288,15 +327,56 @@ instructions
       generateMachineCode(instrs[i]);
       machinecode.push(instrs[i]);
     }
-    
-    return machinecode;
+
+    // generate memory model
+    var mem = [];
+
+    var writeToMemory = function(bitString, startPosition, memoryArray) {
+      console.log(bitString);
+      if (bitString.length % 8 !== 0) {
+        console.log("string: " + bitString + " " + startPosition.toString());
+        throw new Error("Memory string has wrong length");
+      }
+
+      var elems = bitString.match(/.{8}/g);
+
+      for (var i=0; i<elems.length; i++) {
+        memoryArray[startPosition+i] = elems[i];
+      }
+      
+      return startPosition + elems.length;
+    };
+ 
+    for (var opCount=0, memCount=0; opCount<machinecode.length; ) {
+      console.log("len, op, mem", machinecode.length, opCount, memCount);
+      if (typeof machinecode[opCount].curloc === "undefined") {
+        opCount++;
+      } else {
+        if (machinecode[opCount].curloc !== memCount) {
+          memCount = writeToMemory("00000000", memCount, mem);
+        } else {
+          if (typeof machinecode[opCount].machineCode === "string") {
+            memCount = writeToMemory(machinecode[opCount].machineCode, memCount, mem);
+          } else {
+            for (var j=0; j<machinecode[opCount].machineCode.length; j++) {
+              memCount = writeToMemory(machinecode[opCount].machineCode[j], memCount, mem);
+            }
+          }
+          opCount += 1;
+        }
+      }
+    }
+   
+    console.log("FIN");
+ 
+    return [machinecode, mem];
   }
 
 newline
   = "\n" / "\r\n" / "\r" / "\n\r"
 
 instruction_or_end
-  = i:instruction_end { var ins = i; ins.line = linecounter-1; return ins;} /
+  = i:instruction_end { var ins = i; ins.line = linecounter-1; return {}} /
     i:instruction { var ins = i; ins.line = linecounter; return ins;} 
 
 instruction_end
@@ -344,7 +424,7 @@ instruction
       defaultBase = o.value;
     }    
 
-    if (o.op in endops || o.op in equops || o.op in orgops) {
+    if (o.op in endops || o.op in equops || o.op in orgops || o.op in baseops) {
       return {};
     } else {
       return o;

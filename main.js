@@ -28,7 +28,7 @@ lab15 STORE r5, (200)\n\
 lab16 POP r3\n\
 lab17 `ORG 234\n\
  `DW 1,2,3,4,5\n\
- `DW 654\n\
+ `DW 54\n\
 lab18 `EQU 300\n\
 lab19 `DS 12\n\
 lab21 `BASE H\n\
