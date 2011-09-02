@@ -31,10 +31,7 @@
     // 01110 Not used
     // 01111 Not used
   
-  var uprops = {
-    "JP"     : "11000",
-    "CALL"   : "11001",
-    "JR"     : "11010",
+  var rethaltops = {
     "RET"    : "11011",
     "RETI"   : "11011",
     "RETN"   : "11011",
@@ -112,7 +109,7 @@
 
   var allops = {
     aluop : aluops, moveop : moveops, cmpop : cmpops, memop : memops, stackop : stackops,
-    jmpop : jmpops, uprop : uprops, equop : equops, dwop : dwops, orgop : orgops, dsop : dsops, 
+    jmpop : jmpops, rethaltop : rethaltops, equop : equops, dwop : dwops, orgop : orgops, dsop : dsops, 
     endop : endops, dwhbop : dwhbops, baseop : baseops
   };
 
@@ -124,7 +121,7 @@
 
     var machineCode = null;
 
-    if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, uprop : null}) {
+    if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, rethaltop: null}) {
       // set opcode
       machineCode = "00000000000000000000000000000000".split("");
       setBits(machineCode, 27, 31, allops[node.optype][node.op]);
@@ -136,46 +133,46 @@
       case 'cmpop':
       case 'aluop':
         if (node.optype === 'aluop') {
-          setBits(machineCode, 23, 25, convertToBinaryString(node.aludest.value));
+          setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
         }
-        setBits(machineCode, 20, 22, convertToBinaryString(node.alusrc1.value));
+        setBits(machineCode, 20, 22, convertIntToBinary(node.alusrc1.value, 3));
         
         if (node.alusrc2.type === "reg") {
           setBits(machineCode, 26, 26, "0");
-          setBits(machineCode, 17, 19, convertToBinaryString(node.alusrc2.value));
+          setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
           setBits(machineCode, 0, 16, "00000000000000000");
         } else {
           setBits(machineCode, 26, 26, "1");
-          setBits(machineCode, 0, 19, convertToBinaryString(node.alusrc2.value));
+          setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
         }
 
         break;
       case 'moveop':
         if (node.aludest.type === "reg" && (node.alusrc2.type === "reg" || node.alusrc2.type === "num")) {
           // Kada je odredište opći registar, a izvor opći registar ili podatak:
-          setBits(machineCode, 23, 25, convertToBinaryString(node.aludest.value));
+          setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
           setBits(machineCode, 20, 22, "000");
           if (node.alusrc2.type === "reg") {
             setBits(machineCode, 26, 26, "0");
-            setBits(machineCode, 17, 19, convertToBinaryString(node.alusrc2.value));
+            setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
           } else {
             setBits(machineCode, 26, 26, "1");
-            setBits(machineCode, 0, 19, convertToBinaryString(node.alusrc2.value));
+            setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
           }
         } else if (node.aludest.type === "sr") {
           // Kada je odredište registar SR:
           setBits(machineCode, 20, 22, "001");
           if (node.alusrc2.type === "reg") {
             setBits(machineCode, 26, 26, "0");
-            setBits(machineCode, 17, 19, convertToBinaryString(node.alusrc2.value));
+            setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
           } else {
             setBits(machineCode, 26, 26, "1");
-            setBits(machineCode, 0, 19, convertToBinaryString(node.alusrc2.value));
+            setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
           }
         } else if (node.alusrc2.type === "sr") {
           // Kada je izvor registar SR:
           setBits(machineCode, 20, 22, "010");
-          setBits(machineCode, 23, 25, convertToBinaryString(node.aludest.value));
+          setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
           setBits(machineCode, 0, 19, "00000000000000000000");
         }
 
@@ -185,13 +182,13 @@
         setBits(machineCode, 22, 25, flags[node.flag]);
         if (node.addr.type === "num") {
           setBits(machineCode, 26, 26, "1");
-          setBits(machineCode, 0, 19, convertToBinaryString(node.addr.value));
+          setBits(machineCode, 0, 19, convertIntToBinary(node.addr.value, 20));
         } else { 
           setBits(machineCode, 26, 26, "0");
-          setBits(machineCode, 17, 19, convertToBinaryString(node.addr.value));
+          setBits(machineCode, 17, 19, convertIntToBinary(node.addr.value, 3));
         }
         break;
-      case 'uprop':
+      case 'rethaltop':
         setBits(machineCode, 22, 25, flags[node.flag]);
         if (node.op === 'RET') {
           setBits(machineCode, 0, 0, "0");
@@ -206,36 +203,36 @@
 
         break;
       case 'memop':
-        setBits(machineCode, 23, 25, convertToBinaryString(node.reg.value));
+        setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
         if (node.mem.type === "reg") {
           setBits(machineCode, 26, 26, "1");
-          setBits(machineCode, 20, 22, convertToBinaryString(node.mem.value));
-          setBits(machineCode, 0, 19, convertToBinaryString(node.mem.offset));
+          setBits(machineCode, 20, 22, convertIntToBinary(node.mem.value, 3));
+          setBits(machineCode, 0, 19, convertIntToBinary(node.mem.offset, 20));
         } else {
           setBits(machineCode, 26, 26, "0");
-          setBits(machineCode, 0, 19, convertToBinaryString(node.mem.value));
+          setBits(machineCode, 0, 19, convertIntToBinary(node.mem.value, 20));
         }
         break;
       case 'stackop':
-        setBits(machineCode, 23, 25, convertToBinaryString(node.reg.value));
+        setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
         break;
       case 'dwop':
         for (var i=0; i<node.values.length; i++) {
-          machineCode.push(convertToBinaryString(node.values[i], 8));
+          machineCode.push(convertIntToBinary(node.values[i], 8));
         }
         break;
       case 'dsop':
         for (var i=0; i<node.value; i++) {
-          machineCode.push(convertToBinaryString(0, 8));
+          machineCode.push(convertIntToBinary(0, 8));
         }
         break;
       case 'dwhbop':
         for (var i=0; i<node.values.length; i++) {
-          machineCode.push(convertToBinaryString(node.values[i], node.size*8));
+          machineCode.push(convertIntToBinary(node.values[i], node.size*8));
         }
         break;
     }
-    if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, uprop : null}) {
+    if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, rethaltop : null}) {
       node.machineCode = machineCode.join("");
     } else {
       node.machineCode = machineCode;
@@ -252,19 +249,16 @@
     return oldBits;
   };
 
-  var convertToBinaryString = function(number, length) {
-    var str = parseInt(number).toString(2);
+  /* Converts integer value to binary, specifying the length in bits of output */
+  function convertIntToBinary(value, numberOfBits) {
+    var retVal = new Array(numberOfBits);
     
-    if (typeof length !== "undefined") {
-      while (length > str.length) {
-        str = "0" + str;
-      }
+    for (var i=0; i<numberOfBits; i++) {
+      retVal[numberOfBits-i-1] = (Math.pow(2, i) & value) ? 1 : 0; 
     }
- 
-    // check to see if length < str.length
-
-    return str;    
-  };
+    
+    return retVal.join("");
+  }  
 }
 
 instructions
@@ -332,23 +326,20 @@ instructions
     var mem = [];
 
     var writeToMemory = function(bitString, startPosition, memoryArray) {
-      console.log(bitString);
       if (bitString.length % 8 !== 0) {
-        console.log("string: " + bitString + " " + startPosition.toString());
         throw new Error("Memory string has wrong length");
       }
 
       var elems = bitString.match(/.{8}/g);
 
       for (var i=0; i<elems.length; i++) {
-        memoryArray[startPosition+i] = elems[i];
+        memoryArray[startPosition+i] = elems[elems.length - i - 1];
       }
       
       return startPosition + elems.length;
     };
  
     for (var opCount=0, memCount=0; opCount<machinecode.length; ) {
-      console.log("len, op, mem", machinecode.length, opCount, memCount);
       if (typeof machinecode[opCount].curloc === "undefined") {
         opCount++;
       } else {
@@ -367,9 +358,7 @@ instructions
       }
     }
    
-    console.log("FIN");
- 
-    return [machinecode, mem];
+    return { ast : machinecode, mem : mem};
   }
 
 newline
@@ -404,8 +393,8 @@ instruction
     
     o.curloc = curloc;
     
-    if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in uprops || o.op in memops) {
-      curloc += 4
+    if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops) {
+      curloc += 4;
     } else if (o.op in orgops) {
       curloc = o.value;
     } else if (o.op in dwops) {
@@ -518,7 +507,7 @@ uprop
   = op:jmpop_name fl:flag whitespace+ addr:(absaddr_upr / rinaddr) {
       return { op : op, optype : 'jmpop', flag : fl, addr : addr}; 
     } / op:nonjmpop_name fl:flag {
-      return { op : op, optype : 'uprop', flag : fl};
+      return { op : op, optype : 'rethaltop', flag : fl};
     } 
 
 flag
