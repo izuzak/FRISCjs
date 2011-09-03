@@ -698,6 +698,10 @@ var FRISC = function() {
     },
   
     run: function() {
+      if (typeof this.onBeforeRun !== "undefined") {
+        this.onBeforeRun();
+      }
+
       this._runTimer = setInterval(this.performCycle.bind(this), this._frequency * 1000);
     },
   
@@ -711,20 +715,35 @@ var FRISC = function() {
       if (typeof this._runTimer !== "undefined") {
         clearInterval(this._runTimer);
       }
+      
+      if (typeof this.onStop !== "undefined") {
+        this.onStop();
+      }
     },
   
     performCycle: function() {
-      // trigger events onBeforeCycle
+      if (typeof this.onBeforeCycle !== "undefined") {
+        this.onBeforeCycle();
+      }
+
       var instruction = MEM.read(this._r.pc);
       var decodedInstruction = this._decode(instruction);
       
       if (decodedInstruction.op !== null && decodedInstruction.args !== null) {
+        if (typeof this.onBeforeExecute !== "undefined") {
+          this.onBeforeExecute(decodedInstruction);
+        }
+
         this._i[decodedInstruction.op].apply(this, decodedInstruction.args);
         this._r.pc += 4;
-        // trigger events onAfterCylce
+        
+        if (typeof this.onAfterCycle !== "undefined") {
+          this.onAfterCycle();
+        }
       } else {
         this.stop();
-        // trigger events onAfterCylce + onError
+
+        throw new Error("undefined operation code or wrongly defined arguments");
       }
     },
   
