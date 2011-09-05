@@ -42,7 +42,7 @@ function getBitString(number, start, end) {
 /* Extend binary string to N bits, signed or unsigned */
 function extend(binaryString, numberOfBits, signed) {
   var res = binaryString;
-  var prefix = signed ? binaryString[0] : "0"
+  var prefix = signed ? binaryString[0] : "0";
 
   for (var i=0; i<binaryString.length-numberOfBits; i++) {
     res = prefix + res;
@@ -231,7 +231,7 @@ var FRISC = function() {
         if (dest === "1") {
           dest = "sr";
         } else {    
-          var dest = getBitString(statement, 23, 25);
+          ddest = getBitString(statement, 23, 25);
           dest = this._regMap[dest];
         }
         
@@ -304,7 +304,7 @@ var FRISC = function() {
         if (typeof cond === "undefined") {
           args = null;
         } else { 
-          dest = getBitString(statement, 0, 19); // number
+          var dest = getBitString(statement, 0, 19); // number
           dest = extend(dest, 32, 1);
           dest = convertBinaryToInt(dest, 1);
         
@@ -331,11 +331,11 @@ var FRISC = function() {
         
         if (addr === "0") {
           addr = getBitString(statement, 0, 19); // number
-          addr = extend(dest, 32, 1);
-          addr = convertBinaryToInt(dest, 1);
+          addr = extend(addr, 32, 1);
+          addr = convertBinaryToInt(addr, 1);
         } else {
           addr = getBitString(statement, 20, 22); // Rx
-          addr = this._regMap[dest];
+          addr = this._regMap[addr];
           
           offset = getBitString(statement, 0, 19); // number
           offset = extend(offset, 32, 1);
@@ -343,14 +343,14 @@ var FRISC = function() {
         }
         
         var reg = getBitString(statement, 23, 25);
-        reg = this._regMap[dest];
+        reg = this._regMap[reg];
         
         args.push(addr);
         args.push(offset);
         args.push(reg);
       } else if (op === "POP" || op === "PUSH") {
         var reg = getBitString(statement, 23, 25);
-        dest = this._regMap[dest];
+        reg = this._regMap[reg];
         
         args.push(reg);
       } else if (op === "HALT") {
@@ -801,10 +801,10 @@ var FRISC = function() {
       "1101" : "_SGE",
       "1110" : "_SGT"
     }
-  }
+  };
 
   return {MEM : MEM, CPU : CPU};
-}
+};
 
 if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
   module.exports.FRISC = FRISC;
