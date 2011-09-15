@@ -231,7 +231,7 @@ var FRISC = function() {
         if (dest === "1") {
           dest = "sr";
         } else {    
-          ddest = getBitString(statement, 23, 25);
+          dest = getBitString(statement, 23, 25);
           dest = this._regMap[dest];
         }
         
