@@ -22,10 +22,10 @@ runTests: function(tests, setUp, tearDown) {
     var i;
     var total = 0;
     var succ = 0;
-    setUp = setUp || function() {}
-    tearDown = tearDown || function() {}
 
-    setUp();
+    if (setUp) {
+        setUp();
+    }
 
     for (i=0; i<cnt_tests; ++i) {
         console.log("Running test: %s", tests[i].name);
@@ -44,13 +44,58 @@ runTests: function(tests, setUp, tearDown) {
     }
     console.log("Ran %d tests: %d succeeded, %d failed", total, succ, total-succ);
 
-    tearDown();
-},
-
-assertEquals: function(left, right) {
-    if (left !== right) {
-        throw(util.format("got", left, "expected", right));
+    if (tearDown) {
+        tearDown();
     }
 },
 
+// Use this for items that can be directly compared for equality.
+assertEquals: function(left, right) {
+    if (!_equals(left, right)) {
+        throw util.format("got", left, "expected", right);
+    }
+},
+
+// Use this for items that can be directly compared for equality.
+assertNotEquals: function(left, right) {
+    if (_equals(left, right)) {
+        throw util.format(left, "is equal to", right);
+    }
+},
+
+// Use this for arrays whose items can directly compared for equality. 
+assertValueArrayEquals: function(left, right) {
+    if (!_valueArrayEquals(left, right)) {
+        throw util.format("array mismatch: [", left.toString(), "] [", right.toString(), "]");
+    }
+},
+
+// Use this for arrays whose items can directly compared for equality. 
+assertValueArrayNotEquals: function(left, right) {
+    if (_valueArrayEquals(left, right)) {
+        throw util.format("array mismatch: [", left.toString(), "] [", right.toString(), "]");
+    }
+},
+
+
 };
+
+function _equals(left, right) {
+    return left === right;
+}
+
+function _valueArrayEquals(left, right) {
+    var i;
+    var len = left.length;
+    if (len !== right.length) {
+        return false;
+    }
+
+    for (i=0; i<len; ++i) {
+        if (left[i] !== right[i]) {
+            return false;
+        }
+    }
+    
+    return true;
+}
