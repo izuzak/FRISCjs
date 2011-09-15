@@ -702,12 +702,17 @@ var FRISC = function() {
         this.onBeforeRun();
       }
 
-      this._runTimer = setInterval(this.performCycle.bind(this), this._frequency * 1000);
+      function r() {
+        this.performCycle();
+        this._runTimer = setTimeout(r.bind(this), this._frequency * 1000);
+      }
+
+      this._runTimer = setTimeout(r.bind(this), this._frequency * 1000);
     },
   
     pause: function() {
       if (typeof this._runTimer !== "undefined") {
-        clearInterval(this._runTimer);
+        clearTimeout(this._runTimer);
       }
     },
   
