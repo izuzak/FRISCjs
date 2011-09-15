@@ -705,10 +705,10 @@ var FRISC = function() {
 
       function r() {
         this.performCycle();
-        this._runTimer = setTimeout(r.bind(this), this._frequency * 1000);
+        this._runTimer = setTimeout(r.bind(this), (1 / this._frequency) * 1000);
       }
 
-      this._runTimer = setTimeout(r.bind(this), this._frequency * 1000);
+      this._runTimer = setTimeout(r.bind(this), (1 / this._frequency) * 1000);
     },
   
     pause: function() {
