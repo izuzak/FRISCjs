@@ -73,7 +73,7 @@ assertValueArrayEquals: function(left, right) {
 // Use this for arrays whose items can directly compared for equality. 
 assertValueArrayNotEquals: function(left, right) {
     if (_valueArrayEquals(left, right)) {
-        throw util.format("array mismatch: [", left.toString(), "] [", right.toString(), "]");
+        throw util.format("arrays are equal: [", left.toString(), "] [", right.toString(), "]");
     }
 },
 
