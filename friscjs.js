@@ -138,6 +138,7 @@ var FRISC = function() {
   
   var CPU = {
     // Internal state
+    _state : "stopped",
     _r: {r0:0, r1:0, r2:0, r3:0, r4:0, r5:0, r6:0, r7:0, pc:0, sr:0, iif:1},
     _regMap: { "000" : "r0", "001" : "r1", "010" : "r2", "011" : "r3", "100" : "r4", "101" : "r5", "110" : "r6", "111" : "r7" },
     _f: {INT2:1024, INT1:512, INT0:256, GIE:128, EINT2:64, EINT1:32, EINT0:16, Z:8, V:4, C:2, N:1},   //C=prijenos, V=preljev, Z=ništica, N=predznak
@@ -231,7 +232,7 @@ var FRISC = function() {
         if (dest === "1") {
           dest = "sr";
         } else {    
-          ddest = getBitString(statement, 23, 25);
+          dest = getBitString(statement, 23, 25);
           dest = this._regMap[dest];
         }
         
@@ -692,7 +693,7 @@ var FRISC = function() {
       
       HALT: function(cond) {
         if (this._testCond(cond)) {
-          this._stop();
+          this.stop();
         }
       }
     },
@@ -702,12 +703,17 @@ var FRISC = function() {
         this.onBeforeRun();
       }
 
-      this._runTimer = setInterval(this.performCycle.bind(this), this._frequency * 1000);
+      function r() {
+        this.performCycle();
+        this._runTimer = setTimeout(r.bind(this), (1 / this._frequency) * 1000);
+      }
+
+      this._runTimer = setTimeout(r.bind(this), (1 / this._frequency) * 1000);
     },
   
     pause: function() {
       if (typeof this._runTimer !== "undefined") {
-        clearInterval(this._runTimer);
+        clearTimeout(this._runTimer);
       }
     },
   
