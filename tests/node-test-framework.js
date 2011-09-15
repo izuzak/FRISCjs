@@ -2,6 +2,14 @@ var util = require('util');
 
 module.exports = {
 
+// Test constructor.
+// -'name' must be a string
+// -'run' must be a function
+Test: function(name, run) {
+    this.name = name;
+    this.run = run;
+},
+
 // - 'tests' is an array of test objects that have
 // a 'name' property and the test function 'run'
 // - 'setUp' is an optional setup function that is run

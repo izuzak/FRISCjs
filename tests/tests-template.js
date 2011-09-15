@@ -1,6 +1,6 @@
 var T = require("./node-test-framework.js");
 var tests = [
-    { name: "sampleTest", run: function() {
-    }},
+    new T.Test("sampleTest", function() {
+    }),
 ];
 T.runTests(tests, function() {console.log("setup");}, function() {console.log("teardown");});
