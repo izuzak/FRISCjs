@@ -1,3 +1,5 @@
+console.log("Running " + __filename + "...");
+
 var T = require("./node-test-framework.js");
 
 var tests = [
