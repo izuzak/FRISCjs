@@ -814,6 +814,12 @@ var FRISC = function() {
 
 if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
   module.exports.FRISC = FRISC;
+  module.exports.util = {
+    convertIntToBinary: convertIntToBinary, 
+    convertBinaryToInt: convertBinaryToInt,
+    getBitString: getBitString,
+    extend: extend,
+  };
 } else if (typeof document !== "undefined" && typeof document.window !== "undefined") {
   document.window.FRISC = FRISC;
 }
