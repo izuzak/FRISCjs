@@ -5,12 +5,55 @@
     <script type="text/javascript" src="https://raw.github.com/izuzak/FRISCjs/master/friscjs.js"></script>
   </head>
   <body>
-    <textarea id="frisc-input"></textarea>
-    <button type="button" id="frisc-execute">Execute!</button>
-    <button type="button" id="frisc-stop">Stop!</button>
-    <div id="output"></div>
-
+    <div id="frisc-header" style="margin-bottom: 20px;">
+      <h1> FRISCjs </h1>
+      <div id="frisc-upute">
+        FRISCjs is a FRISC processor simulator written in JavaScript. Usage instructions: </br>
+        1. Enter your FRISC assembler program into the textbox on the left. </br>
+        2. Press the "Load!" button to parse the program and load it into memory.</br>
+        3. Press the "Run all!" button to start the CPU.</br>
+        4. Enter the instructions-per-second frequency and press "Set freq!" to change the CPU speed.</br>
+        5. Press the "Pause!" button to pause CPU execution.</br>
+        6. Press the "Run once!" button to force the CPU to execute the next instruction.</br>
+        7. Press the "Stop!" button to stop the CPU completely and return to defining the program.  </br>
+        8. Press the "Clear!" button to clear the log output screen. </br>
+        9. To view the state of a part of memory, enter the lower and upper bound into the textboxes and press "Refresh!". </br>
+      </div>
+    </div>
+    <div id="frisc-inputdiv" style="float: left;">
+      <textarea id="frisc-input" style="width: 300px;"></textarea>
+    </div>
+    <div id="frisc-controls" style="float: left; margin-left: 15px;">
+      <div id="frisc-cpu-controls" style="width: 100%;">
+        <button type="button" id="frisc-load">Load!</button>
+        <button type="button" id="frisc-execute">Run all!</button>
+        <button type="button" id="frisc-next">Run one!</button>
+        <button type="button" id="frisc-pause">Pause!</button>
+        <input type="text" id="frisc-freq" value="1"></input>
+        <button type="button" id="frisc-freqset">Set freq!</button>
+        <button type="button" id="frisc-clear">Clear!</button>
+        <button type="button" id="frisc-stop">Stop!</button>
+      </div>
+      <div id="cpuout" style="font: 10pt courier new; background-color: #D4CDCF; width: 100%; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px;"></div>
+      <div id="frisc-memcontrols" style="width: 100%; margin-top: 15px;">
+        <label>Lower memory bound:</label>
+        <input type="text" id="frisc-mem-lower" value="0"></input>
+        <label>Upper memory bound:</label>
+        <input type="text" id="frisc-mem-upper" value="100"></input>
+        <button type="button" id="frisc-mem-refresh">Refresh!</button>
+      </div>
+      <div id="memout" style="font: 10pt courier new; background-color: #D4CDCF; width: 100%; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px;"></div> 
+    </div>
     <script type="text/javascript">
+      $("#frisc-input").height(($("body").height() - ($("#frisc-header").height()) - 40 + "px"));
+      $("#frisc-controls").width(($("body").innerWidth() - ($("#frisc-inputdiv").innerWidth()) - 45 + "px"));
+
+      var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight() * 2)/2 - 40 + "px";
+      $("#cpuout").height(height);
+      $("#memout").height(height);
+
+      var _state = "stopped";
+
       // create FRISC
       var simulator = new FRISC();
 
@@ -58,7 +101,55 @@ lab23 ADD R1, R2, R3\n\
           text = JSON.stringify(text);
         }
         
-        $("#output").append("<p>" + text + "</p>");
+        $("#cpuout").append("<p>" + text + "</p>");
+        $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
+      }
+
+      function memLog(text) {
+        $("#memout").html(text);
+      }
+
+      function getMemState(lower, upper) {
+        var memStateString = ""; 
+        
+        for (var i=lower; i>=0 && i<simulator.MEM._memory.length && i<upper; i+=4) {
+          var decoded = simulator.CPU._decode(simulator.MEM.read(i));
+          decoded = decoded ? " - " + JSON.stringify(decoded) : "";
+
+          memStateString += i.toString() + ": " + simulator.MEM.read(i).toString() + " - " + convertIntToBinary(simulator.MEM.read(i), 32) + decoded + "</br>";
+        }
+
+        return memStateString;
+      }
+
+      function changeState(st) {
+        if (st === "stopped") {
+          enableElements(["#frisc-input", "#frisc-load"]);
+          disableElements(["#frisc-execute", "#frisc-next", "#frisc-pause", "#frisc-stop"]);
+          _state = st;
+        } else if (st ==="loaded") {
+          enableElements(["#frisc-execute", "#frisc-next", "#frisc-stop"]);
+          disableElements(["#frisc-input", "#frisc-load", "#frisc-pause"]);
+          _state = st;
+        } else if (st === "running") {
+          enableElements(["#frisc-stop", "#frisc-pause", "#frisc-next"]);
+          disableElements(["frisc-execute", "#frisc-input", "#frisc-load"]);
+          _state = st;
+        }
+      }
+
+      changeState("stopped");
+
+      function enableElements(elems) {
+        for (var i=0; i<elems.length; i++) {
+          $(elems[i]).attr('disabled', false);
+        }
+      }
+
+      function disableElements(elems) {
+        for (var i=0; i<elems.length; i++) {
+          $(elems[i]).attr('disabled', true);
+        }
       }
       
       simulator.CPU.onBeforeRun = function() {
@@ -81,18 +172,59 @@ lab23 ADD R1, R2, R3\n\
         simulatorLog(simulator.CPU._r);
       };
 
-      $("#frisc-execute").click(function() {
-        var result = frisc_asm.parse($("#frisc-input").val());
-        
-        simulatorLog("Input code AST:");        
-        simulatorLog(result.ast);
+      $("#frisc-load").click(function() {
+        if (_state === "stopped") {
+          var result = frisc_asm.parse($("#frisc-input").val());
+          
+          simulatorLog("Input code AST:");        
+          simulatorLog(result.ast);
 
-        simulator.MEM.loadBinaryString(result.mem);
-        simulator.CPU.run();
+          simulator.MEM.loadBinaryString(result.mem);
+          memLog(getMemState());
+
+          // todo check if there was no exception during parsing
+
+          changeState("loaded");
+        }
+      });
+
+      $("#frisc-execute").click(function() {
+        if (_state === "loaded") {
+          simulator.CPU.run();
+          changeState("running");
+        }
       });
 
       $("#frisc-stop").click(function() {
-        simulator.CPU.stop();
+        if (_state === "running" || _state === "loaded") {
+          simulator.CPU.stop();
+          changeState("stopped");
+        }
+      });
+
+      $("#frisc-next").click(function() {
+        if (_state === "running" || _state === "loaded") {
+          simulator.CPU.performCycle();
+        }
+      });
+
+      $("#frisc-pause").click(function() {
+        if (_state === "running") {
+          simulator.CPU.pause();
+          changeState("loaded");
+        }
+      });
+
+      $("#frisc-clear").click(function() {
+        $("#cpuout").html("");
+      });
+
+      $("#frisc-freqset").click(function() {
+        simulator.CPU._frequency = parseFloat($("#frisc-freq").val());
+      });
+
+      $("#frisc-mem-refresh").click(function() {
+        memLog(getMemState(parseInt($("#frisc-mem-lower").val()), parseInt($("#frisc-mem-upper").val())));
       });
     </script>
 
