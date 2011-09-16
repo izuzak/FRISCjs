@@ -1,3 +1,3 @@
-To add a test suite, copy 'tests-template.js', rename it to '*Tests.js' and write your test in it.
+To add a test suite, copy 'tests-template.js', rename it to '*[tT]ests.js' and write your test in it.
 
 To run tests in a test suite, simply run it with Node, e.g. "node sampleTests.js".
