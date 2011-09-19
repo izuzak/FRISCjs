@@ -24,6 +24,9 @@ var tests = [
   new T.Test("equal mixed type arrays", function() {
     T.assertValueArrayEquals([1,"2",3], [1,"2",3]);
   }),
+  new T.Test("throwing", function() {
+    T.assertThrows(function() { throw "test"; });
+  }),
 ];
 
 T.runTests(tests);
