@@ -77,6 +77,20 @@ assertValueArrayNotEquals: function(left, right) {
   }
 },
 
+// Use this to test error conditions that the code checks for (part of the API).
+// - 'fun' should be a function that wraps whatever is expected to throw
+assertThrows: function(fun) {
+  var threw = false;
+  try {
+    fun();
+  } catch(err) {
+    threw = true;
+  }
+  if (!threw) {
+    throw util.format("expected a throw from", fun.toString());
+  }
+},
+
 };
 
 function _equals(left, right) {
