@@ -42,7 +42,13 @@ function convertBinaryToInt(value, signed) {
   return (signed && value[0] === "1") ? ( Math.pow(2, value.length-1) - retVal) * -1 : (retVal);
 }
 
-/* Get bits from position X to postition Y */
+/* Returns a bit string representing bits from 'start' to 'end' (inclusive) of 'number'.
+ * The bits are counted from right to left, i.e. the LSB is the bit 0.
+ * The returned string contains bits with indices 'end', 'end'-1, ... 'start'.
+ * - number is either a bit string or a number object that is converted into a
+ * 32-bit bit string - otherwise, null is returned
+ * - start is a valid 0-based index of the lowest requested bit
+ * - end is a valid 0-based index of the highest requested bit */
 function getBitString(number, start, end) {
   if (typeof number === "string") {
     return number.substring(number.length - end - 1, number.length - start);
