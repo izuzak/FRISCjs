@@ -13,15 +13,29 @@ function convertIntToBinary(value, numberOfBits) {
   return retVal.join("");
 }
 
-/* Converts binary value to integer, specifying if the binary value is signed */
+/* Returns the integer represented by 'value'.
+ * - value is a string of ones and zeroes. If it is empty or contains another digit, an exception is thrown.
+ * - [signed=false] can be either true, false, 0 or 1. For any other value, an exception is thrown as it is 
+ * likely a silent error. */
 function convertBinaryToInt(value, signed) {
-  var retVal = 0;
+  if (value.length === 0) {
+    throw "'value' must be nonempty";
+  }
+
+  var retVal = 0, bit;
   
   if (typeof signed === "undefined") {
     signed = 0;
   }
+  if (signed!==0 && signed!==1 && signed!==true && signed!==false) {
+    throw "invalid 'signed' value " + signed.toString();
+  }
   
   for (var i=0, numberOfBits=value.length; i<numberOfBits-signed; i++) {
+    bit = value[numberOfBits - 1 - i];
+    if (bit!=="0" && bit!=="1") {
+      throw "invalid bit in binary string 'value' at position " + (numberOfBits - 1 - i) + " (" + bit + ")";
+    }
     retVal += (value[numberOfBits - i - 1] === "1") * Math.pow(2, i);
   }
   
