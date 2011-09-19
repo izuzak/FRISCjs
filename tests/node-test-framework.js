@@ -3,19 +3,17 @@ var util = require('util');
 module.exports = {
 
 // Test constructor.
-// - 'name' must be a string
-// - 'run' must be a function
+// - name must be a string
+// - run is a function that defines the test
 Test: function(name, run) {
   this.name = name;
   this.run = run;
 },
 
-// - 'tests' is an array of test objects that have
-// a 'name' property and the test function 'run'
-// - 'setUp' is an optional setup function that is run
-// exactly once before all the tests are run
-// - 'tearDown' is an optional tear-down function that is
-// run exactly once after all tests are run
+// Test driver.
+// - tests is an array of Test objects
+// - [setUp=nop] is a function that is run exactly once before all the tests are run
+// - [tearDown=nop] is a function that is run exactly once after all tests are run
 runTests: function(tests, setUp, tearDown) {
   var ok;
   var cnt_tests = tests.length;
