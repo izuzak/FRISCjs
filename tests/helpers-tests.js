@@ -48,6 +48,24 @@ var tests = [
     T.assertThrows(function() { code.convertBinaryToInt("10", 2); });
     T.assertThrows(function() { code.convertBinaryToInt("12"); });
   }),
+
+  new T.Test("getBitString strings", function() {
+    T.assertEquals(code.getBitString("11000110", 0, 2), "110");
+    T.assertEquals(code.getBitString("11000110", 2, 4), "001");
+    T.assertEquals(code.getBitString("11000110", 4, 4), "0");
+    T.assertEquals(code.getBitString("11000110", 5, 7), "110");
+  }),
+  new T.Test("getBitString numbers", function() {
+    T.assertEquals(code.getBitString(0xc6, 0, 2), "110");
+    T.assertEquals(code.getBitString(0xc6, 2, 4), "001");
+    T.assertEquals(code.getBitString(0xc6, 4, 4), "0");
+    T.assertEquals(code.getBitString(0xc6, 5, 7), "110");
+  }),
+  new T.Test("getBitString null on non-number", function() {
+    T.assertEquals(code.getBitString({}, 0, 0), null);
+    T.assertEquals(code.getBitString(undefined, 0, 0), null);
+    T.assertEquals(code.getBitString(true, 0, 0), null);
+  }),
 ];
 
 T.runTests(tests);
