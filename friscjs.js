@@ -65,14 +65,15 @@ function getBitString(number, start, end) {
  * it is less than or eqaul to binaryString.length, binaryString is returned unchanged.
  * - [signed=false] is a flag signaling if binaryString is signed or unsigned */
 function extend(binaryString, numberOfBits, signed) {
-  var res = binaryString;
-  var prefix = signed ? binaryString[0] : "0";
+  var bit = signed ? binaryString[0] : "0";
+  var len = binaryString.length;
+  var prefix = "";
 
-  for (var i=0; i<numberOfBits-binaryString.length; i++) {
-    res = prefix + res;
+  for (var i=0; i<numberOfBits-len; i++) {
+    prefix += bit;
   }
   
-  return res;
+  return prefix + binaryString;
 }
 
 
