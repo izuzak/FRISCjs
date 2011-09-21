@@ -66,6 +66,31 @@ var tests = [
     T.assertEquals(code.getBitString(undefined, 0, 0), null);
     T.assertEquals(code.getBitString(true, 0, 0), null);
   }),
+
+  new T.Test("extend unsigned", function() {
+    T.assertEquals(code.extend("0", 2), "00");
+    T.assertEquals(code.extend("00", 3), "000");
+    T.assertEquals(code.extend("100", 4), "0100");
+    T.assertEquals(code.extend("100", 32), "00000000000000000000000000000100");
+    // 20 one-bits unsigned-extended = 2^20 - 1
+    T.assertEquals(code.extend("11111111111111111111", 32), "00000000000011111111111111111111");
+  }),
+  new T.Test("extend signed", function() {
+    T.assertEquals(code.extend("0", 2, true), "00");
+    T.assertEquals(code.extend("00", 3, true), "000");
+    T.assertEquals(code.extend("100", 4, true), "1100");
+    T.assertEquals(code.extend("100", 32, true), "11111111111111111111111111111100");
+    // 20 one-bits sign extended = -1
+    T.assertEquals(code.extend("11111111111111111111", 32, true), "11111111111111111111111111111111"); 
+  }),
+  new T.Test("extend to smaller returns unchanged argument", function() {
+    T.assertEquals(code.extend("11100111", 0), "11100111");
+    T.assertEquals(code.extend("11100111", 0, true), "11100111");
+    T.assertEquals(code.extend("11100111", 7), "11100111");
+    T.assertEquals(code.extend("11100111", 7, true), "11100111");
+    T.assertEquals(code.extend("11100111", 8), "11100111");
+    T.assertEquals(code.extend("11100111", 8, true), "11100111");
+  }),
 ];
 
 T.runTests(tests);
