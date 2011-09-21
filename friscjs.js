@@ -59,12 +59,16 @@ function getBitString(number, start, end) {
   }
 }
 
-/* Extend binary string to N bits, signed or unsigned */
+/* Returns 'binaryString' sign-extended to 'numberOfBits' bits.
+ * - binaryString is a string of ones and zeroes
+ * - numberOfBits is the desired number of bits for the extended number. If
+ * it is less than or eqaul to binaryString.length, binaryString is returned unchanged.
+ * - [signed=false] is a flag signaling if binaryString is signed or unsigned */
 function extend(binaryString, numberOfBits, signed) {
   var res = binaryString;
   var prefix = signed ? binaryString[0] : "0";
 
-  for (var i=0; i<binaryString.length-numberOfBits; i++) {
+  for (var i=0; i<numberOfBits-binaryString.length; i++) {
     res = prefix + res;
   }
   
