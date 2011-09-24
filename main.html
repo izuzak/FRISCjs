@@ -8,7 +8,7 @@
     <div id="frisc-header" style="margin-bottom: 20px;">
       <h1> FRISCjs </h1>
       <div id="frisc-upute">
-        FRISCjs is a FRISC processor simulator written in JavaScript. Usage instructions: </br>
+        <a href="https://github.com/izuzak/FRISCjs">FRISCjs</a> is a FRISC processor simulator written in JavaScript. Usage instructions: </br>
         1. Enter your FRISC assembler program into the textbox on the left. </br>
         2. Press the "Load!" button to parse the program and load it into memory. In case of parsing errors, the error message, line and column numbers will be logged to the output screen.</br>
         3. Press the "Run all!" button to start the CPU.</br>
@@ -96,12 +96,16 @@ lab20 `END\n\
 lab23 ADD R1, R2, R3\n\
 ; fds fsd';");
 
-      function simulatorLog(text) {
+      function simulatorLog(text, marginLeft) {
         if (typeof text !== "string") {
           text = JSON.stringify(text);
         }
+
+        if (typeof marginLeft === "undefined") {
+          marginLeft = "0px";
+        }
         
-        $("#cpuout").append("<p>" + text + "</p>");
+        $("#cpuout").append("<p style='margin: 1px; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</p>");
         $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
       }
 
@@ -114,7 +118,7 @@ lab23 ADD R1, R2, R3\n\
         
         for (var i=lower; i>=0 && i<simulator.MEM._memory.length && i<upper; i+=4) {
           var decoded = simulator.CPU._decode(simulator.MEM.read(i));
-          decoded = decoded ? " - " + JSON.stringify(decoded) : "";
+          decoded = decoded ? " - " + instructionToString(decoded) : "";
 
           memStateString += i.toString() + ": " + simulator.MEM.read(i).toString() + " - " + convertIntToBinary(simulator.MEM.read(i), 32) + decoded + "</br>";
         }
@@ -151,39 +155,61 @@ lab23 ADD R1, R2, R3\n\
           $(elems[i]).attr('disabled', true);
         }
       }
+
+      function cpuStateToString() {
+        var retVal = "";
+        
+        for (var key in simulator.CPU._r) {
+          if (key !== 'sr') {
+            retVal += key + ": " + simulator.CPU._r[key].toString() + " ";
+          } else {
+            retVal += key + ": " + simulator.CPU._r[key].toString() + " ( ";
+            for (var flag in simulator.CPU._f) {
+              retVal += flag + ": " + simulator.CPU._getFlag(simulator.CPU._f[flag]) + " ";
+            }
+            retVal += ") ";
+          }
+        }
+
+        return retVal;
+      }
+
+      function instructionToString(instruction) {
+        return instruction.op + " " + instruction.args.join(" ");
+      }
       
       simulator.CPU.onBeforeRun = function() {
-        simulatorLog("Starting (or continuing) simulation!");
-        simulatorLog(simulator.CPU._r);
+        simulatorLog("<b>Starting (or continuing) simulation!</b>");
       };
       
       simulator.CPU.onBeforeCycle = function() {
-        simulatorLog("New FRISC cycle starting!");
-        simulatorLog(simulator.CPU._r);
+        simulatorLog("<b>New CPU cycle starting!</b>");
+        simulatorLog("CPU state: " + cpuStateToString(), "10px");
       };
       
+      simulator.CPU.onAfterCycle = function() {
+        simulatorLog("CPU state: " + cpuStateToString(), "10px");
+      };
+
       simulator.CPU.onBeforeExecute = function(instruction) {
-        simulatorLog("Executing FRISC instruction!");
-        simulatorLog(instruction);
+        simulatorLog("Executing FRISC instruction: " + instructionToString(instruction), "10px");
       };
       
       simulator.CPU.onStop = function() {
-        simulatorLog("FRISC processor stopped!");
-        simulatorLog(simulator.CPU._r);
+        simulatorLog("<b>FRISC processor stopped!</b>");
       };
 
       $("#frisc-load").click(function() {
         if (_state === "stopped") {
           try {
             var result = frisc_asm.parse($("#frisc-input").val());
-  
-            simulatorLog("Input code AST:");        
-            simulatorLog(result.ast);
             simulator.MEM.loadBinaryString(result.mem);
+
+            simulatorLog("<b>Input program parsed successfully.</b>");
   
             changeState("loaded");
           } catch (e) {
-            simulatorLog("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
+            simulatorLog("<b>Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString() + "</b>");
           }
         }
       });
