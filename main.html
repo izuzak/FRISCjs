@@ -1,8 +1,8 @@
 <html>
   <head>
     <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
-    <script type="text/javascript" src="https://raw.github.com/izuzak/FRISCjs/master/friscasm.js"></script>
-    <script type="text/javascript" src="https://raw.github.com/izuzak/FRISCjs/master/friscjs.js"></script>
+    <script type="text/javascript" src="friscasm.js"></script>
+    <script type="text/javascript" src="friscjs.js"></script>
   </head>
   <body>
     <div id="frisc-header" style="margin-bottom: 20px;">
@@ -10,7 +10,7 @@
       <div id="frisc-upute">
         FRISCjs is a FRISC processor simulator written in JavaScript. Usage instructions: </br>
         1. Enter your FRISC assembler program into the textbox on the left. </br>
-        2. Press the "Load!" button to parse the program and load it into memory.</br>
+        2. Press the "Load!" button to parse the program and load it into memory. In case of parsing errors, the error message, line and column numbers will be logged to the output screen.</br>
         3. Press the "Run all!" button to start the CPU.</br>
         4. Enter the instructions-per-second frequency and press "Set freq!" to change the CPU speed.</br>
         5. Press the "Pause!" button to pause CPU execution.</br>
@@ -174,17 +174,17 @@ lab23 ADD R1, R2, R3\n\
 
       $("#frisc-load").click(function() {
         if (_state === "stopped") {
-          var result = frisc_asm.parse($("#frisc-input").val());
-          
-          simulatorLog("Input code AST:");        
-          simulatorLog(result.ast);
-
-          simulator.MEM.loadBinaryString(result.mem);
-          memLog(getMemState());
-
-          // todo check if there was no exception during parsing
-
-          changeState("loaded");
+          try {
+            var result = frisc_asm.parse($("#frisc-input").val());
+  
+            simulatorLog("Input code AST:");        
+            simulatorLog(result.ast);
+            simulator.MEM.loadBinaryString(result.mem);
+  
+            changeState("loaded");
+          } catch (e) {
+            simulatorLog("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
+          }
         }
       });
 
