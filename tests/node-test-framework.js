@@ -12,21 +12,31 @@ Test: function(name, run) {
 
 // Test driver.
 // - tests is an array of Test objects
-// - [setUp=nop] is a function that is run exactly once before all the tests are run
-// - [tearDown=nop] is a function that is run exactly once after all tests are run
-runTests: function(tests, setUp, tearDown) {
+// - [cfg] is a configuration object with the following properties
+//    - [suiteSetUp] is a function to be called before the first test is run
+//    - [suiteTearDown] is a function to be called after the last test is run
+//    - [testSetUp] is a function to be called before every test
+//    - [testTearDown] is a function to be called after every test
+runTests: function(tests, cfg) {
   var ok;
   var cnt_tests = tests.length;
   var i;
   var total = 0;
   var succ = 0;
 
-  if (setUp) {
-    setUp();
+  cfg = cfg || {};
+
+  if (cfg.suiteSetUp) {
+    cfg.suiteSetUp();
   }
 
   for (i=0; i<cnt_tests; ++i) {
     console.log("Running test: %s", tests[i].name);
+
+    if (cfg.testSetUp) {
+      cfg.testSetUp();
+    }
+
     ok = true;
     try {
       tests[i].run();
@@ -39,12 +49,17 @@ runTests: function(tests, setUp, tearDown) {
       console.log("SUCCESS!");
       ++succ;
     }
-  }
-  console.log("Ran %d tests: %d succeeded, %d failed", total, succ, total-succ);
 
-  if (tearDown) {
-    tearDown();
+    if (cfg.testTearDown) {
+      cfg.testTearDown();
+    }
   }
+
+  if (cfg.suiteTearDown) {
+    cfg.suiteTearDown();
+  }
+
+  console.log("Ran %d tests: %d succeeded, %d failed", total, succ, total-succ);
 },
 
 // Use this for items that can be directly compared for equality.
