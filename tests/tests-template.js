@@ -7,4 +7,9 @@ var tests = [
   }),
 ];
 
-T.runTests(tests, function() {console.log("setup");}, function() {console.log("teardown");});
+T.runTests(tests, {
+  suiteSetUp: function() {console.log("suite setup");},
+  suiteTearDown: function() {console.log("suite teardown");},
+  testSetUp: function() {console.log("test setup");},
+  testTearDown: function() {console.log("test teardown");},
+});
