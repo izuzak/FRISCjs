@@ -49,6 +49,7 @@ runTests: function(tests, cfg) {
     } catch (err) {
       ok = false;
       console.log("FAILURE: " + err);
+      console.log(err.stack.split("\n")[1]);
     }
     ++total;
     if (ok) {
@@ -76,28 +77,28 @@ runTests: function(tests, cfg) {
 // Use this for items that can be directly compared for equality.
 assertEquals: function(left, right) {
   if (!_equals(left, right)) {
-    throw util.format("got", left, "expected", right);
+    throw new Error(util.format("got", left, "expected", right));
   }
 },
 
 // Use this for items that can be directly compared for equality.
 assertNotEquals: function(left, right) {
   if (_equals(left, right)) {
-    throw util.format(left, "is equal to", right);
+    throw new Error(util.format(left, "is equal to", right));
   }
 },
 
 // Use this for arrays whose items can directly compared for equality. 
 assertValueArrayEquals: function(left, right) {
   if (!_valueArrayEquals(left, right)) {
-    throw util.format("array mismatch: [", left.toString(), "] [", right.toString(), "]");
+    throw new Error(util.format("array mismatch: [", left.toString(), "] [", right.toString(), "]"));
   }
 },
 
 // Use this for arrays whose items can directly compared for equality. 
 assertValueArrayNotEquals: function(left, right) {
   if (_valueArrayEquals(left, right)) {
-    throw util.format("arrays are equal: [", left.toString(), "] [", right.toString(), "]");
+    throw new Error(util.format("arrays are equal: [", left.toString(), "] [", right.toString(), "]"));
   }
 },
 
@@ -111,7 +112,7 @@ assertThrows: function(fun) {
     threw = true;
   }
   if (!threw) {
-    throw util.format("expected a throw from", fun.toString());
+    throw new Error(util.format("expected a throw from", fun.toString()));
   }
 },
 
