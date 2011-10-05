@@ -96,6 +96,72 @@ var tests = [
     T.assertEquals(simulator.MEM._memory[6], 0); 
     T.assertEquals(simulator.MEM._memory[7], 0); 
   }),
+  new T.Test("Test memory load loadByteString", function() {
+    var simulator = new FRISC();
+    simulator.MEM.reset();
+
+    var data1 = ["00000000", "00000000", "00000110", "00000111", "00001000", "00001001"];
+    var data2 = [];
+
+    for (var i=0; i<data1.length; i++) {
+      data2[i] = String.fromCharCode(util.convertBinaryToInt(data1[i]));
+    }
+
+    simulator.MEM.loadByteString(data2.join(""));
+
+    T.assertEquals(simulator.MEM._memory[2], util.convertBinaryToInt("00000110")); 
+    T.assertEquals(simulator.MEM._memory[3], util.convertBinaryToInt("00000111")); 
+    T.assertEquals(simulator.MEM._memory[4], util.convertBinaryToInt("00001000")); 
+    T.assertEquals(simulator.MEM._memory[5], util.convertBinaryToInt("00001001")); 
+    T.assertEquals(simulator.MEM._memory[0], 0); 
+    T.assertEquals(simulator.MEM._memory[1], 0); 
+    T.assertEquals(simulator.MEM._memory[6], 0); 
+    T.assertEquals(simulator.MEM._memory[7], 0); 
+  }),
+  new T.Test("Test memory load loadBytes", function() {
+    var simulator = new FRISC();
+    simulator.MEM.reset();
+
+    var data1 = ["00000000", "00000000", "00000110", "00000111", "00001000", "00001001"];
+    var data2 = [];
+
+    for (var i=0; i<data1.length; i++) {
+      data2[i] = util.convertBinaryToInt(data1[i]);
+    }
+
+    simulator.MEM.loadBytes(data2);
+
+    T.assertEquals(simulator.MEM._memory[2], util.convertBinaryToInt("00000110")); 
+    T.assertEquals(simulator.MEM._memory[3], util.convertBinaryToInt("00000111")); 
+    T.assertEquals(simulator.MEM._memory[4], util.convertBinaryToInt("00001000")); 
+    T.assertEquals(simulator.MEM._memory[5], util.convertBinaryToInt("00001001")); 
+    T.assertEquals(simulator.MEM._memory[0], 0); 
+    T.assertEquals(simulator.MEM._memory[1], 0); 
+    T.assertEquals(simulator.MEM._memory[6], 0); 
+    T.assertEquals(simulator.MEM._memory[7], 0); 
+  }),
+  new T.Test("Test memory load loadBinaryString", function() {
+    var simulator = new FRISC();
+    simulator.MEM.reset();
+
+    var data1 = ["00000000", "00000000", "00000110", "00000111", "00001000", "00001001"];
+    var data2 = [];
+
+    for (var i=0; i<data1.length; i++) {
+      data2[i] = data1[i];
+    }
+
+    simulator.MEM.loadBinaryString(data2);
+
+    T.assertEquals(simulator.MEM._memory[2], util.convertBinaryToInt("00000110")); 
+    T.assertEquals(simulator.MEM._memory[3], util.convertBinaryToInt("00000111")); 
+    T.assertEquals(simulator.MEM._memory[4], util.convertBinaryToInt("00001000")); 
+    T.assertEquals(simulator.MEM._memory[5], util.convertBinaryToInt("00001001")); 
+    T.assertEquals(simulator.MEM._memory[0], 0); 
+    T.assertEquals(simulator.MEM._memory[1], 0); 
+    T.assertEquals(simulator.MEM._memory[6], 0); 
+    T.assertEquals(simulator.MEM._memory[7], 0); 
+  }),
 ];
 
 T.runTests(tests);
