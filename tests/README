@@ -2,3 +2,4 @@ To add a test suite, copy 'tests-template.js', rename it to '*[tT]ests.js' and w
 Every suite should export a 'stats' object returned from the runTests function (as in the template).
 
 To run tests in a test suite, simply run it with Node, e.g. "node sampleTests.js".
+To run all test suites, run type "node runAllTests.js".
