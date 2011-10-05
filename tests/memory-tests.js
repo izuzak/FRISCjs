@@ -4,10 +4,11 @@ var T = require("./node-test-framework.js");
 var FRISC = require("../friscjs.js").FRISC;
 var util = require("../friscjs.js").util;
 
+// global test state
+var simulator;
+
 var tests = [
   new T.Test("Test memory single byte read", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
     simulator.MEM._memory[2] = util.convertBinaryToInt("00000110");
     simulator.MEM._memory[3] = util.convertBinaryToInt("00000111");
     simulator.MEM._memory[4] = util.convertBinaryToInt("00001000");
@@ -23,8 +24,6 @@ var tests = [
     T.assertEquals(simulator.MEM.readb(7), 0); 
   }),
   new T.Test("Test memory half-word read", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
     simulator.MEM._memory[2] = util.convertBinaryToInt("00000110");
     simulator.MEM._memory[3] = util.convertBinaryToInt("00000111");
     simulator.MEM._memory[4] = util.convertBinaryToInt("00001000");
@@ -39,8 +38,6 @@ var tests = [
     T.assertEquals(simulator.MEM.readw(6), 0); 
   }),
   new T.Test("Test memory word read", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
     simulator.MEM._memory[2] = util.convertBinaryToInt("00000110");
     simulator.MEM._memory[3] = util.convertBinaryToInt("00000111");
     simulator.MEM._memory[4] = util.convertBinaryToInt("00001000");
@@ -52,9 +49,6 @@ var tests = [
     T.assertEquals(simulator.MEM.read(6), 0);
   }),
   new T.Test("Test memory single byte write", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
-
     simulator.MEM.writeb(2, util.convertBinaryToInt("00000110"));
     simulator.MEM.writeb(3, util.convertBinaryToInt("00000111"));
 
@@ -66,9 +60,6 @@ var tests = [
     T.assertEquals(simulator.MEM._memory[5], 0); 
   }),
   new T.Test("Test memory half-word write", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
-
     simulator.MEM.writew(2, util.convertBinaryToInt("0000011100000110"));
     simulator.MEM.writew(4, util.convertBinaryToInt("0000100100001000"));
 
@@ -82,9 +73,6 @@ var tests = [
     T.assertEquals(simulator.MEM._memory[7], 0); 
   }),
   new T.Test("Test memory word write", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
-
     simulator.MEM.write(2, util.convertBinaryToInt("00001001000010000000011100000110"));
 
     T.assertEquals(simulator.MEM._memory[2], util.convertBinaryToInt("00000110")); 
@@ -97,9 +85,6 @@ var tests = [
     T.assertEquals(simulator.MEM._memory[7], 0); 
   }),
   new T.Test("Test memory load loadByteString", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
-
     var data1 = ["00000000", "00000000", "00000110", "00000111", "00001000", "00001001"];
     var data2 = [];
 
@@ -119,9 +104,6 @@ var tests = [
     T.assertEquals(simulator.MEM._memory[7], 0); 
   }),
   new T.Test("Test memory load loadBytes", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
-
     var data1 = ["00000000", "00000000", "00000110", "00000111", "00001000", "00001001"];
     var data2 = [];
 
@@ -141,9 +123,6 @@ var tests = [
     T.assertEquals(simulator.MEM._memory[7], 0); 
   }),
   new T.Test("Test memory load loadBinaryString", function() {
-    var simulator = new FRISC();
-    simulator.MEM.reset();
-
     var data1 = ["00000000", "00000000", "00000110", "00000111", "00001000", "00001001"];
     var data2 = [];
 
@@ -164,4 +143,9 @@ var tests = [
   }),
 ];
 
-T.runTests(tests);
+T.runTests(tests, {
+  testSetUp: function() {
+    simulator = new FRISC();
+    simulator.MEM.reset();
+  },
+});
