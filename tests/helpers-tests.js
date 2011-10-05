@@ -93,4 +93,4 @@ var tests = [
   }),
 ];
 
-T.runTests(tests);
+module.exports.stats = T.runTests(tests);

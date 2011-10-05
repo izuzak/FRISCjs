@@ -7,7 +7,7 @@ var tests = [
   }),
 ];
 
-T.runTests(tests, {
+module.exports.stats = T.runTests(tests, {
   suiteSetUp: function() {console.log("suite setup");},
   suiteTearDown: function() {console.log("suite teardown");},
   testSetUp: function() {console.log("test setup");},
