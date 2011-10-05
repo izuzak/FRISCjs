@@ -143,7 +143,7 @@ var FRISC = function() {
       this.reset();
       
       for (var i=0; i<bytes.length; i++) {
-        this.writeb(i, bytes(i));
+        this.writeb(i, bytes[i]);
       }
     },
     
