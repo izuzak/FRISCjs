@@ -143,7 +143,7 @@ var tests = [
   }),
 ];
 
-T.runTests(tests, {
+module.exports.stats = T.runTests(tests, {
   testSetUp: function() {
     simulator = new FRISC();
     simulator.MEM.reset();

@@ -10,7 +10,13 @@ Test: function(name, run) {
   this.run = run;
 },
 
-// Test driver.
+// Runs all tests and returns an object describing the results.
+//
+// {
+//  total, // number of tests run
+//  succ, // number of tests that completed successfully
+// }
+//
 // - tests is an array of Test objects
 // - [cfg] is a configuration object with the following properties
 //    - [suiteSetUp] is a function to be called before the first test is run
@@ -60,6 +66,11 @@ runTests: function(tests, cfg) {
   }
 
   console.log("Ran %d tests: %d succeeded, %d failed", total, succ, total-succ);
+
+  return {
+    "total": total,
+    "succ": succ,
+  };
 },
 
 // Use this for items that can be directly compared for equality.
