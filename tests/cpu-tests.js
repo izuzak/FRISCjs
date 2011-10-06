@@ -60,6 +60,107 @@ var tests = [
     T.assertEquals(simulator.CPU._testCond("_SGT"), false);
   }),
   new T.Test("Test cpu decoder", function() {
+    var instruction = "00100001100101000000000000000000";
+    var decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "ADD");
+    T.assertValueArrayEquals(decoded.args, ["r1", "r2", "r3"]);
+
+    instruction = "00110110101000000000000000000101";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "SUB");
+    T.assertValueArrayEquals(decoded.args, ["r2", 5, "r5"]);
+
+    instruction = "01101000000101000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+ 
+    T.assertEquals(decoded.op, "CMP");
+    T.assertValueArrayEquals(decoded.args, ["r1", "r2"]);
+
+    instruction = "01101100000100000000000000000101";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "CMP");
+    T.assertValueArrayEquals(decoded.args, ["r1", 5]);
+
+    instruction = "00000010100010000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, ["r4", "r5"]);
+
+    instruction = "00000000000110100000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, ["r5", "sr"]);
+
+    instruction = "00000010101000000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, ["sr", "r5"]);
+
+    instruction = "00000110000000000000000000010000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, [16, "r4"]);
+
+    instruction = "00000100000100000000000000010100";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, [20, "sr"]);
+
+    instruction = "11000100000000000000000000000100";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "JP");
+    T.assertValueArrayEquals(decoded.args, ["", 4]);
+
+    instruction = "11000100010000000000000000110110";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "JP");
+    T.assertValueArrayEquals(decoded.args, ["_N/M", 54]);
+
+    instruction = "11000001000000100000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "JP");
+    T.assertValueArrayEquals(decoded.args, ["_NC/UGE", "r1"]);
+
+    instruction = "11011000010000000000000000000001";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "RET");
+    T.assertValueArrayEquals(decoded.args, ["_N/M", false, false]);
+
+    instruction = "10111100101000000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "STORE");
+    T.assertValueArrayEquals(decoded.args, ["r2", 0, "r1"]);
+
+    instruction = "10111110001100000000000000100011";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "STORE");
+    T.assertValueArrayEquals(decoded.args, ["r3", 35, "r4"]);
+
+    instruction = "10111010000000000000000000111100";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "STORE");
+    T.assertValueArrayEquals(decoded.args, [60, 0, "r4"]);
+
+    instruction = "10000001100000000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "POP");
+    T.assertValueArrayEquals(decoded.args, ["r3"]);
   }),
 ];
 
