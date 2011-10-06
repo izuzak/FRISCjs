@@ -204,7 +204,7 @@
         break;
       case 'memop':
         setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
-        if (node.mem.type === "reg") {
+        if (node.mem.type === "regoff") {
           setBits(machineCode, 26, 26, "1");
           setBits(machineCode, 20, 22, convertIntToBinary(node.mem.value, 3));
           setBits(machineCode, 0, 19, convertIntToBinary(node.mem.offset, 20));

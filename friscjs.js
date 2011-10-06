@@ -235,7 +235,7 @@ var FRISC = function() {
       }
       
       if (op === "MOVE") {
-        var src = getBitString(statement, 21, 22);
+        var src = getBitString(statement, 21, 21);
         
         if (src === "1") {
           src = "sr";
@@ -252,7 +252,7 @@ var FRISC = function() {
           }
         }
         
-        var dest = getBitString(statement, 20, 21);
+        var dest = getBitString(statement, 20, 20);
         
         if (dest === "1") {
           dest = "sr";

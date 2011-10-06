@@ -4511,7 +4511,7 @@ var frisc_asm = (function(){
       
           setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
       
-          if (node.mem.type === "reg") {
+          if (node.mem.type === "regoff") {
       
             setBits(machineCode, 26, 26, "1");
       
