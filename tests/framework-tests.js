@@ -24,6 +24,20 @@ var tests = [
   new T.Test("equal mixed type arrays", function() {
     T.assertValueArrayEquals([1,"2",3], [1,"2",3]);
   }),
+  new T.Test("truthy", function() {
+      T.assertTrue(1);
+      T.assertTrue(-1);
+      T.assertTrue(true);
+      T.assertTrue("false");
+      T.assertTrue({});
+  }),
+  new T.Test("falsy", function() {
+      T.assertFalse(0);
+      T.assertFalse(false);
+      T.assertFalse(undefined);
+      T.assertFalse(null);
+      T.assertFalse("");
+  }),
   new T.Test("throwing", function() {
     T.assertThrows(function() { throw "test"; });
   }),
