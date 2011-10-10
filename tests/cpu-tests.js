@@ -162,18 +162,6 @@ var tests = [
     T.assertEquals(decoded.op, "POP");
     T.assertValueArrayEquals(decoded.args, ["r3"]);
   }),
-  new T.Test("Test cpu XOR instruction", function() {
-    simulator.CPU._r["r1"] = util.convertBinaryToInt("01001001110000000000000000000011");
-    simulator.CPU._r["r2"] = util.convertBinaryToInt("10000101010100010111110111010111");
-    
-    simulator.CPU._i["XOR"].apply(simulator.CPU, ["r1", "r2", "r3"]);
-
-    T.assertEquals(util.convertIntToBinary(simulator.CPU._r["r3"], 32), "11001100100100010111110111010100");
-    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["C"]), 0);
-    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["V"]), 0);
-    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["Z"]), 0);
-    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["N"]), 1);
-  }),
 ];
 
 module.exports.stats = T.runTests(tests, {
