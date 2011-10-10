@@ -392,6 +392,37 @@ var FRISC = function() {
       
       return { op : op, args : args };  
     },
+
+    _ADD_internal: function(src1, src2, dest, carry) {
+      var src1 = this._r[src1];
+      var src2 = typeof src2 === 'number' ? src2 : this._r[src2];
+
+      // or equivalently (...)|0, just to force int conversion
+      // this simulates hardware addition
+      var res = (src1+src2+carry) & 0xFFFFFFFF; 
+      
+      var t1 = src1 & 0x7FFFFFFF;
+      var t2 = src2 & 0x7FFFFFFF;
+      // carry on the next-to-last bit
+      // (t1+t2+carry) can't overflow by construction of t1 and t2
+      var c_ntl = ((t1+t2+carry)>>31) & 1;
+      
+      var b1 = (src1>>31) & 1;
+      var b2 = (src2>>31) & 1;
+      var c_last = b1+b2+c_ntl>1 ? 1 : 0;
+        
+      // signed overflow flag
+      var V = c_ntl ^ c_last;
+      // unsigned overflow flag
+      var C = c_last;
+      
+      this._setFlag(this._f.C, C);
+      this._setFlag(this._f.V, V);
+      this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
+      this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+      
+      this._r[dest] = res;
+    },
     
     _i: {
       POP: function(dest) {
@@ -405,59 +436,11 @@ var FRISC = function() {
       },
       
       ADD: function(src1, src2, dest) {        
-        var src1 = this._r[src1];
-        var src2 = typeof src2 === 'number' ? src2 : this._r[src2];
-        var carry = 0;
-        
-        var res = src1 + src2 + carry;
-        
-        var t1 = src1 & 0x7FFFFFF;
-        var t2 = src2 & 0x7FFFFFF;
-        
-        var c_predzadnji = ((t1+t2+carry)>>31) & 1 > 0 ? 1 : 0;
-        
-        var b1 = (src1>>31) & 1;
-        var b2 = (src2>>31) & 1;
-        
-        var c_zadnji = (b1+b2+c_predzadnji > 1 ? 1 : 0);
-        
-        var V = c_predzadnji ^ c_zadnji;
-        var C = c_zadnji;
-        
-        this._setFlag(this._f.C, C);
-        this._setFlag(this._f.V, V);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
-        
-        this._r[dest] = res & 0xFFFFFFFF;         
+        this._ADD_internal(src1, src2, dest, 0);
       },
       
       ADC: function(src1, src2, dest) {
-        var src1 = this._r[src1];
-        var src2 = typeof src2 === 'number' ? src2 : this._r[src2];
-        var carry = this._getFlag(this._f.C);
-        
-        var res = src1 + src2 + carry;
-        
-        var t1 = src1 & 0x7FFFFFF;
-        var t2 = src2 & 0x7FFFFFF;
-        
-        var c_predzadnji = ((t1+t2+carry)>>31) & 1 > 0 ? 1 : 0;
-        
-        var b1 = (src1>>31) & 1;
-        var b2 = (src2>>31) & 1;
-        
-        var c_zadnji = (b1+b2+c_predzadnji > 1 ? 1 : 0);
-        
-        var V = c_predzadnji ^ c_zadnji;
-        var C = c_zadnji;
-        
-        this._setFlag(this._f.C, C);
-        this._setFlag(this._f.V, V);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
-        
-        this._r[dest] = res & 0xFFFFFFFF;                
+        this._ADD_internal(src1, src2, dest, this._getFlag(this._f.C));
       },
       
       SUB: function(src1, src2, dest) {
@@ -470,8 +453,8 @@ var FRISC = function() {
         src2 = (~(src2)+1) & 0xFFFFFFFF;
         carry = (~(carry)+1) & 0xFFFFFFFF;
         
-        var t1 = src1 & 0x7FFFFFF;
-        var t2 = src2 & 0x7FFFFFF;
+        var t1 = src1 & 0x7FFFFFFF;
+        var t2 = src2 & 0x7FFFFFFF;
         
         var c_predzadnji = ((t1+t2+carry)>>31) & 1 > 0 ? 1 : 0;
         
@@ -501,8 +484,8 @@ var FRISC = function() {
         src2 = (~(src2)+1) & 0xFFFFFFFF;
         carry = (~(carry)+1) & 0xFFFFFFFF;
         
-        var t1 = src1 & 0x7FFFFFF;
-        var t2 = src2 & 0x7FFFFFF;
+        var t1 = src1 & 0x7FFFFFFF;
+        var t2 = src2 & 0x7FFFFFFF;
         
         var c_predzadnji = ((t1+t2+carry)>>31) & 1 > 0 ? 1 : 0;
         
