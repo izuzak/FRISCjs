@@ -1,0 +1,184 @@
+console.log("Running " + __filename + "...");
+
+var T = require("./node-test-framework.js");
+var FRISC = require("../friscjs.js").FRISC;
+var util = require("../friscjs.js").util;
+
+// global test state
+var simulator;
+
+var tests = [
+  new T.Test("Test cpu flag getter", function() {
+    simulator.CPU._r.sr = util.convertBinaryToInt("00101101010");
+
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["INT2"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["INT2"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["INT1"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["INT0"]), 1);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["GIE"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["EINT2"]), 1);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["EINT1"]), 1);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["EINT0"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["Z"]), 1);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["V"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["C"]), 1);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["N"]), 0);
+  }),
+  new T.Test("Test cpu flag setter", function() {
+    simulator.CPU._setFlag(simulator.CPU._f["INT2"], 0);
+    simulator.CPU._setFlag(simulator.CPU._f["INT1"], 0);
+    simulator.CPU._setFlag(simulator.CPU._f["INT0"], 1);
+    simulator.CPU._setFlag(simulator.CPU._f["INT0"], 1);
+    simulator.CPU._setFlag(simulator.CPU._f["GIE"], 0);
+    simulator.CPU._setFlag(simulator.CPU._f["EINT2"], 1);
+    simulator.CPU._setFlag(simulator.CPU._f["EINT1"], 1);
+    simulator.CPU._setFlag(simulator.CPU._f["EINT0"], 0);
+    simulator.CPU._setFlag(simulator.CPU._f["Z"], 1);
+    simulator.CPU._setFlag(simulator.CPU._f["V"], 0);
+    simulator.CPU._setFlag(simulator.CPU._f["C"], 1);
+    simulator.CPU._setFlag(simulator.CPU._f["N"], 0);
+   
+    T.assertEquals(util.convertIntToBinary(simulator.CPU._r.sr, 11), "00101101010");
+  }),
+  new T.Test("Test cpu condition tester", function() {
+    simulator.CPU._r.sr = util.convertBinaryToInt("00101101010");
+
+    T.assertEquals(simulator.CPU._testCond(""), true);
+    T.assertEquals(simulator.CPU._testCond("_N/M"), false);
+    T.assertEquals(simulator.CPU._testCond("_NN/P"), true);
+    T.assertEquals(simulator.CPU._testCond("_C/ULT"), true);
+    T.assertEquals(simulator.CPU._testCond("_NC/UGE"), false);
+    T.assertEquals(simulator.CPU._testCond("_V"), false);
+    T.assertEquals(simulator.CPU._testCond("_NV"), true);
+    T.assertEquals(simulator.CPU._testCond("_Z/EQ"), true);
+    T.assertEquals(simulator.CPU._testCond("_NZ/NE"), false);
+    T.assertEquals(simulator.CPU._testCond("_ULE"), true);
+    T.assertEquals(simulator.CPU._testCond("_UGT"), false);
+    T.assertEquals(simulator.CPU._testCond("_SLT"), false);
+    T.assertEquals(simulator.CPU._testCond("_SLE"), true);
+    T.assertEquals(simulator.CPU._testCond("_SGE"), true);
+    T.assertEquals(simulator.CPU._testCond("_SGT"), false);
+  }),
+  new T.Test("Test cpu decoder", function() {
+    var instruction = "00100001100101000000000000000000";
+    var decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "ADD");
+    T.assertValueArrayEquals(decoded.args, ["r1", "r2", "r3"]);
+
+    instruction = "00110110101000000000000000000101";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "SUB");
+    T.assertValueArrayEquals(decoded.args, ["r2", 5, "r5"]);
+
+    instruction = "01101000000101000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+ 
+    T.assertEquals(decoded.op, "CMP");
+    T.assertValueArrayEquals(decoded.args, ["r1", "r2"]);
+
+    instruction = "01101100000100000000000000000101";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "CMP");
+    T.assertValueArrayEquals(decoded.args, ["r1", 5]);
+
+    instruction = "00000010100010000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, ["r4", "r5"]);
+
+    instruction = "00000000000110100000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, ["r5", "sr"]);
+
+    instruction = "00000010101000000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, ["sr", "r5"]);
+
+    instruction = "00000110000000000000000000010000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, [16, "r4"]);
+
+    instruction = "00000100000100000000000000010100";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "MOVE");
+    T.assertValueArrayEquals(decoded.args, [20, "sr"]);
+
+    instruction = "11000100000000000000000000000100";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "JP");
+    T.assertValueArrayEquals(decoded.args, ["", 4]);
+
+    instruction = "11000100010000000000000000110110";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "JP");
+    T.assertValueArrayEquals(decoded.args, ["_N/M", 54]);
+
+    instruction = "11000001000000100000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "JP");
+    T.assertValueArrayEquals(decoded.args, ["_NC/UGE", "r1"]);
+
+    instruction = "11011000010000000000000000000001";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "RET");
+    T.assertValueArrayEquals(decoded.args, ["_N/M", false, false]);
+
+    instruction = "10111100101000000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "STORE");
+    T.assertValueArrayEquals(decoded.args, ["r2", 0, "r1"]);
+
+    instruction = "10111110001100000000000000100011";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "STORE");
+    T.assertValueArrayEquals(decoded.args, ["r3", 35, "r4"]);
+
+    instruction = "10111010000000000000000000111100";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "STORE");
+    T.assertValueArrayEquals(decoded.args, [60, 0, "r4"]);
+
+    instruction = "10000001100000000000000000000000";
+    decoded = simulator.CPU._decode(instruction);
+
+    T.assertEquals(decoded.op, "POP");
+    T.assertValueArrayEquals(decoded.args, ["r3"]);
+  }),
+  new T.Test("Test cpu XOR instruction", function() {
+    simulator.CPU._r["r1"] = util.convertBinaryToInt("01001001110000000000000000000011");
+    simulator.CPU._r["r2"] = util.convertBinaryToInt("10000101010100010111110111010111");
+    
+    simulator.CPU._i["XOR"].apply(simulator.CPU, ["r1", "r2", "r3"]);
+
+    T.assertEquals(util.convertIntToBinary(simulator.CPU._r["r3"], 32), "11001100100100010111110111010100");
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["C"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["V"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["Z"]), 0);
+    T.assertEquals(simulator.CPU._getFlag(simulator.CPU._f["N"]), 1);
+  }),
+];
+
+module.exports.stats = T.runTests(tests, {
+  testSetUp: function() {
+    simulator = new FRISC();
+    simulator.CPU.reset();
+  },
+});
