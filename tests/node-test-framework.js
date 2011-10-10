@@ -26,9 +26,10 @@ Test: function(name, run) {
 runTests: function(tests, cfg) {
   var ok;
   var cnt_tests = tests.length;
-  var i;
+  var i, j;
   var total = 0;
   var succ = 0;
+  var lines;
 
   cfg = cfg || {};
 
@@ -49,7 +50,13 @@ runTests: function(tests, cfg) {
     } catch (err) {
       ok = false;
       console.log("FAILURE: " + err);
-      console.log(err.stack.split("\n")[1]);
+
+      lines = err.stack.split("\n");
+      for (j=0; j<lines.length; j++) {
+        if (lines[j].indexOf("-tests.js") >= 0) {
+          console.log(lines[j]);
+        }
+      }
     }
     ++total;
     if (ok) {
