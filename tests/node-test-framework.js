@@ -102,6 +102,20 @@ assertValueArrayNotEquals: function(left, right) {
   }
 },
 
+// Asserts that 'val' is truthy.
+assertTrue: function(val) {
+  if (!val) {
+    throw new Error(util.format("expected truthy value, got", val));
+  }
+},
+
+// Asserts that 'val' is falsy.
+assertFalse: function(val) {
+  if (val) {
+    throw new Error(util.format("expected falsy value, got", val));
+  }
+},
+
 // Use this to test error conditions that the code checks for (part of the API).
 // - 'fun' should be a function that wraps whatever is expected to throw
 assertThrows: function(fun) {
