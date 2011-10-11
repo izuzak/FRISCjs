@@ -77,6 +77,17 @@ function extend(binaryString, numberOfBits, signed) {
   return prefix + binaryString;
 }
 
+/* Returns the two's complement of 'value' with respect to the specified
+ * 'mask' that must be an all ones bitmask defining the word size.
+ *
+ * - value is an integer
+ * - mask is an all ones bitmask of word size bits */
+function twosComplement(value, mask) {
+  // 'mask' is defined as a bitmask instead of the word size as a number
+  // because ((1<<i)-1) will not work if i==32 since (1<<32) is a no-op
+  return (~value + 1) & mask;
+}
+
 
 var FRISC = function() {
 
@@ -794,6 +805,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     convertBinaryToInt: convertBinaryToInt,
     getBitString: getBitString,
     extend: extend,
+    twosComplement: twosComplement,
   };
 } else if (typeof document !== "undefined" && typeof document.window !== "undefined") {
   document.window.FRISC = FRISC;
