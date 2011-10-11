@@ -442,8 +442,8 @@ var FRISC = function() {
     _SUB_internal: function(src1, src2, carry, dest) {
       // do the three-way add with two's complements of src2 and the carry bit
       this._ADD_three(this._r[src1],
-          (~(typeof src2==='number' ? src2 : this._r[src2]) + 1) & this._WORD_BITS,
-          (~carry + 1) & this._WORD_BITS,
+          twosComplement(typeof src2==='number' ? src2 : this._r[src2], this._WORD_BITS),
+          twosComplement(carry, this._WORD_BITS),
           dest);
       // invert the carry bit so that C=1 indicates unsigned underflow
       // which makes it consistent with SBC
