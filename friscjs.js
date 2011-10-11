@@ -7,7 +7,7 @@ function convertIntToBinary(value, numberOfBits) {
   var retVal = new Array(numberOfBits);
   
   for (var i=0; i<numberOfBits; i++) {
-    retVal[numberOfBits-i-1] = (Math.pow(2, i) & value) ? 1 : 0; 
+    retVal[numberOfBits-i-1] = (value & (1<<i)) ? 1 : 0; 
   }
   
   return retVal.join("");
@@ -36,6 +36,7 @@ function convertBinaryToInt(value, signed) {
     if (bit!=="0" && bit!=="1") {
       throw "invalid bit in binary string 'value' at position " + (numberOfBits - 1 - i) + " (" + bit + ")";
     }
+    // using Math.pow here since 'i' can be >30
     retVal += (value[numberOfBits - i - 1] === "1") * Math.pow(2, i);
   }
   
