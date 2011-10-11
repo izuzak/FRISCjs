@@ -91,6 +91,21 @@ var tests = [
     T.assertEquals(code.extend("11100111", 8), "11100111");
     T.assertEquals(code.extend("11100111", 8, true), "11100111");
   }),
+
+  new T.Test("twosComplement negative numbers", function() {
+    T.assertEquals(code.twosComplement(-123, 0xFFFFFFFF), 123);
+    T.assertEquals(code.twosComplement(-435, 0xFFFFFFFF), 435);
+    T.assertEquals(code.twosComplement(-345678, 0xFFFFFFFF), 345678);
+  }),
+  new T.Test("twosComplement zero", function() {
+    T.assertEquals(code.twosComplement(0, 0xFFFFFFFF), 0);
+  }),
+  new T.Test("twosComplement positive numbers", function() {
+    T.assertEquals(code.twosComplement(123, 0xFFFFFFFF), -123);
+    T.assertEquals(code.twosComplement(435, 0xFFFFFFFF), -435);
+    T.assertEquals(code.twosComplement(345678, 0xFFFFFFFF), -345678);
+  }),
+
 ];
 
 module.exports.stats = T.runTests(tests);
