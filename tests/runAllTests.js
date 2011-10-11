@@ -1,5 +1,4 @@
 var fs = require("fs");
-var path = require("path");
 var EventEmitter = require("events").EventEmitter;
 
 
@@ -28,9 +27,12 @@ join.emitter.on(EVENT_FILE_PROCESSED, function() {
 });
 
 
+function endsWith(s, what) {
+  return s.length>=what.length && (what.length==0 || s.substring(s.length-what.length)===what);
+}
+
 fs.readdir(".", function(err, files) {
   var stats;
-  var matcher = /[Tt]ests\.js$/;
 
   if (err !== null) {
     console.error(err);
@@ -38,8 +40,8 @@ fs.readdir(".", function(err, files) {
     join.counter = files.length; // this initializes the joiner
 
     files.forEach(function(filename) {
-      // only run "*[Tt]ests.js" files, but not this file
-      if (path.resolve(filename)===__filename || !matcher.test(filename)) {
+      // only run "*-tests.js" files
+      if (!endsWith(filename, "-tests.js")) {
         join.emitter.emit(EVENT_FILE_PROCESSED);
         return;
       }
