@@ -93,6 +93,13 @@ var tests = [
     T.assertEquals(R.r2, 0);
     assertFlags({Z:1});
   }),
+  new T.Test("ADD to negative", function() {
+    R.r0 = 123;
+    R.r1 = -321;
+    I.ADD("r0", "r1", "r2");
+    
+    assertFlags({N:1});
+  }),
   new T.Test("ADD unaffected by carry", function() {
     R.r0 = 123;
     R.r1 = 345;
@@ -103,6 +110,25 @@ var tests = [
     T.assertEquals(R.r2, R.r3);
   }),
 
+  new T.Test("ADC reg-reg", function() {
+    R.r0 = 123;
+    R.r1 = 345;
+    simulator.CPU._setFlag(F.C, 0);
+    I.ADC("r0", "r1", "r2");
+    T.assertEquals(R.r2, 468);
+    simulator.CPU._setFlag(F.C, 1);
+    I.ADC("r0", "r1", "r2");
+    T.assertEquals(R.r2, 469);
+  }),
+  new T.Test("ADC reg-immediate", function() {
+    R.r0 = 123;
+    simulator.CPU._setFlag(F.C, 0);
+    I.ADC("r0", 345, "r2");
+    T.assertEquals(R.r2, 468);
+    simulator.CPU._setFlag(F.C, 1);
+    I.ADC("r0", 345, "r2");
+    T.assertEquals(R.r2, 469);
+  }),
   new T.Test("ADC affected by carry", function() {
     R.r0 = 123;
     R.r1 = 345;
@@ -111,6 +137,79 @@ var tests = [
     simulator.CPU._setFlag(F.C, 1);
     I.ADC("r0", "r1", "r3");
     T.assertNotEquals(R.r2, R.r3);
+  }),
+
+  new T.Test("SUB reg-reg", function() {
+    R.r0 = 123;
+    R.r1 = 23;
+    I.SUB("r0", "r1", "r2");
+    T.assertEquals(R.r2, 100);
+  }),
+  new T.Test("SUB reg-immediate", function() {
+    R.r0 = 123;
+    I.SUB("r0", 23, "r2");
+    T.assertEquals(R.r2, 100);
+  }),
+  new T.Test("SUB large", function() {
+    R.r0 = 1234567890;
+    R.r1 = 234567890;
+    I.SUB("r0", "r1", "r2");
+    T.assertEquals(R.r2, 1000000000);
+  }),
+  new T.Test("SUB unsigned underflow", function() {
+    R.r0 = 123;
+    R.r1 = 124;
+    I.SUB("r0", "r1", "r2");
+    assertFlags({C:1, V:0});
+  }),
+  new T.Test("SUB signed underflow", function() {
+    R.r0 = -1234567890;
+    R.r1 = 1234567890;
+    I.SUB("r0", "r1", "r2");
+    assertFlags({C:0, V:1});
+  }),
+  new T.Test("SUB to zero", function() {
+    R.r0 = 12345;
+    R.r1 = 12345;
+    I.SUB("r0", "r1", "r2");
+    assertFlags({Z:1});
+  }),
+  new T.Test("SUB to negative", function() {
+    R.r0 = 123;
+    R.r1 = 223;
+    I.SUB("r0", "r1", "r2");
+    assertFlags({N:1});
+  }),
+  new T.Test("SUB unaffected by carry", function() {
+    R.r0 = 123;
+    R.r1 = 345;
+    simulator.CPU._setFlag(F.C, 0);
+    I.SUB("r0", "r1", "r2");
+    simulator.CPU._setFlag(F.C, 1);
+    I.SUB("r0", "r1", "r3");
+    T.assertEquals(R.r2, R.r3);
+  }),
+
+  new T.Test("SBC reg-reg", function() {
+    R.r0 = 123;
+    R.r1 = 120;
+    I.SBC("r0", "r1", "r2");
+    T.assertEquals(R.r2, 3);
+  }),
+  new T.Test("SBC reg-immediate", function() {
+    R.r0 = 123;
+    I.SBC("r0", 120, "r2");
+    T.assertEquals(R.r2, 3);
+  }),
+  new T.Test("SBC affected by carry", function() {
+    R.r0 = 123;
+    R.r1 = 120;
+    simulator.CPU._setFlag(F.C, 0);
+    I.SBC("r0", "r1", "r2");
+    T.assertEquals(R.r2, 3);
+    simulator.CPU._setFlag(F.C, 1);
+    I.SBC("r0", "r1", "r2");
+    T.assertEquals(R.r2, 2);
   }),
 
   new T.Test("XOR", function() {
