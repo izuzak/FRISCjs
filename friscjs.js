@@ -169,6 +169,11 @@ var FRISC = function() {
     _regMap: { "000" : "r0", "001" : "r1", "010" : "r2", "011" : "r3", "100" : "r4", "101" : "r5", "110" : "r6", "111" : "r7" },
     _f: {INT2:1024, INT1:512, INT0:256, GIE:128, EINT2:64, EINT1:32, EINT0:16, Z:8, V:4, C:2, N:1},   //C=prijenos, V=preljev, Z=ništica, N=predznak
     _frequency : 1,
+
+    // bitmasks
+    _SIGN_BIT: 0x80000000,
+    _NONSIGN_BITS: 0x7FFFFFFF,
+    _WORD_BITS: 0xFFFFFFFF,
     
     _setFlag: function(flag, value) {
       this._r.sr = value ? (this._r.sr | flag) : (this._r.sr & ~(flag));
@@ -394,35 +399,44 @@ var FRISC = function() {
       return { op : op, args : args };  
     },
 
-    _ADD_internal: function(src1, src2, dest, carry) {
-      var src1 = this._r[src1];
-      var src2 = typeof src2 === 'number' ? src2 : this._r[src2];
-
-      // or equivalently (...)|0, just to force int conversion
-      // this simulates hardware addition
-      var res = (src1+src2+carry) & 0xFFFFFFFF; 
+    // Simulates the addition 'v1'+'v2'+'v3' and stores the result in the 
+    // register specified by 'dest' and updates flags.
+    _ADD_three: function(v1, v2, v3, dest) {
+      // the & just forces ToInt32 from ECMA-262
+      // v1+v2+v3 can be represented exactly by Number as it is <=2^53
+      // so there is no loss of precision
+      var res = (v1+v2+v3) & this._WORD_BITS; 
       
-      var t1 = src1 & 0x7FFFFFFF;
-      var t2 = src2 & 0x7FFFFFFF;
-      // carry on the next-to-last bit
-      // (t1+t2+carry) can't overflow by construction of t1 and t2
-      var c_ntl = ((t1+t2+carry)>>31) & 1;
+      // calculate carry on the next-to-last bit
+      var t1 = v1 & this._NONSIGN_BITS;
+      var t2 = v2 & this._NONSIGN_BITS;
+      var t3 = v3 & this._NONSIGN_BITS;
+      // (t1+t2+t3) can't overflow 32 bits by construction of t1, t2 and t3
+      var c_ntl = ((t1+t2+t3)>>31) & 1;
       
-      var b1 = (src1>>31) & 1;
-      var b2 = (src2>>31) & 1;
-      var c_last = b1+b2+c_ntl>1 ? 1 : 0;
+      // calculate carry on the last bit
+      var b1 = (v1>>31) & 1;
+      var b2 = (v2>>31) & 1;
+      var b3 = (v3>>31) & 1;
+      var c_last = b1+b2+b3+c_ntl>1 ? 1 : 0;
         
-      // signed overflow flag
-      var V = c_ntl ^ c_last;
-      // unsigned overflow flag
-      var C = c_last;
-      
-      this._setFlag(this._f.C, C);
-      this._setFlag(this._f.V, V);
-      this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-      this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
-      
+      this._setFlag(this._f.C, c_last);
+      this._setFlag(this._f.V, c_ntl ^ c_last);
+      this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+      this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
+
       this._r[dest] = res;
+    },
+
+    _SUB_internal: function(src1, src2, carry, dest) {
+      // do the three-way add with two's complements of src2 and the carry bit
+      this._ADD_three(this._r[src1],
+          (~(typeof src2==='number' ? src2 : this._r[src2]) + 1) & this._WORD_BITS,
+          (~carry + 1) & this._WORD_BITS,
+          dest);
+      // invert the carry bit so that C=1 indicates unsigned underflow
+      // which makes it consistent with SBC
+      this._setFlag(this._f.C, 1 - this._getFlag(this._f.C))
     },
     
     _i: {
@@ -437,82 +451,34 @@ var FRISC = function() {
       },
       
       ADD: function(src1, src2, dest) {        
-        this._ADD_internal(src1, src2, dest, 0);
+        this._ADD_three(this._r[src1],
+            typeof src2==='number' ? src2 : this._r[src2],
+            0,
+            dest);
       },
       
       ADC: function(src1, src2, dest) {
-        this._ADD_internal(src1, src2, dest, this._getFlag(this._f.C));
+        this._ADD_three(this._r[src1],
+            typeof src2==='number' ? src2 : this._r[src2],
+            this._getFlag(this._f.C),
+            dest);
       },
       
       SUB: function(src1, src2, dest) {
-        var src1 = this._r[src1];
-        var src2 = typeof src2 === 'number' ? src2 : this._r[src2];
-        var carry = 0;
-        
-        var res = src1 - src2 - carry;
-        
-        src2 = (~(src2)+1) & 0xFFFFFFFF;
-        carry = (~(carry)+1) & 0xFFFFFFFF;
-        
-        var t1 = src1 & 0x7FFFFFFF;
-        var t2 = src2 & 0x7FFFFFFF;
-        
-        var c_predzadnji = ((t1+t2+carry)>>31) & 1 > 0 ? 1 : 0;
-        
-        var b1 = (src1>>31) & 1;
-        var b2 = (src2>>31) & 1;
-        
-        var c_zadnji = (b1+b2+c_predzadnji > 1 ? 1 : 0);
-        
-        var V = c_predzadnji ^ c_zadnji;
-        var C = c_zadnji;
-        
-        this._setFlag(this._f.C, (res > 0xFFFFFFFF) + 0);
-        this._setFlag(this._f.V, (res > 0xFFFFFFFF) + 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
-        
-        this._r[dest] = res & 0xFFFFFFFF;     
+        this._SUB_internal(src1, src2, 0, dest);
       },
       
       SBC: function(src1, src2, dest) {
-        var src1 = this._r[src1];
-        var src2 = typeof src2 === 'number' ? src2 : this._r[src2];
-        var carry = this._getFlag(this._f.C);
-        
-        var res = src1 - src2 - carry;
-        
-        src2 = (~(src2)+1) & 0xFFFFFFFF;
-        carry = (~(carry)+1) & 0xFFFFFFFF;
-        
-        var t1 = src1 & 0x7FFFFFFF;
-        var t2 = src2 & 0x7FFFFFFF;
-        
-        var c_predzadnji = ((t1+t2+carry)>>31) & 1 > 0 ? 1 : 0;
-        
-        var b1 = (src1>>31) & 1;
-        var b2 = (src2>>31) & 1;
-        
-        var c_zadnji = (b1+b2+c_predzadnji > 1 ? 1 : 0);
-        
-        var V = c_predzadnji ^ c_zadnji;
-        var C = c_zadnji;
-        
-        this._setFlag(this._f.C, C);
-        this._setFlag(this._f.V, V);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
-        
-        this._r[dest] = res & 0xFFFFFFFF;     
+        this._SUB_internal(src1, src2, this._getFlag(this._f.C), dest);
       },
       
       CMP: function(src1, src2) {
         var res = this._r[src1] - (typeof src2 === 'number' ? src2 : this._r[src2]);
         
-        this._setFlag(this._f.C, (res > 0xFFFFFFFF) + 0);
-        this._setFlag(this._f.V, (res > 0xFFFFFFFF) + 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.C, (res > this._WORD_BITS) + 0);
+        this._setFlag(this._f.V, (res > this._WORD_BITS) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
       },
       
       AND:  function(src1, src2, dest) {
@@ -520,10 +486,10 @@ var FRISC = function() {
         
         this._setFlag(this._f.C, 0);
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF;     
+        this._r[dest] = res & this._WORD_BITS;     
       },
       
       OR:  function(src1, src2, dest) {
@@ -531,10 +497,10 @@ var FRISC = function() {
         
         this._setFlag(this._f.C, 0);
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF;     
+        this._r[dest] = res & this._WORD_BITS;     
       },
       
       XOR:  function(src1, src2, dest) {
@@ -542,10 +508,10 @@ var FRISC = function() {
         
         this._setFlag(this._f.C, 0);
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF;     
+        this._r[dest] = res & this._WORD_BITS;     
       },
       
       SHL: function(src1, src2, dest) {
@@ -553,10 +519,10 @@ var FRISC = function() {
   
         this._setFlag(this._f.C, !!(res & 0x100000000) + 0);
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF; 
+        this._r[dest] = res & this._WORD_BITS; 
       },
       
       SHR: function(src1, src2, dest) {
@@ -564,33 +530,33 @@ var FRISC = function() {
         
         var res = src1 >> (typeof src2 === 'number' ? src2 : this._r[src2]);
   
-        this._setFlag(this._f.C, !!(res & 0x80000000) + 0);
+        this._setFlag(this._f.C, !!(res & this._SIGN_BIT) + 0);
         
         res = (res >> 32);
         
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.C, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.C, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF; 
+        this._r[dest] = res & this._WORD_BITS; 
       },
       
       ASHR: function(src1, src2, dest) {
         var src1 = this._r[src1] << 32;
-        var sign = this._r[src1] & 0x80000000;
+        var sign = this._r[src1] & this._SIGN_BIT;
         
         var res = src1 >> (typeof src2 === 'number' ? src2 : this._r[src2]);
   
-        this._setFlag(this._f.C, !!(res & 0x80000000) + 0);
+        this._setFlag(this._f.C, !!(res & this._SIGN_BIT) + 0);
         
         res = (src1 >> 32);
         res = res | sign;
         
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF; 
+        this._r[dest] = res & this._WORD_BITS; 
       },
       
       ROTL: function(src1, src2, dest) {
@@ -598,13 +564,13 @@ var FRISC = function() {
         
         this._setFlag(this._f.C, !!(res & 0x100000000) + 0);
         
-        var res = (res & 0xFFFFFFFF) | ((res & 0xFFFFFFFF00000000) >> 32);
+        var res = (res & this._WORD_BITS) | ((res & 0xFFFFFFFF00000000) >> 32);
         
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF; 
+        this._r[dest] = res & this._WORD_BITS; 
       },
       
       ROTR: function(src1, src2, dest) {
@@ -612,15 +578,15 @@ var FRISC = function() {
         
         var res = src1 >> (typeof src2 === 'number' ? src2 : this._r[src2]);
   
-        this._setFlag(this._f.C, !!(res & 0x80000000) + 0);
+        this._setFlag(this._f.C, !!(res & this._SIGN_BIT) + 0);
         
-        res = (((res & 0xFFFFFFFF) << 32) | (res & 0xFFFFFFFF00000000)) >> 32;
+        res = (((res & this._WORD_BITS) << 32) | (res & 0xFFFFFFFF00000000)) >> 32;
         
         this._setFlag(this._f.V, 0);
-        this._setFlag(this._f.N, !!(res & 0x80000000) + 0);
-        this._setFlag(this._f.Z, !(res & 0xFFFFFFFF) + 0);
+        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
-        this._r[dest] = res & 0xFFFFFFFF; 
+        this._r[dest] = res & this._WORD_BITS; 
       },
       
       MOVE: function(src, dest) {
