@@ -106,6 +106,12 @@ var tests = [
     T.assertEquals(code.twosComplement(345678, 0xFFFFFFFF), -345678);
   }),
 
+  new T.Test("generateStringOfCharacters zero", function() {
+    T.assertEquals(code.generateStringOfCharacters("1", 0), "");
+  }),
+  new T.Test("generateStringOfCharacters non-zero", function() {
+    T.assertEquals(code.generateStringOfCharacters("1", 9), "111111111");
+  }),
 ];
 
 module.exports.stats = T.runTests(tests);

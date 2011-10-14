@@ -88,6 +88,24 @@ function twosComplement(value, mask) {
   return (~value + 1) & mask;
 }
 
+/* Returns a string of length 'stringLength' of characters 'character'.
+ *
+ * - character is any character
+ * - stringLength is a non-negative integer */
+
+function generateStringOfCharacters(character, stringLength) {
+  var retVal = [];
+  
+  if (typeof stringLength !== 'number' || stringLength < 0) {
+    throw new Error("stringLength must be a non-negative integer");
+  }
+
+  for (var i=0; i<stringLength; i++) {
+    retVal.push(character);
+  }
+
+  return retVal.join("");
+}
 
 var FRISC = function() {
 
@@ -526,9 +544,15 @@ var FRISC = function() {
       },
       
       SHL: function(src1, src2, dest) {
-        var res = this._r[src1] << (typeof src2 === 'number' ? src2 : this._r[src2]);
-  
-        this._setFlag(this._f.C, !!(res & 0x100000000) + 0);
+        src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
+        
+        src1 = convertIntToBinary(this._r[src1], 32);
+        src1 = src1 + generateStringOfCharacters("0", src2); 
+
+        var carry = src2 === 0 ? 0 : (src1[src2-1] === "1" ? 1 : 0);
+        var res = convertBinaryToInt(src1.substring(src2));
+
+        this._setFlag(this._f.C, carry);
         this._setFlag(this._f.V, 0);
         this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
         this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
@@ -537,32 +561,31 @@ var FRISC = function() {
       },
       
       SHR: function(src1, src2, dest) {
-        var src1 = this._r[src1] << 32;
+        src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
+        src1 = convertIntToBinary(this._r[src1], 32);
+        src1 = generateStringOfCharacters("0", src2) + src1;
+
+        var carry = src2 === 0 ? 0 : (src1[32] === "1" ? 1 : 0);
+        var res = convertBinaryToInt(src1.substring(0, 32));
         
-        var res = src1 >> (typeof src2 === 'number' ? src2 : this._r[src2]);
-  
-        this._setFlag(this._f.C, !!(res & this._SIGN_BIT) + 0);
-        
-        res = (res >> 32);
-        
+        this._setFlag(this._f.C, carry);
         this._setFlag(this._f.V, 0);
         this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
-        this._setFlag(this._f.C, !(res & this._WORD_BITS) + 0);
+        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
         
         this._r[dest] = res & this._WORD_BITS; 
       },
       
       ASHR: function(src1, src2, dest) {
-        var src1 = this._r[src1] << 32;
-        var sign = this._r[src1] & this._SIGN_BIT;
+        src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
+        src1 = convertIntToBinary(this._r[src1], 32);
         
-        var res = src1 >> (typeof src2 === 'number' ? src2 : this._r[src2]);
-  
-        this._setFlag(this._f.C, !!(res & this._SIGN_BIT) + 0);
+        src1 = generateStringOfCharacters(src1[0], src2) + src1;
+
+        var carry = src2 === 0 ? 0 : (src1[32] === "1" ? 1 : 0);
+        var res = convertBinaryToInt(src1.substring(0, 32));
         
-        res = (src1 >> 32);
-        res = res | sign;
-        
+        this._setFlag(this._f.C, carry);
         this._setFlag(this._f.V, 0);
         this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
         this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
@@ -571,12 +594,15 @@ var FRISC = function() {
       },
       
       ROTL: function(src1, src2, dest) {
-        var res = this._r[src1] << (typeof src2 === 'number' ? src2 : this._r[src2]);
+        src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
         
-        this._setFlag(this._f.C, !!(res & 0x100000000) + 0);
-        
-        var res = (res & this._WORD_BITS) | ((res & 0xFFFFFFFF00000000) >> 32);
-        
+        src1 = convertIntToBinary(this._r[src1], 32);
+        var carry = src2 === 0 ? 0 : (src1[(src2-1)%32] === "1" ? 1 : 0);
+
+        src2 = src2 % 32; 
+        var res = convertBinaryToInt(src1.substring(src2) + src1.substring(0, src2));
+
+        this._setFlag(this._f.C, carry);
         this._setFlag(this._f.V, 0);
         this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
         this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
@@ -585,14 +611,15 @@ var FRISC = function() {
       },
       
       ROTR: function(src1, src2, dest) {
-        var src1 = this._r[src1] << 32;
+        src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
         
-        var res = src1 >> (typeof src2 === 'number' ? src2 : this._r[src2]);
-  
-        this._setFlag(this._f.C, !!(res & this._SIGN_BIT) + 0);
-        
-        res = (((res & this._WORD_BITS) << 32) | (res & 0xFFFFFFFF00000000)) >> 32;
-        
+        src1 = convertIntToBinary(this._r[src1], 32);
+        var carry = src2 === 0 ? 0 : (src1[32-src2] === "1" ? 1 : 0);
+
+        src2 = src2 % 32; 
+        var res = convertBinaryToInt(src1.substring(32-src2) + src1.substring(0, 32-src2));
+
+        this._setFlag(this._f.C, carry);
         this._setFlag(this._f.V, 0);
         this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
         this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
@@ -806,6 +833,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     getBitString: getBitString,
     extend: extend,
     twosComplement: twosComplement,
+    generateStringOfCharacters: generateStringOfCharacters
   };
 } else if (typeof document !== "undefined" && typeof document.window !== "undefined") {
   document.window.FRISC = FRISC;

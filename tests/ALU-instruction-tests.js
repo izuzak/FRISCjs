@@ -211,15 +211,269 @@ var tests = [
     I.SBC("r0", "r1", "r2");
     T.assertEquals(R.r2, 2);
   }),
+  new T.Test("AND instruction with reg", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    R.r2 = util.convertBinaryToInt("10000101010100010111110111010111");
+    
+    I.AND("r1", "r2", "r3");
 
-  new T.Test("XOR", function() {
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000001010000000000000000000011");
+    assertFlags("0000"); 
+  }),
+  new T.Test("AND instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+        
+    I.AND("r1", util.convertBinaryToInt("10000101010100010111110111010111"), "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000001010000000000000000000011");
+    assertFlags("0000"); 
+  }),
+  new T.Test("OR instruction with reg", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    R.r2 = util.convertBinaryToInt("10000101010100010111110111010111");
+    
+    I.OR("r1", "r2", "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "11001101110100010111110111010111");
+    assertFlags("0001");
+  }),
+  new T.Test("OR instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+
+    I.OR("r1", util.convertBinaryToInt("10000101010100010111110111010111"), "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "11001101110100010111110111010111");
+    assertFlags("0001");
+  }),
+  new T.Test("XOR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = util.convertBinaryToInt("10000101010100010111110111010111");
     
     I.XOR("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "11001100100100010111110111010100");
-    assertFlags("0001"); // first bit zero = negative
+    assertFlags("0001");
+  }),
+  new T.Test("XOR instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+
+    I.XOR("r1", util.convertBinaryToInt("10000101010100010111110111010111"), "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "11001100100100010111110111010100");
+    assertFlags("0001");
+  }),
+  new T.Test("SHL instruction with reg", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    R.r2 = 5;
+    
+    I.SHL("r1", "r2", "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001100000");
+    assertFlags("1000");
+  }),
+  new T.Test("SHL instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHL("r1", 5, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001100000");
+    assertFlags("1000");
+  }),
+  new T.Test("SHL instruction with 0", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHL("r1", 0, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
+  }),
+  new T.Test("SHL instruction with 32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHL("r1", 32, "r3");
+
+    T.assertEquals(R.r3, 0);
+    assertFlags("1010");
+  }),
+  new T.Test("SHL instruction with >32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHL("r1", 35, "r3");
+
+    T.assertEquals(R.r3, 0);
+    assertFlags("0010");
+  }),
+  new T.Test("SHR instruction with reg", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    R.r2 = 5;
+    
+    I.SHR("r1", "r2", "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
+    assertFlags("0000");
+  }),
+  new T.Test("SHR instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHR("r1", 5, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
+    assertFlags("0000");
+  }),
+  new T.Test("SHR instruction with 0", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHR("r1", 0, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
+  }),
+  new T.Test("SHR instruction with 32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHR("r1", 32, "r3");
+
+    T.assertEquals(R.r3, 0);
+    assertFlags("0010");
+  }),
+  new T.Test("SHR instruction with >32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.SHR("r1", 35, "r3");
+
+    T.assertEquals(R.r3, 0);
+    assertFlags("0010");
+  }),
+  new T.Test("ASHR instruction with reg", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    R.r2 = 5;
+    
+    I.ASHR("r1", "r2", "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
+    assertFlags("0000");
+  }),
+  new T.Test("ASHR instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ASHR("r1", 5, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
+    assertFlags("0000");
+  }),
+  new T.Test("ASHR instruction with 0", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ASHR("r1", 0, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
+  }),
+  new T.Test("ASHR instruction with 32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ASHR("r1", 32, "r3");
+
+    T.assertEquals(R.r3, 0);
+    assertFlags("0010");
+  }),
+  new T.Test("ASHR instruction with >32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ASHR("r1", 35, "r3");
+
+    T.assertEquals(R.r3, 0);
+    assertFlags("0010");
+  }),
+  new T.Test("ASHR instruction with 1 sign bit and >32", function() {
+    R.r1 = util.convertBinaryToInt("11001001110000000000000000000011");
+    
+    I.ASHR("r1", 35, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "11111111111111111111111111111111");
+    assertFlags("1001");
+  }),
+  new T.Test("ROTL instruction with reg", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    R.r2 = 5;
+    
+    I.ROTL("r1", "r2", "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001101001");
+    assertFlags("1000");
+  }),
+  new T.Test("ROTL instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ROTL("r1", 5, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001101001");
+    assertFlags("1000");
+  }),
+  new T.Test("ROTL instruction with 0", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ROTL("r1", 0, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
+  }),
+  new T.Test("ROTL instruction with 32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ROTL("r1", 32, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("1000");
+  }),
+  new T.Test("ROTL instruction with >32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+        
+    I.ROTL("r1", 35, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001110000000000000000000011010");
+    assertFlags("0000");
+  }),
+  new T.Test("ROTR instruction with reg", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    R.r2 = 5;
+    
+    I.ROTR("r1", "r2", "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00011010010011100000000000000000");
+    assertFlags("0000");
+  }),
+  new T.Test("ROTR instruction with num", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ROTR("r1", 5, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00011010010011100000000000000000");
+    assertFlags("0000");
+  }),
+  new T.Test("ROTR instruction with 0", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ROTR("r1", 0, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
+  }),
+  new T.Test("ROTR instruction with 32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+    
+    I.ROTR("r1", 32, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
+  }),
+  new T.Test("ROTR instruction with >32", function() {
+    R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
+        
+    I.ROTR("r1", 35, "r3");
+
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01101001001110000000000000000000");
+    assertFlags("0000");
   }),
 ];
 
