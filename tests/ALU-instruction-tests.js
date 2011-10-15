@@ -475,6 +475,51 @@ var tests = [
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01101001001110000000000000000000");
     assertFlags("0000");
   }),
+  new T.Test("MOVE instruction reg->reg", function() {
+    R.r1 = 2;
+    R.r2 = 5;
+
+    I.MOVE("r1", "r2");
+
+    T.assertEquals(R.r2, 2);  
+  }),
+  new T.Test("MOVE instruction num->reg", function() {
+    R.r2 = 5;
+
+    I.MOVE(2, "r2");
+
+    T.assertEquals(R.r2, 2);
+  }),
+  new T.Test("MOVE instruction reg->sr", function() {
+    R.r1 = 2;
+    R.sr = 5;
+
+    I.MOVE("r1", "sr");
+
+    T.assertEquals(R.sr, 2);  
+  }),
+  new T.Test("MOVE instruction num->sr", function() {
+    R.sr = 5;
+
+    I.MOVE(2, "sr");
+
+    T.assertEquals(R.sr, 2);  
+  }),
+  new T.Test("MOVE instruction num->sr >8 bits", function() {
+    R.sr = 5;
+
+    I.MOVE(util.convertBinaryToInt("01100100100"), "sr");
+
+    T.assertEquals(R.sr, util.convertBinaryToInt("00000100100"));  
+  }),
+  new T.Test("MOVE instruction sr->reg", function() {
+    R.sr = 2;
+    R.r1 = 5;
+
+    I.MOVE("sr", "r1");
+
+    T.assertEquals(R.sr, 2);  
+  }),
 ];
 
 module.exports.stats = T.runTests(tests, {
