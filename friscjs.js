@@ -391,17 +391,15 @@ var FRISC = function() {
         var offset = 0;
         
         if (addr === "0") {
-          addr = getBitString(statement, 0, 19); // number
-          addr = extend(addr, 32, 1);
-          addr = convertBinaryToInt(addr, 1);
+          addr = 0;
         } else {
-          addr = getBitString(statement, 20, 22); // Rx
+          addr = getBitString(statement, 20, 22);
           addr = this._regMap[addr];
-          
-          offset = getBitString(statement, 0, 19); // number
-          offset = extend(offset, 32, 1);
-          offset = convertBinaryToInt(offset, 1);
         }
+        
+        offset = getBitString(statement, 0, 19);
+        offset = extend(offset, 32, 1);
+        offset = convertBinaryToInt(offset, 1);
         
         var reg = getBitString(statement, 23, 25);
         reg = this._regMap[reg];
