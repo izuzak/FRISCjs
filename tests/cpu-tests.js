@@ -154,7 +154,7 @@ var tests = [
     decoded = simulator.CPU._decode(instruction);
 
     T.assertEquals(decoded.op, "STORE");
-    T.assertValueArrayEquals(decoded.args, [60, 0, "r4"]);
+    T.assertValueArrayEquals(decoded.args, [0, 60, "r4"]);
 
     instruction = "10000001100000000000000000000000";
     decoded = simulator.CPU._decode(instruction);
