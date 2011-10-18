@@ -203,6 +203,7 @@ var FRISC = function() {
     _SIGN_BIT: 0x80000000,
     _NONSIGN_BITS: 0x7FFFFFFF,
     _WORD_BITS: 0xFFFFFFFF,
+    _SHIFT_BITS: 0x0000001F,
     
     _setFlag: function(flag, value) {
       this._r.sr = value ? (this._r.sr | flag) : (this._r.sr & ~(flag));
@@ -543,6 +544,7 @@ var FRISC = function() {
       
       SHL: function(src1, src2, dest) {
         src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
+        src2 = src2 & this._SHIFT_BITS;
         
         src1 = convertIntToBinary(this._r[src1], 32);
         src1 = src1 + generateStringOfCharacters("0", src2); 
@@ -560,6 +562,8 @@ var FRISC = function() {
       
       SHR: function(src1, src2, dest) {
         src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
+        src2 = src2 & this._SHIFT_BITS;
+
         src1 = convertIntToBinary(this._r[src1], 32);
         src1 = generateStringOfCharacters("0", src2) + src1;
 
@@ -576,8 +580,9 @@ var FRISC = function() {
       
       ASHR: function(src1, src2, dest) {
         src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
-        src1 = convertIntToBinary(this._r[src1], 32);
-        
+        src2 = src2 & this._SHIFT_BITS;
+
+        src1 = convertIntToBinary(this._r[src1], 32);        
         src1 = generateStringOfCharacters(src1[0], src2) + src1;
 
         var carry = src2 === 0 ? 0 : (src1[32] === "1" ? 1 : 0);
@@ -593,7 +598,8 @@ var FRISC = function() {
       
       ROTL: function(src1, src2, dest) {
         src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
-        
+        src2 = src2 & this._SHIFT_BITS;
+
         src1 = convertIntToBinary(this._r[src1], 32);
         var carry = src2 === 0 ? 0 : (src1[(src2-1)%32] === "1" ? 1 : 0);
 
@@ -610,6 +616,7 @@ var FRISC = function() {
       
       ROTR: function(src1, src2, dest) {
         src2 = (typeof src2 === 'number' ? src2 : this._r[src2]);
+        src2 = src2 & this._SHIFT_BITS;
         
         src1 = convertIntToBinary(this._r[src1], 32);
         var carry = src2 === 0 ? 0 : (src1[32-src2] === "1" ? 1 : 0);

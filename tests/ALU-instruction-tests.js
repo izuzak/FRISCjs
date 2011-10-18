@@ -292,16 +292,16 @@ var tests = [
     
     I.SHL("r1", 32, "r3");
 
-    T.assertEquals(R.r3, 0);
-    assertFlags("1010");
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
   }),
   new T.Test("SHL instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     
     I.SHL("r1", 35, "r3");
 
-    T.assertEquals(R.r3, 0);
-    assertFlags("0010");
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001110000000000000000000011000");
+    assertFlags("0000");
   }),
   new T.Test("SHR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
@@ -333,16 +333,16 @@ var tests = [
     
     I.SHR("r1", 32, "r3");
 
-    T.assertEquals(R.r3, 0);
-    assertFlags("0010");
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
   }),
   new T.Test("SHR instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     
     I.SHR("r1", 35, "r3");
 
-    T.assertEquals(R.r3, 0);
-    assertFlags("0010");
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00001001001110000000000000000000");
+    assertFlags("0000");
   }),
   new T.Test("ASHR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
@@ -374,24 +374,24 @@ var tests = [
     
     I.ASHR("r1", 32, "r3");
 
-    T.assertEquals(R.r3, 0);
-    assertFlags("0010");
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
+    assertFlags("0000");
   }),
   new T.Test("ASHR instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     
     I.ASHR("r1", 35, "r3");
 
-    T.assertEquals(R.r3, 0);
-    assertFlags("0010");
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "00001001001110000000000000000000");
+    assertFlags("0000");
   }),
   new T.Test("ASHR instruction with 1 sign bit and >32", function() {
     R.r1 = util.convertBinaryToInt("11001001110000000000000000000011");
     
     I.ASHR("r1", 35, "r3");
 
-    T.assertEquals(util.convertIntToBinary(R.r3, 32), "11111111111111111111111111111111");
-    assertFlags("1001");
+    T.assertEquals(util.convertIntToBinary(R.r3, 32), "11111001001110000000000000000000");
+    assertFlags("0001");
   }),
   new T.Test("ROTL instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
@@ -424,7 +424,7 @@ var tests = [
     I.ROTL("r1", 32, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
-    assertFlags("1000");
+    assertFlags("0000");
   }),
   new T.Test("ROTL instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
