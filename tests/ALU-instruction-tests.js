@@ -843,7 +843,28 @@ var tests = [
     T.assertEquals(R.iif, 1);
   }),
 
-// HALT
+  new T.Test("HALT instruction with cond=true", function() {
+    var onStop = false;
+
+    simulator.CPU.onStop = function() {
+      onStop = true;
+    };
+    
+    I.HALT("_NN/P");
+
+    T.assertEquals(onStop, true);
+  }),
+  new T.Test("HALT instruction with cond=false", function() {
+    var onStop = false;
+
+    simulator.CPU.onStop = function() {
+      onStop = true;
+    };
+    
+    I.HALT("_N/M");
+
+    T.assertEquals(onStop, false);
+  }),
 
 ];
 
