@@ -678,13 +678,13 @@ var FRISC = function() {
       
       JP: function(cond, dest) {
         if (this._testCond(cond)) {
-          this._r.pc = (typeof dest === 'string' ? this._r[dest] : dest) & ~(0x03);
+          this._r.pc = ((typeof dest === 'string' ? this._r[dest] : dest) & ~(0x03)) - 4;
         }
       },
        
       JR: function(cond, dest) {
         if (this._testCond(cond)) {
-          this._r.pc = (this._r.pc + dest) & ~(0x03);
+          this._r.pc = ((this._r.pc + dest) & ~(0x03)) - 4;
         }
       },
       
@@ -692,7 +692,7 @@ var FRISC = function() {
         if (this._testCond(cond)) {
           this._r.r7 -= 4;
           MEM.write(this._r.r7, this._r.pc & ~(0x03));
-          this._r.pc = (typeof dest === 'string' ? this._r[dest] : dest) & ~(0x03);
+          this._r.pc = ((typeof dest === 'string' ? this._r[dest] : dest) & ~(0x03)) - 4;
         }
       },
       
@@ -704,7 +704,7 @@ var FRISC = function() {
           if (isRETI) {
             this._setFlag(this._f.GIE, 1);
           } else if (isRETN) {
-            this._setFlag(this._f.IIF, 1);
+            this._r.iif = 1;
           }
         }
       },

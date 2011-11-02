@@ -698,20 +698,20 @@ var tests = [
   new T.Test("JP instruction with cond=true", function() {
     R.pc = 8;
     
-    I.JP("_NN/P", 12);
+    I.JP("_NN/P", 16);
 
     T.assertEquals(R.pc, 12);
   }),
   new T.Test("JP instruction with cond=false", function() {
     R.pc = 8;
     
-    I.JP("_N/M", 12);
+    I.JP("_N/M", 16);
 
     T.assertEquals(R.pc, 8);
   }),
   new T.Test("JP instruction with register", function() {
     R.pc = 8;
-    R.r1 = 12;
+    R.r1 = 16;
     
     I.JP("", "r1");
 
@@ -720,7 +720,7 @@ var tests = [
   new T.Test("JP instruction with wrongly aligned address", function() {
     R.pc = 8;
     
-    I.JP("", 14);
+    I.JP("", 18);
 
     T.assertEquals(R.pc, 12);
   }),
@@ -728,30 +728,121 @@ var tests = [
   new T.Test("JR instruction with cond=true", function() {
     R.pc = 8;
     
-    I.JR("_NN/P", 4);
+    I.JR("_NN/P", 8);
 
     T.assertEquals(R.pc, 12);
   }),
   new T.Test("JR instruction with cond=false", function() {
     R.pc = 8;
     
-    I.JR("_N/M", 4);
+    I.JR("_N/M", 8);
 
     T.assertEquals(R.pc, 8);
   }),
   new T.Test("JR instruction with wrongly aligned address", function() {
     R.pc = 8;
     
-    I.JR("", 6);
+    I.JR("", 10);
 
     T.assertEquals(R.pc, 12);
   }),
 
+  new T.Test("CALL instruction with cond=true", function() {
+    R.pc = 8;
+    R.r7 = 128;
+    
+    I.CALL("_NN/P", 16);
 
-// CALL
-//
-// RET
-//
+    T.assertEquals(R.pc, 12);
+    T.assertEquals(R.r7, 124);
+    T.assertEquals(simulator.MEM.read(124), 8);
+  }),
+  new T.Test("CALL instruction with cond=false", function() {
+    R.pc = 8;
+    R.r7 = 128;
+    
+    I.CALL("_N/M", 16);
+
+    T.assertEquals(R.pc, 8);
+    T.assertEquals(R.r7, 128);
+    T.assertEquals(simulator.MEM.read(124), 0);
+  }),
+  new T.Test("CALL instruction with wrongly aligned address", function() {
+    R.pc = 8;
+    R.r7 = 128;
+    
+    I.CALL("", 18);
+
+    T.assertEquals(R.pc, 12);
+    T.assertEquals(R.r7, 124);
+    T.assertEquals(simulator.MEM.read(124), 8);
+  }),
+  new T.Test("Call instruction with register", function() {
+    R.pc = 8;
+    R.r7 = 128;
+    R.r1 = 16;
+    
+    I.CALL("_N/M", "r1");
+
+    T.assertEquals(R.pc, 8);
+    T.assertEquals(R.r7, 128);
+    T.assertEquals(simulator.MEM.read(124), 0);
+  }),
+
+  new T.Test("RET instruction with cond=true", function() {
+    R.pc = 12;
+    R.r7 = 124;
+    simulator.MEM.write(124, 8);
+    
+    I.RET("_NN/P", false, false);
+
+    T.assertEquals(R.pc, 8);
+    T.assertEquals(R.r7, 128);
+    T.assertEquals(simulator.MEM.read(124), 8);
+    T.assertEquals(simulator.CPU._getFlag(F.GIE), 0);
+    T.assertEquals(R.iif, 1);
+  }),
+  new T.Test("RET instruction with cond=false", function() {
+    R.pc = 12;
+    R.r7 = 124;
+    simulator.MEM.write(124, 8);
+    
+    I.RET("_N/M", false, false);
+
+    T.assertEquals(R.pc, 12);
+    T.assertEquals(R.r7, 124);
+    T.assertEquals(simulator.MEM.read(124), 8);
+    T.assertEquals(simulator.CPU._getFlag(F.GIE), 0);
+    T.assertEquals(R.iif, 1);
+  }),
+  new T.Test("RETI instruction", function() {
+    R.pc = 12;
+    R.r7 = 124;
+    simulator.MEM.write(124, 8);
+    
+    I.RET("", true, false);
+
+    T.assertEquals(R.pc, 8);
+    T.assertEquals(R.r7, 128);
+    T.assertEquals(simulator.MEM.read(124), 8);
+    T.assertEquals(simulator.CPU._getFlag(F.GIE), 1);
+    T.assertEquals(R.iif, 1);
+  }),
+  new T.Test("RETN instruction", function() {
+    R.pc = 12;
+    R.r7 = 124;
+    R.sr = 0;
+    simulator.MEM.write(124, 8);
+    
+    I.RET("", false, true);
+
+    T.assertEquals(R.pc, 8);
+    T.assertEquals(R.r7, 128);
+    T.assertEquals(simulator.MEM.read(124), 8);
+    T.assertEquals(simulator.CPU._getFlag(F.GIE), 0);
+    T.assertEquals(R.iif, 1);
+  }),
+
 // HALT
 
 ];
