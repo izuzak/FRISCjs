@@ -694,10 +694,60 @@ var tests = [
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101"))
   }),
-// JP
-//
-// JR
-//
+
+  new T.Test("JP instruction with cond=true", function() {
+    R.pc = 8;
+    
+    I.JP("_NN/P", 12);
+
+    T.assertEquals(R.pc, 12);
+  }),
+  new T.Test("JP instruction with cond=false", function() {
+    R.pc = 8;
+    
+    I.JP("_N/M", 12);
+
+    T.assertEquals(R.pc, 8);
+  }),
+  new T.Test("JP instruction with register", function() {
+    R.pc = 8;
+    R.r1 = 12;
+    
+    I.JP("", "r1");
+
+    T.assertEquals(R.pc, 12);
+  }),
+  new T.Test("JP instruction with wrongly aligned address", function() {
+    R.pc = 8;
+    
+    I.JP("", 14);
+
+    T.assertEquals(R.pc, 12);
+  }),
+
+  new T.Test("JR instruction with cond=true", function() {
+    R.pc = 8;
+    
+    I.JR("_NN/P", 4);
+
+    T.assertEquals(R.pc, 12);
+  }),
+  new T.Test("JR instruction with cond=false", function() {
+    R.pc = 8;
+    
+    I.JR("_N/M", 4);
+
+    T.assertEquals(R.pc, 8);
+  }),
+  new T.Test("JR instruction with wrongly aligned address", function() {
+    R.pc = 8;
+    
+    I.JR("", 6);
+
+    T.assertEquals(R.pc, 12);
+  }),
+
+
 // CALL
 //
 // RET
