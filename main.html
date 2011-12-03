@@ -197,11 +197,13 @@ lab23 ADD R1, R2, R3\n\
       
       simulator.CPU.onStop = function() {
         simulatorLog("<b>FRISC processor stopped!</b>");
+        changeState("stopped");
       };
 
       $("#frisc-load").click(function() {
         if (_state === "stopped") {
           try {
+            simulator.CPU.reset();
             var result = frisc_asm.parse($("#frisc-input").val());
             simulator.MEM.loadBinaryString(result.mem);
 
