@@ -721,17 +721,12 @@ var FRISC = function() {
         this.onBeforeRun();
       }
 
-      function r() {
-        this.performCycle();
-        this._runTimer = setTimeout(r.bind(this), (1 / this._frequency) * 1000);
-      }
-
-      this._runTimer = setTimeout(r.bind(this), (1 / this._frequency) * 1000);
+      this._runTimer = setInterval(this.performCycle.bind(this), (1 / this._frequency) * 1000);
     },
   
     pause: function() {
       if (typeof this._runTimer !== "undefined") {
-        clearTimeout(this._runTimer);
+        clearInterval(this._runTimer);
       }
     },
   
@@ -772,7 +767,6 @@ var FRISC = function() {
     },
   
     reset: function() {
-      this.stop();
       this._r = {r0:0, r1:0, r2:0, r3:0, r4:0, r5:0, r6:0, r7:0, pc:0, sr:0, iif:1};
     },
   
