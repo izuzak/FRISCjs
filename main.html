@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="description" content="FRISCjs - FRISC processor simulator in JavaScript">
-    <meta name="author" content="Ivan Zuzak">
+    <meta charset="utf-8" />
+    <meta name="description" content="FRISCjs - FRISC processor simulator in JavaScript" />
+    <meta name="author" content="Ivan Zuzak" />
 
     <title> FRISCjs - FRISC processor simulator in JavaScript</title>
-    <link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css">
+    <link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css" />
     <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
     <script type="text/javascript" src="friscasm.js"></script>
     <script type="text/javascript" src="friscjs.js"></script>
@@ -15,7 +15,7 @@
   </head>
   <body>
     <div class="container">
-      <h1> FRISCjs <small> FRISC processor simulator in JavaScript </h1>
+      <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
       <ul class="tabs" data-tabs="tabs">
         <li class="active"><a href="#sim">Simulator</a></li>
         <li><a href="#frisc-header">Help & Usage</a></li>
@@ -53,7 +53,7 @@
           </p>
           <p>
             FRISCjs is built with many open-source projects: <a href="http://pegjs.majda.cz/">PEGjs</a>, <a href="http://nodejs.org">NodeJS</a>, <a href="http://jquery.com">jQuery</a>, <a href="http://twitter.github.com/bootstrap">Bootstrap</a> and <a href="http://ace.ajax.org/">Ace</a>.
-          </b>
+          </p>
       </div>
     </div>
     <div class="active container-fluid" id="sim">
@@ -67,16 +67,16 @@
         <button type="button" class="btn primary" id="frisc-next">Run one</button>
         <button type="button" class="btn primary" id="frisc-pause">Pause</button>
         <button type="button" class="btn danger" id="frisc-stop">Stop</button>
-       <input type="text" class="span2" id="frisc-freq" value="1"></input>
+        <input type="text" class="span2" id="frisc-freq" value="1" />
         <button type="button" class="btn" id="frisc-freqset">Set CPU freq</button>
         <button type="button" class="btn primary" id="frisc-clear">Clear</button>
       </div>
       <div id="cpuout" style="font: 10pt courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
       <div id="frisc-memcontrols" style="width: 650px; margin-top: 15px;">
         <label style="float: none;">Lower memory bound:</label>
-        <input type="text" class="span2" id="frisc-mem-lower" value="0"></input>
+        <input type="text" class="span2" id="frisc-mem-lower" value="0" />
         <label style="float: none;">Upper memory bound:</label>
-        <input type="text" class="span2" id="frisc-mem-upper" value="100"></input>
+        <input type="text" class="span2" id="frisc-mem-upper" value="100" />
         <button type="button" class="btn" id="frisc-mem-refresh">Show memory state</button>
       </div>
       <div id="memout" style="font: 10pt courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
@@ -316,7 +316,6 @@ editor.resize();
         s.parentNode.insertBefore(ga, s);
       })();
     </script>
-  </div>
   </div>
   </div>
   </div>
