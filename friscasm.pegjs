@@ -584,7 +584,7 @@ register
 number
   = b:(("%" base " "+) / "") p:([+-])? &([0-9][0-9a-hA-H]*) digits:([0-9a-hA-H]*) { 
     var d = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]; 
-    var base = b === "" ? defaultBase : b[1];
+    var base = (b === "") ? defaultBase : b[1];
     for (var i=0; i<digits.length; i++) {
       var found = false;
       for (var j=0; j<base; j++) {
@@ -600,8 +600,7 @@ number
     }
     
     var prefix = p === "-" ? -1 : 1;
-    
-    return prefix*parseInt(digits.join(""), b);
+    return prefix*parseInt(digits.join(""), base);
   }
   
 base

@@ -3806,7 +3806,7 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result0 = (function(b, p, digits) { 
               var d = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]; 
-              var base = b === "" ? defaultBase : b[1];
+              var base = (b === "") ? defaultBase : b[1];
               for (var i=0; i<digits.length; i++) {
                 var found = false;
                 for (var j=0; j<base; j++) {
@@ -3822,8 +3822,7 @@ var frisc_asm = (function(){
               }
               
               var prefix = p === "-" ? -1 : 1;
-              
-              return prefix*parseInt(digits.join(""), b);
+              return prefix*parseInt(digits.join(""), base);
             })(result0[0], result0[1], result0[3]);
         }
         if (result0 === null) {
