@@ -260,10 +260,10 @@ var frisc_asm = (function(){
                 generateMachineCode(instrs[i]);
                 machinecode.push(instrs[i]);
               }
-          
+              
               // generate memory model
               var mem = [];
-          
+              
               var writeToMemory = function(bitString, startPosition, memoryArray) {
                 if (bitString.length % 8 !== 0) {
                   throw new Error("Memory string has wrong length");
@@ -277,7 +277,7 @@ var frisc_asm = (function(){
                 
                 return startPosition + elems.length;
               };
-           
+              
               for (var opCount=0, memCount=0; opCount<machinecode.length; ) {
                 if (typeof machinecode[opCount].curloc === "undefined") {
                   opCount++;
@@ -584,7 +584,7 @@ var frisc_asm = (function(){
               
               o.curloc = curloc;
               
-              if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops) {
+              if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
                 curloc += 4;
               } else if (o.op in orgops) {
                 curloc = o.value;
