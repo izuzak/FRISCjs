@@ -469,13 +469,13 @@ var FRISC = function() {
     
     _i: {
       POP: function(dest) {
-        this._r[dest] = MEM.read(this._r.r7 & 0x03);
+        this._r[dest] = MEM.read(this._r.r7 & ~(0x03));
         this._r.r7 += 4;
       },
       
       PUSH: function(src) {
         this._r.r7 -= 4;
-        MEM.write(this._r.r7, this._r[src] & 0x03);
+        MEM.write(this._r.r7 & ~(0x03), this._r[src]);
       },
       
       ADD: function(src1, src2, dest) {        
