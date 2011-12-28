@@ -3,6 +3,19 @@ var path = require("path");
 var parser = require("./friscasm.js");
 var sim = require("./friscjs.js").FRISC;
 
+var argv = process.argv;
+var isVerboseMode = argv.indexOf("-v") > -1;
+
+if (isVerboseMode) {
+  argv.splice(argv.indexOf("-v"), 1);
+}
+
+var debug = function(str) {
+  if (isVerboseMode) {
+    console.error(str);
+  }
+};
+
 console.error("");
 console.error("*********************************************************");
 console.error("** FRISCjs - FRISC simulator in JavaScript");
@@ -14,12 +27,19 @@ console.error("**     > node main.js filename");
 console.error("**   or input the FRISC program via stdin:");
 console.error("**     > cat filename | node main.js");
 console.error("** ");
+console.error("** Verbose debugging mode can be turned on by passing");
+console.error("**   specifying the -v flag, e.g.:");
+console.error("** ");
+console.error("**     > node main.js -v filename");
+console.error("**   or");
+console.error("**     > cat filename | node main.js -v");
+console.error("** ");
 console.error("** Execution flow:");
 console.error("** ");
 console.error("**   1) compilation of the FRISC program to machine code ");
 console.error("**   2) step-by-step execution of FRISC program ");
 console.error("**      with logging of processor state at each step  ");
-console.error("**      to stderr");
+console.error("**      to stderr (if in verbose mode)");
 console.error("**   3) output of r6 to stdout after program execution");
 console.error("** ");
 console.error("** GUI version of FRISC simulator is available at:");
@@ -34,10 +54,10 @@ console.error("*********************************************************");
 console.error("");
 
 // determine method for acquiring the input program
-if (process.argv.length > 2) {
+if (argv.length > 2) {
   // the process is passed an argument which points to a filename with the
   // program
-  var filename = path.normalize(process.argv[2]);
+  var filename = path.normalize(argv[2]);
 
   console.error("");
   console.error("*********************************************************");
@@ -121,7 +141,7 @@ function runProgram(frisc_asmsource) {
   }
 
   simulator = new sim();
-  simulator.CPU._frequency = 1;
+  simulator.CPU._frequency = 1000;
    
   simulator.CPU.onBeforeRun = function() {
     console.error("");
@@ -132,20 +152,20 @@ function runProgram(frisc_asmsource) {
   };
   
   simulator.CPU.onBeforeCycle = function() {
-    console.error("");
-    console.error("*********************************************************");
-    console.error("New CPU cycle starting!");
-    console.error("*********************************************************");
-    console.error("");
-    console.error("## CPU state: " + cpuStateToString(simulator));
+    debug("");
+    debug("*********************************************************");
+    debug("New CPU cycle starting!");
+    debug("*********************************************************");
+    debug("");
+    debug("## CPU state: " + cpuStateToString(simulator));
   };
 
   simulator.CPU.onAfterCycle = function() {
-    console.error("## CPU state: " + cpuStateToString(simulator));
+    debug("## CPU state: " + cpuStateToString(simulator));
   };
   
   simulator.CPU.onBeforeExecute = function(instruction) {
-    console.error("## Executing FRISC instruction: " + instructionToString(instruction));
+    debug("## Executing FRISC instruction: " + instructionToString(instruction));
   };
   
   simulator.CPU.onStop = function() {
