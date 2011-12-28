@@ -14,14 +14,14 @@
     <script type="text/javascript" src="https://raw.github.com/twitter/bootstrap/master/js/bootstrap-tabs.js"></script>
   </head>
   <body>
-    <div class="container">
+    <div class="container" style="width: 1140px">
       <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
       <ul class="tabs" data-tabs="tabs">
         <li class="active"><a href="#sim">Simulator</a></li>
         <li><a href="#frisc-header">Help & Usage</a></li>
       </ul>
     <div class="tab-content">
-    <div class="container" id="frisc-header" style="margin-bottom: 20px;">
+    <div class="container" id="frisc-header" style="margin-bottom: 20px; width: auto;">
       <div id="frisc-upute" class="well" style="visible: false">
         <h3> About </h3>
         <p>
@@ -57,9 +57,9 @@
       </div>
     </div>
     <div class="active container-fluid" id="sim">
-    <div class="sidebar" id="frisc-inputdiv" style="left: 0px; position: absolute; width: 250px; height: 500px;">
+    <div class="sidebar" id="frisc-inputdiv" style="left: 0px; position: absolute; width: 450px; height: 500px;">
     </div>
-    <div class="content">
+    <div class="content" style="margin-left: 440px;">
     <div id="frisc-controls" style="float: left; margin-left: 10px;">
       <div id="frisc-cpu-controls" style="width: 650px;">
         <button type="button" class="btn success" id="frisc-load">Load</button>
@@ -67,7 +67,7 @@
         <button type="button" class="btn primary" id="frisc-next">Run one</button>
         <button type="button" class="btn primary" id="frisc-pause">Pause</button>
         <button type="button" class="btn danger" id="frisc-stop">Stop</button>
-        <input type="text" class="span2" id="frisc-freq" value="1" />
+        <input type="text" class="span2" id="frisc-freq" value="1000" />
         <button type="button" class="btn" id="frisc-freqset">Set CPU freq</button>
         <button type="button" class="btn primary" id="frisc-clear">Clear</button>
       </div>
@@ -92,12 +92,14 @@
 
       // create FRISC
       var simulator = new FRISC();
+      simulator.CPU._frequency = parseFloat($("#frisc-freq").val());
 
       window.onload = function() {
         $(function() { $("li").css("color", "#404040"); });
         editor = ace.edit("frisc-inputdiv");
-        document.getElementById('frisc-inputdiv').style.font='10pt courier new';
-$(".ace_gutter").width("40px");
+        document.getElementById('frisc-inputdiv').style.fontSize='10pt';
+        document.getElementById('frisc-inputdiv').style.fontFamily='courier new';
+        $(".ace_gutter").width("40px");
         editor.renderer.setHScrollBarAlwaysVisible(false);
         editor.getSession().setValue("; aluop\n\
 lab1 ADD R1, R2, R3\n\
