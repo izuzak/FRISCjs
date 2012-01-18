@@ -1,0 +1,25 @@
+.ace_line {
+  font-weight: bold;
+}
+
+.ace_frisc_numeric {
+  color: #268bd2;
+}
+
+.ace_frisc_comment {
+  color: #666;
+  font-style: italic;
+  font-weight: normal;
+}
+
+.ace_frisc_register {
+  color: #859900;
+}
+
+.ace_frisc_instruction {
+  color: black;
+}
+
+.ace_frisc_label {
+  color: #dc322f
+}

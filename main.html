@@ -7,11 +7,13 @@
 
     <title> FRISCjs - FRISC processor simulator in JavaScript</title>
     <link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css" />
+    <link rel="stylesheet" href="ace-mode-frisc.css" />
     <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
     <script type="text/javascript" src="friscasm.js"></script>
     <script type="text/javascript" src="friscjs.js"></script>
-    <script type="text/javascript" src="https://raw.github.com/ajaxorg/ace/master/build/src/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="https://raw.github.com/ajaxorg/ace/master/build/src/ace.js"></script>
     <script type="text/javascript" src="https://raw.github.com/twitter/bootstrap/master/js/bootstrap-tabs.js"></script>
+    <script type="text/javascript" src="ace-mode-frisc.js"></script>
   </head>
   <body>
     <div class="container" style="width: 1140px">
@@ -97,6 +99,8 @@
       window.onload = function() {
         $(function() { $("li").css("color", "#404040"); });
         editor = ace.edit("frisc-inputdiv");
+        var FriscMode = require("ace/mode/frisc").Mode;
+        editor.getSession().setMode(new FriscMode());
         document.getElementById('frisc-inputdiv').style.fontSize='10pt';
         document.getElementById('frisc-inputdiv').style.fontFamily='courier new';
         $(".ace_gutter").width("40px");
