@@ -4,6 +4,8 @@ FRISCjs
 FRISCjs is a [FRISC processor](http://www.fer.hr/rasip/knjige/frisc) simulator written in JavaScript.
 This project was inspited by the [GameBoy emulator in JavaScript](http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-The-CPU) and [jsLinux](http://bellard.org/jslinux/tech.html).
 
+<img src="https://raw.github.com/izuzak/FRISCjs/master/friscjs-screenshot.png" />
+
 ## 
 
 The FRISCjs simulator has two parts: a [FRISC assembler](https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](https://github.com/izuzak/FRISCjs/blob/master/friscjs.js) which executes machine code.
