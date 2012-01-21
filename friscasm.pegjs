@@ -376,6 +376,10 @@ instruction_end
 instruction
   = l:labelPart? o:operationPart? c:commentPart? {
     if (o === "") {
+      if (l !== "") {
+        labels[l] = curloc;
+      }
+
       return {};
     }
 

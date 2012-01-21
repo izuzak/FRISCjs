@@ -567,6 +567,10 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result0 = (function(l, o, c) {
               if (o === "") {
+                if (l !== "") {
+                  labels[l] = curloc;
+                }
+          
                 return {};
               }
           
