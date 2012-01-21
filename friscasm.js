@@ -567,6 +567,10 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result0 = (function(l, o, c) {
               if (o === "") {
+                if (l !== "") {
+                  labels[l] = curloc;
+                }
+          
                 return {};
               }
           
@@ -658,24 +662,24 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result1 = [];
-          if (input.substr(pos).match(/^[0-9A-z]/) !== null) {
+          if (input.substr(pos).match(/^[0-9a-zA-Z_]/) !== null) {
             result2 = input.charAt(pos);
             pos++;
           } else {
             result2 = null;
             if (reportFailures === 0) {
-              matchFailed("[0-9A-z]");
+              matchFailed("[0-9a-zA-Z_]");
             }
           }
           while (result2 !== null) {
             result1.push(result2);
-            if (input.substr(pos).match(/^[0-9A-z]/) !== null) {
+            if (input.substr(pos).match(/^[0-9a-zA-Z_]/) !== null) {
               result2 = input.charAt(pos);
               pos++;
             } else {
               result2 = null;
               if (reportFailures === 0) {
-                matchFailed("[0-9A-z]");
+                matchFailed("[0-9a-zA-Z_]");
               }
             }
           }
