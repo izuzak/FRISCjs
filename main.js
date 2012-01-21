@@ -114,7 +114,11 @@ function cpuStateToString(simulator) {
 }
 
 function instructionToString(instruction) {
-  return instruction.op + " " + instruction.args.join(" ");
+  if (typeof instruction.args === 'undefined' || instruction.args === null) {
+    return instruction.op;
+  } else {
+    return instruction.op + " " + instruction.args.join(" ");
+  }
 }
 
 function runProgram(frisc_asmsource) {
