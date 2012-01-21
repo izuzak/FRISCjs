@@ -424,7 +424,7 @@ labelPart
   = label;
   
 label
-  = &[a-zA-Z] l:([0-9A-z]*) {
+  = &[a-zA-Z] l:([0-9a-zA-Z_]*) {
     return l.join("");
   }
   
