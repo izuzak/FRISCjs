@@ -260,10 +260,10 @@ var frisc_asm = (function(){
                 generateMachineCode(instrs[i]);
                 machinecode.push(instrs[i]);
               }
-          
+              
               // generate memory model
               var mem = [];
-          
+              
               var writeToMemory = function(bitString, startPosition, memoryArray) {
                 if (bitString.length % 8 !== 0) {
                   throw new Error("Memory string has wrong length");
@@ -277,7 +277,7 @@ var frisc_asm = (function(){
                 
                 return startPosition + elems.length;
               };
-           
+              
               for (var opCount=0, memCount=0; opCount<machinecode.length; ) {
                 if (typeof machinecode[opCount].curloc === "undefined") {
                   opCount++;
@@ -567,6 +567,10 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result0 = (function(l, o, c) {
               if (o === "") {
+                if (l !== "") {
+                  labels[l] = curloc;
+                }
+          
                 return {};
               }
           
@@ -584,7 +588,7 @@ var frisc_asm = (function(){
               
               o.curloc = curloc;
               
-              if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops) {
+              if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
                 curloc += 4;
               } else if (o.op in orgops) {
                 curloc = o.value;
@@ -658,24 +662,24 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result1 = [];
-          if (input.substr(pos).match(/^[0-9A-z]/) !== null) {
+          if (input.substr(pos).match(/^[0-9a-zA-Z_]/) !== null) {
             result2 = input.charAt(pos);
             pos++;
           } else {
             result2 = null;
             if (reportFailures === 0) {
-              matchFailed("[0-9A-z]");
+              matchFailed("[0-9a-zA-Z_]");
             }
           }
           while (result2 !== null) {
             result1.push(result2);
-            if (input.substr(pos).match(/^[0-9A-z]/) !== null) {
+            if (input.substr(pos).match(/^[0-9a-zA-Z_]/) !== null) {
               result2 = input.charAt(pos);
               pos++;
             } else {
               result2 = null;
               if (reportFailures === 0) {
-                matchFailed("[0-9A-z]");
+                matchFailed("[0-9a-zA-Z_]");
               }
             }
           }
@@ -3806,7 +3810,7 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result0 = (function(b, p, digits) { 
               var d = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]; 
-              var base = b === "" ? defaultBase : b[1];
+              var base = (b === "") ? defaultBase : b[1];
               for (var i=0; i<digits.length; i++) {
                 var found = false;
                 for (var j=0; j<base; j++) {
@@ -3822,8 +3826,7 @@ var frisc_asm = (function(){
               }
               
               var prefix = p === "-" ? -1 : 1;
-              
-              return prefix*parseInt(digits.join(""), b);
+              return prefix*parseInt(digits.join(""), base);
             })(result0[0], result0[1], result0[3]);
         }
         if (result0 === null) {

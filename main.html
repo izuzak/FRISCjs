@@ -1,52 +1,90 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="FRISCjs - FRISC processor simulator in JavaScript" />
+    <meta name="author" content="Ivan Zuzak" />
+
+    <title> FRISCjs - FRISC processor simulator in JavaScript</title>
+    <link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css" />
+    <link rel="stylesheet" href="ace-mode-frisc.css" />
     <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
     <script type="text/javascript" src="friscasm.js"></script>
     <script type="text/javascript" src="friscjs.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/ajaxorg/ace/master/build/src/ace.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/twitter/bootstrap/master/js/bootstrap-tabs.js"></script>
+    <script type="text/javascript" src="ace-mode-frisc.js"></script>
   </head>
   <body>
-    <div id="frisc-header" style="margin-bottom: 20px;">
-      <h1> FRISCjs </h1>
-      <div id="frisc-upute">
-        <a href="https://github.com/izuzak/FRISCjs">FRISCjs</a> is a FRISC processor simulator written in JavaScript. Usage instructions: </br>
-        1. Enter your FRISC assembler program into the textbox on the left. </br>
-        2. Press the "Load!" button to parse the program and load it into memory. In case of parsing errors, the error message, line and column numbers will be logged to the output screen.</br>
-        3. Press the "Run all!" button to start the CPU.</br>
-        4. Enter the instructions-per-second frequency and press "Set freq!" to change the CPU speed.</br>
-        5. Press the "Pause!" button to pause CPU execution.</br>
-        6. Press the "Run once!" button to force the CPU to execute the next instruction.</br>
-        7. Press the "Stop!" button to stop the CPU completely and return to defining the program.  </br>
-        8. Press the "Clear!" button to clear the log output screen. </br>
-        9. To view the state of a part of memory, enter the lower and upper bound into the textboxes and press "Refresh!". </br>
+    <div class="container" style="width: 1140px">
+      <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
+      <ul class="tabs" data-tabs="tabs">
+        <li class="active"><a href="#sim">Simulator</a></li>
+        <li><a href="#frisc-header">Help & Usage</a></li>
+      </ul>
+    <div class="tab-content">
+    <div class="container" id="frisc-header" style="margin-bottom: 20px; width: auto;">
+      <div id="frisc-upute" class="well" style="visible: false">
+        <h3> About </h3>
+        <p>
+        FRISCjs is a simulator of the FRISC processor written in JavaScript.
+        The simulator has two parts: a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs">FRISC assembler</a> (built using PEGjs) which translates FRISC assembly code to machine code and a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscjs.js">FRISC CPU simulator</a> which executes machine code.
+        This Web application is a graphical interface for the simulator, while there also exists a <a href="https://github.com/izuzak/FRISCjs/blob/master/main.js">console interface which runs on NodeJS</a>.
+        </p>
+        <h3> Usage instructions </h3>
+        <ol>
+          <li> Enter your FRISC assembler program into the textbox on the left. </li>
+          <li> Press the <b>"Load"</b> button to parse the program and load it into memory. In case of parsing errors, the error message, line and column numbers will be logged to the output screen.</li>
+          <li> Press the <b>"Run all"</b> button to start the CPU.</li>
+          <li> Enter the instructions-per-second frequency and press <b>"Set CPU freq!"</b> to change the CPU speed.</li>
+          <li> Press the <b>"Pause"</b> button to pause CPU execution.</li>
+          <li> Press the <b>"Run one"</b> button to force the CPU to execute the next instruction.</li>
+          <li> Press the <b>"Stop"</b> button to stop the CPU completely and return to defining the program.  </li>
+          <li> Press the <b>"Clear"</b> button to clear the log output screen. </li>
+          <li> To view the state of a part of memory, enter the lower and upper bound into the textboxes and press <b>"Show memory state"</b>. </li>
+        </ol>
+
+        <h3> Source code and bug reports </h3>
+          <p>
+          The complete source code for FRISCjs and this Web application is <a href="https://github.com/izuzak/FRISCjs">available on GitHub</a>.
+          Please use the GitHub issue tracker for reporting bugs and feature requests.
+          </p>
+        <h3> Credits and licence </h3>
+          <p>
+            FRISCjs was developed by <a href="http://ivanzuzak.info">Ivan Zuzak</a>. License: <a href="https://github.com/izuzak/FRISCjs/blob/master/LICENSE.markdown">Apache 2.0.</a> Contributors: <a href="https://github.com/ibudiselic">Ivan Budiselic</a>.
+          </p>
+          <p>
+            FRISCjs is built with many open-source projects: <a href="http://pegjs.majda.cz/">PEGjs</a>, <a href="http://nodejs.org">NodeJS</a>, <a href="http://jquery.com">jQuery</a>, <a href="http://twitter.github.com/bootstrap">Bootstrap</a> and <a href="http://ace.ajax.org/">Ace</a>.
+          </p>
       </div>
     </div>
-    <div id="frisc-inputdiv" style="float: left;">
-      <textarea id="frisc-input" style="width: 300px;"></textarea>
+    <div class="active container-fluid" id="sim">
+    <div class="sidebar" id="frisc-inputdiv" style="left: 0px; position: absolute; width: 450px; height: 500px;">
     </div>
-    <div id="frisc-controls" style="float: left; margin-left: 15px;">
-      <div id="frisc-cpu-controls" style="width: 100%;">
-        <button type="button" id="frisc-load">Load!</button>
-        <button type="button" id="frisc-execute">Run all!</button>
-        <button type="button" id="frisc-next">Run one!</button>
-        <button type="button" id="frisc-pause">Pause!</button>
-        <input type="text" id="frisc-freq" value="1"></input>
-        <button type="button" id="frisc-freqset">Set freq!</button>
-        <button type="button" id="frisc-clear">Clear!</button>
-        <button type="button" id="frisc-stop">Stop!</button>
+    <div class="content" style="margin-left: 440px;">
+    <div id="frisc-controls" style="float: left; margin-left: 10px;">
+      <div id="frisc-cpu-controls" style="width: 650px;">
+        <button type="button" class="btn success" id="frisc-load">Load</button>
+        <button type="button" class="btn primary" id="frisc-execute">Run all</button>
+        <button type="button" class="btn primary" id="frisc-next">Run one</button>
+        <button type="button" class="btn primary" id="frisc-pause">Pause</button>
+        <button type="button" class="btn danger" id="frisc-stop">Stop</button>
+        <input type="text" class="span2" id="frisc-freq" value="1000" />
+        <button type="button" class="btn" id="frisc-freqset">Set CPU freq</button>
+        <button type="button" class="btn primary" id="frisc-clear">Clear</button>
       </div>
-      <div id="cpuout" style="font: 10pt courier new; background-color: #D4CDCF; width: 100%; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px;"></div>
-      <div id="frisc-memcontrols" style="width: 100%; margin-top: 15px;">
-        <label>Lower memory bound:</label>
-        <input type="text" id="frisc-mem-lower" value="0"></input>
-        <label>Upper memory bound:</label>
-        <input type="text" id="frisc-mem-upper" value="100"></input>
-        <button type="button" id="frisc-mem-refresh">Refresh!</button>
+      <div id="cpuout" style="font: 10pt courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
+      <div id="frisc-memcontrols" style="width: 650px; margin-top: 15px;">
+        <label style="float: none;">Lower memory bound:</label>
+        <input type="text" class="span2" id="frisc-mem-lower" value="0" />
+        <label style="float: none;">Upper memory bound:</label>
+        <input type="text" class="span2" id="frisc-mem-upper" value="100" />
+        <button type="button" class="btn" id="frisc-mem-refresh">Show memory state</button>
       </div>
-      <div id="memout" style="font: 10pt courier new; background-color: #D4CDCF; width: 100%; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px;"></div> 
+      <div id="memout" style="font: 10pt courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
     </div>
     <script type="text/javascript">
       $("#frisc-input").height(($("body").height() - ($("#frisc-header").height()) - 40 + "px"));
-      $("#frisc-controls").width(($("body").innerWidth() - ($("#frisc-inputdiv").innerWidth()) - 45 + "px"));
 
       var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight() * 2)/2 - 40 + "px";
       $("#cpuout").height(height);
@@ -56,8 +94,18 @@
 
       // create FRISC
       var simulator = new FRISC();
+      simulator.CPU._frequency = parseFloat($("#frisc-freq").val());
 
-      $("#frisc-input").val("; aluop\n\
+      window.onload = function() {
+        $(function() { $("li").css("color", "#404040"); });
+        editor = ace.edit("frisc-inputdiv");
+        var FriscMode = require("ace/mode/frisc").Mode;
+        editor.getSession().setMode(new FriscMode());
+        document.getElementById('frisc-inputdiv').style.fontSize='10pt';
+        document.getElementById('frisc-inputdiv').style.fontFamily='courier new';
+        $(".ace_gutter").width("40px");
+        editor.renderer.setHScrollBarAlwaysVisible(false);
+        editor.getSession().setValue("; aluop\n\
 lab1 ADD R1, R2, R3\n\
 lab2 ADD r2, 5, r5\n\
  ADD r5, lab1, r2\n\
@@ -95,6 +143,8 @@ lab22 DW 54\n\
 lab20 `END\n\
 lab23 ADD R1, R2, R3\n\
 ; fds fsd';");
+editor.resize();
+      };
 
       function simulatorLog(text, marginLeft) {
         if (typeof text !== "string") {
@@ -175,41 +225,47 @@ lab23 ADD R1, R2, R3\n\
       }
 
       function instructionToString(instruction) {
-        return instruction.op + " " + instruction.args.join(" ");
+        if (typeof instruction.args === 'undefined' || instruction.args === null) {
+          return instruction.op;
+        } else {
+          return instruction.op + " " + instruction.args.join(" ");
+        }
       }
       
       simulator.CPU.onBeforeRun = function() {
-        simulatorLog("<b>Starting (or continuing) simulation!</b>");
+        simulatorLog("<span class='label success'><b>Starting (or continuing) simulation!</b></span>");
       };
       
       simulator.CPU.onBeforeCycle = function() {
-        simulatorLog("<b>New CPU cycle starting!</b>");
-        simulatorLog("CPU state: " + cpuStateToString(), "10px");
+        simulatorLog("<span class='label success'><b>New CPU cycle starting!</b></span>");
+        simulatorLog("<span class='label notice'>CPU state:</span>" + " " + cpuStateToString(), "10px");
       };
       
       simulator.CPU.onAfterCycle = function() {
-        simulatorLog("CPU state: " + cpuStateToString(), "10px");
+        simulatorLog("<span class='label notice'>CPU state:</span>" + " " + cpuStateToString(), "10px");
       };
 
       simulator.CPU.onBeforeExecute = function(instruction) {
-        simulatorLog("Executing FRISC instruction: " + instructionToString(instruction), "10px");
+        simulatorLog("<span class='label notice'>Executing FRISC instruction:</span>" + " " + instructionToString(instruction), "10px");
       };
       
       simulator.CPU.onStop = function() {
-        simulatorLog("<b>FRISC processor stopped!</b>");
+        simulatorLog("<span class='label warning'><b>FRISC processor stopped!</b></span>");
+        changeState("stopped");
       };
 
       $("#frisc-load").click(function() {
         if (_state === "stopped") {
           try {
-            var result = frisc_asm.parse($("#frisc-input").val());
+            simulator.CPU.reset();
+            var result = frisc_asm.parse(editor.getSession().getValue());
             simulator.MEM.loadBinaryString(result.mem);
 
-            simulatorLog("<b>Input program parsed successfully.</b>");
+            simulatorLog("<span class='label success'><b>Input program parsed successfully.</b></span>");
   
             changeState("loaded");
           } catch (e) {
-            simulatorLog("<b>Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString() + "</b>");
+            simulatorLog("<span class='label important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
           }
         }
       });
@@ -270,5 +326,9 @@ lab23 ADD R1, R2, R3\n\
         s.parentNode.insertBefore(ga, s);
       })();
     </script>
+  </div>
+  </div>
+  </div>
+  </div>
   </body>
 </html>
