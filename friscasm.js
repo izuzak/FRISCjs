@@ -37,6 +37,7 @@ var frisc_asm = (function(){
         "instruction_end": parse_instruction_end,
         "instruction_or_end": parse_instruction_or_end,
         "instructions": parse_instructions,
+        "instructions_main": parse_instructions_main,
         "jmpop_name": parse_jmpop_name,
         "label": parse_label,
         "memop": parse_memop,
@@ -67,7 +68,7 @@ var frisc_asm = (function(){
           throw new Error("Invalid rule name: " + quote(startRule) + ".");
         }
       } else {
-        startRule = "instructions";
+        startRule = "instructions_main";
       }
       
       var pos = 0;
@@ -89,13 +90,15 @@ var frisc_asm = (function(){
       
       function escape(ch) {
         var charCode = ch.charCodeAt(0);
+        var escapeChar;
+        var length;
         
         if (charCode <= 0xFF) {
-          var escapeChar = 'x';
-          var length = 2;
+          escapeChar = 'x';
+          length = 2;
         } else {
-          var escapeChar = 'u';
-          var length = 4;
+          escapeChar = 'u';
+          length = 4;
         }
         
         return '\\' + escapeChar + padLeft(charCode.toString(16).toUpperCase(), '0', length);
@@ -107,13 +110,20 @@ var frisc_asm = (function(){
          * string literal except for the closing quote character, backslash,
          * carriage return, line separator, paragraph separator, and line feed.
          * Any character may appear in the form of an escape sequence.
+         *
+         * For portability, we also escape escape all control and non-ASCII
+         * characters. Note that "\0" and "\v" escape sequences are not used
+         * because JSHint does not like the first and IE the second.
          */
         return '"' + s
-          .replace(/\\/g, '\\\\')            // backslash
-          .replace(/"/g, '\\"')              // closing quote character
-          .replace(/\r/g, '\\r')             // carriage return
-          .replace(/\n/g, '\\n')             // line feed
-          .replace(/[\x80-\uFFFF]/g, escape) // non-ASCII characters
+          .replace(/\\/g, '\\\\')  // backslash
+          .replace(/"/g, '\\"')    // closing quote character
+          .replace(/\x08/g, '\\b') // backspace
+          .replace(/\t/g, '\\t')   // horizontal tab
+          .replace(/\n/g, '\\n')   // line feed
+          .replace(/\f/g, '\\f')   // form feed
+          .replace(/\r/g, '\\r')   // carriage return
+          .replace(/[\x00-\x07\x0B\x0E-\x1F\x80-\uFFFF]/g, escape)
           + '"';
       }
       
@@ -130,65 +140,211 @@ var frisc_asm = (function(){
         rightmostFailuresExpected.push(failure);
       }
       
-      function parse_instructions() {
-        var cacheKey = 'instructions@' + pos;
+      function parse_instructions_main() {
+        var cacheKey = "instructions_main@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5, result6;
-        var pos0, pos1, pos2, pos3;
+        var result0;
+        var pos0;
         
+        pos0 = pos;
+        result0 = parse_instructions();
+        if (result0 !== null) {
+          result0 = (function(ins) {
+        
+            var instrs = [];
+            var machinecode = [];
+            var unknownlabels = [];
+        
+            for (var i=0; i<ins.length; i++) {
+              if (typeof ins[i][0].op !== "undefined" && ins[i][0].op !== "") {
+                instrs.push(ins[i][0]);
+              }
+            }
+        
+            function replaceLabel(element) {
+              if (element.type === "label") {
+                var labelValue = labels[element.value];
+        
+                if (typeof labelValue !== "undefined") {
+                  element.type = "num";
+                  element.value = labelValue;
+                } else {
+                  unknownlabels.push(element.value);
+                  element.value = null;
+                }
+              }
+            }
+        
+            // replace labels
+            for (var i=0; i<instrs.length; i++) {
+              if (instrs[i].op in aluops || instrs[i].op in cmpops || instrs[i].op in moveops) {
+                replaceLabel(instrs[i].alusrc2);
+              } else if (instrs[i].op in jmpops) {
+                replaceLabel(instrs[i].addr);
+              } else if (instrs[i].op in memops) {
+                replaceLabel(instrs[i].mem);
+              } else if (instrs[i].op in dwhbops) {
+                var vals = [];
+        
+                for (var j=0; j<instrs[i].values.length; j++) {
+                  replaceLabel(instrs[i].values[j]);
+                  vals.push(instrs[i].values[j].value);
+                }
+        
+                instrs[i].values = vals;
+              }
+            }
+        
+            // check if all labels are defined
+            if (unknownlabels.length > 0) {
+              throw new Error("Unknown labels: " + unknownlabels.toString());
+            }
+        
+            // generate machine code
+            for (var i=0; i<instrs.length; i++) {
+              generateMachineCode(instrs[i]);
+              machinecode.push(instrs[i]);
+            }
+        
+            // generate memory model
+            var mem = [];
+        
+            var writeToMemory = function(bitString, startPosition, memoryArray) {
+              if (bitString.length % 8 !== 0) {
+                throw new Error("Memory string has wrong length");
+              }
+        
+              var elems = bitString.match(/.{8}/g);
+        
+              for (var i=0; i<elems.length; i++) {
+                memoryArray[startPosition+i] = elems[elems.length - i - 1];
+              }
+        
+              return startPosition + elems.length;
+            };
+        
+            for (var opCount=0, memCount=0; opCount<machinecode.length; ) {
+              if (typeof machinecode[opCount].curloc === "undefined") {
+                opCount++;
+              } else {
+                if (machinecode[opCount].curloc !== memCount) {
+                  memCount = writeToMemory("00000000", memCount, mem);
+                } else {
+                  if (typeof machinecode[opCount].machineCode === "string") {
+                    memCount = writeToMemory(machinecode[opCount].machineCode, memCount, mem);
+                  } else {
+                    for (var j=0; j<machinecode[opCount].machineCode.length; j++) {
+                      memCount = writeToMemory(machinecode[opCount].machineCode[j], memCount, mem);
+                    }
+                  }
+                  opCount += 1;
+                }
+              }
+            }
+        
+            return { ast : machinecode, mem : mem};
+          })(result0);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        
+        cache[cacheKey] = {
+          nextPos: pos,
+          result:  result0
+        };
+        return result0;
+      }
+      
+      function parse_instructions() {
+        var cacheKey = "instructions@" + pos;
+        var cachedResult = cache[cacheKey];
+        if (cachedResult) {
+          pos = cachedResult.nextPos;
+          return cachedResult.result;
+        }
+        
+        var result0, result1, result2;
+        var pos0, pos1, pos2;
         
         pos0 = pos;
         pos1 = pos;
-        result0 = parse_instruction_or_end();
-        if (result0 !== null) {
-          result1 = [];
-          pos2 = pos;
-          result2 = parse_newline();
+        pos2 = pos;
+        result1 = parse_instruction_or_end();
+        if (result1 !== null) {
+          result2 = (function() {linecounter++; return true;})() ? "" : null;
           if (result2 !== null) {
-            result3 = (function() {linecounter++; return true;})() ? '' : null;
-            if (result3 !== null) {
-              result4 = parse_instruction_or_end();
-              if (result4 !== null) {
-                result2 = [result2, result3, result4];
-              } else {
-                result2 = null;
-                pos = pos2;
-              }
-            } else {
-              result2 = null;
-              pos = pos2;
-            }
+            result1 = [result1, result2];
           } else {
-            result2 = null;
+            result1 = null;
             pos = pos2;
           }
-          while (result2 !== null) {
-            result1.push(result2);
+        } else {
+          result1 = null;
+          pos = pos2;
+        }
+        if (result1 !== null) {
+          result0 = [];
+          while (result1 !== null) {
+            result0.push(result1);
             pos2 = pos;
-            result2 = parse_newline();
-            if (result2 !== null) {
-              result3 = (function() {linecounter++; return true;})() ? '' : null;
-              if (result3 !== null) {
-                result4 = parse_instruction_or_end();
-                if (result4 !== null) {
-                  result2 = [result2, result3, result4];
-                } else {
-                  result2 = null;
-                  pos = pos2;
-                }
+            result1 = parse_instruction_or_end();
+            if (result1 !== null) {
+              result2 = (function() {linecounter++; return true;})() ? "" : null;
+              if (result2 !== null) {
+                result1 = [result1, result2];
               } else {
-                result2 = null;
+                result1 = null;
                 pos = pos2;
               }
             } else {
-              result2 = null;
+              result1 = null;
               pos = pos2;
             }
+          }
+        } else {
+          result0 = null;
+        }
+        if (result0 !== null) {
+          pos2 = pos;
+          reportFailures++;
+          if (input.length > pos) {
+            result2 = input.charAt(pos);
+            pos++;
+          } else {
+            result2 = null;
+            if (reportFailures === 0) {
+              matchFailed("any character");
+            }
+          }
+          if (result2 !== null) {
+            result1 = [];
+            while (result2 !== null) {
+              result1.push(result2);
+              if (input.length > pos) {
+                result2 = input.charAt(pos);
+                pos++;
+              } else {
+                result2 = null;
+                if (reportFailures === 0) {
+                  matchFailed("any character");
+                }
+              }
+            }
+          } else {
+            result1 = null;
+          }
+          reportFailures--;
+          if (result1 === null) {
+            result1 = "";
+          } else {
+            result1 = null;
+            pos = pos2;
           }
           if (result1 !== null) {
             result0 = [result0, result1];
@@ -201,110 +357,13 @@ var frisc_asm = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(i1, i2) {
-              var instrs = [];
-              var machinecode = [];
-              var unknownlabels = [];
-          
-              if (typeof i1.op !== "undefined" && i1.op !== "") {
-                instrs.push(i1);
-              }
-              
-              for (var i=0; i<i2.length; i++) {
-                if (typeof i2[i][2].op !== "undefined" && i2[i][2].op !== "") {
-                  instrs.push(i2[i][2]);
-                }
-              }
-          
-              function replaceLabel(element) {
-                if (element.type === "label") {
-                  var labelValue = labels[element.value];
-          
-                  if (typeof labelValue !== "undefined") {
-                    element.type = "num";
-                    element.value = labelValue;
-                  } else {
-                    unknownlabels.push(element.value);
-                    element.value = null;
-                  }
-                }
-              }
-              
-              // replace labels
-              for (var i=0; i<instrs.length; i++) {
-                if (instrs[i].op in aluops || instrs[i].op in cmpops || instrs[i].op in moveops) {
-                  replaceLabel(instrs[i].alusrc2);
-                } else if (instrs[i].op in jmpops) {
-                  replaceLabel(instrs[i].addr);
-                } else if (instrs[i].op in memops) {
-                  replaceLabel(instrs[i].mem);
-                } else if (instrs[i].op in dwhbops) {
-                  var vals = [];
-                  
-                  for (var j=0; j<instrs[i].values.length; j++) {
-                    replaceLabel(instrs[i].values[j]);
-                    vals.push(instrs[i].values[j].value);
-                  }
-          
-                  instrs[i].values = vals;
-                }
-              }
-              
-              // check if all labels are defined
-              if (unknownlabels.length > 0) {
-                throw new Error("Unknown labels:" + unknownlabels.toString());
-              }
-             
-              // generate machine code
-              for (var i=0; i<instrs.length; i++) {
-                generateMachineCode(instrs[i]);
-                machinecode.push(instrs[i]);
-              }
-              
-              // generate memory model
-              var mem = [];
-              
-              var writeToMemory = function(bitString, startPosition, memoryArray) {
-                if (bitString.length % 8 !== 0) {
-                  throw new Error("Memory string has wrong length");
-                }
-          
-                var elems = bitString.match(/.{8}/g);
-          
-                for (var i=0; i<elems.length; i++) {
-                  memoryArray[startPosition+i] = elems[elems.length - i - 1];
-                }
-                
-                return startPosition + elems.length;
-              };
-              
-              for (var opCount=0, memCount=0; opCount<machinecode.length; ) {
-                if (typeof machinecode[opCount].curloc === "undefined") {
-                  opCount++;
-                } else {
-                  if (machinecode[opCount].curloc !== memCount) {
-                    memCount = writeToMemory("00000000", memCount, mem);
-                  } else {
-                    if (typeof machinecode[opCount].machineCode === "string") {
-                      memCount = writeToMemory(machinecode[opCount].machineCode, memCount, mem);
-                    } else {
-                      for (var j=0; j<machinecode[opCount].machineCode.length; j++) {
-                        memCount = writeToMemory(machinecode[opCount].machineCode[j], memCount, mem);
-                      }
-                    }
-                    opCount += 1;
-                  }
-                }
-              }
-             
-              return { ast : machinecode, mem : mem};
-            })(result0[0], result0[1]);
+          result0 = (function(ins) {
+              return ins;
+            })(result0[0]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -314,7 +373,7 @@ var frisc_asm = (function(){
       }
       
       function parse_newline() {
-        var cacheKey = 'newline@' + pos;
+        var cacheKey = "newline@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -322,10 +381,8 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
         
-        
-        if (input.substr(pos, 1) === "\n") {
+        if (input.charCodeAt(pos) === 10) {
           result0 = "\n";
           pos += 1;
         } else {
@@ -345,7 +402,7 @@ var frisc_asm = (function(){
             }
           }
           if (result0 === null) {
-            if (input.substr(pos, 1) === "\r") {
+            if (input.charCodeAt(pos) === 13) {
               result0 = "\r";
               pos += 1;
             } else {
@@ -364,12 +421,9 @@ var frisc_asm = (function(){
                   matchFailed("\"\\n\\r\"");
                 }
               }
-              
             }
           }
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -379,16 +433,15 @@ var frisc_asm = (function(){
       }
       
       function parse_instruction_or_end() {
-        var cacheKey = 'instruction_or_end@' + pos;
+        var cacheKey = "instruction_or_end@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0;
+        var result0, result1;
         var pos0, pos1;
-        
         
         pos0 = pos;
         result0 = parse_instruction_end();
@@ -400,17 +453,35 @@ var frisc_asm = (function(){
         }
         if (result0 === null) {
           pos0 = pos;
+          pos1 = pos;
           result0 = parse_instruction();
           if (result0 !== null) {
-            result0 = (function(i) { var ins = i; ins.line = linecounter; return ins;})(result0);
+            if (/^[\n]/.test(input.charAt(pos))) {
+              result1 = input.charAt(pos);
+              pos++;
+            } else {
+              result1 = null;
+              if (reportFailures === 0) {
+                matchFailed("[\\n]");
+              }
+            }
+            if (result1 !== null) {
+              result0 = [result0, result1];
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+          if (result0 !== null) {
+            result0 = (function(i) { var ins = i; ins.line = linecounter; return ins;})(result0[0]);
           }
           if (result0 === null) {
             pos = pos0;
           }
-          
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -420,21 +491,20 @@ var frisc_asm = (function(){
       }
       
       function parse_instruction_end() {
-        var cacheKey = 'instruction_end@' + pos;
+        var cacheKey = "instruction_end@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5, result6, result7, result8;
-        var pos0, pos1, pos2, pos3;
-        
+        var result0, result1, result2, result3, result4, result5, result6;
+        var pos0, pos1, pos2;
         
         pos0 = pos;
         pos1 = pos;
         result0 = parse_label();
-        result0 = result0 !== null ? result0 : '';
+        result0 = result0 !== null ? result0 : "";
         if (result0 !== null) {
           result2 = parse_whitespace();
           if (result2 !== null) {
@@ -450,7 +520,7 @@ var frisc_asm = (function(){
             result2 = parse_endop();
             if (result2 !== null) {
               result3 = parse_commentPart();
-              result3 = result3 !== null ? result3 : '';
+              result3 = result3 !== null ? result3 : "";
               if (result3 !== null) {
                 pos2 = pos;
                 result4 = parse_newline();
@@ -462,7 +532,7 @@ var frisc_asm = (function(){
                   } else {
                     result6 = null;
                     if (reportFailures === 0) {
-                      matchFailed('any character');
+                      matchFailed("any character");
                     }
                   }
                   while (result6 !== null) {
@@ -473,7 +543,7 @@ var frisc_asm = (function(){
                     } else {
                       result6 = null;
                       if (reportFailures === 0) {
-                        matchFailed('any character');
+                        matchFailed("any character");
                       }
                     }
                   }
@@ -487,7 +557,7 @@ var frisc_asm = (function(){
                   result4 = null;
                   pos = pos2;
                 }
-                result4 = result4 !== null ? result4 : '';
+                result4 = result4 !== null ? result4 : "";
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
                 } else {
@@ -512,14 +582,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(l, o, c) {
-                return o;
-              })(result0[0], result0[2], result0[3]);
+              return o;
+            })(result0[0], result0[2], result0[3]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -529,27 +597,26 @@ var frisc_asm = (function(){
       }
       
       function parse_instruction() {
-        var cacheKey = 'instruction@' + pos;
+        var cacheKey = "instruction@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
         result0 = parse_label();
-        result0 = result0 !== null ? result0 : '';
+        result0 = result0 !== null ? result0 : "";
         if (result0 !== null) {
           result1 = parse_operationPart();
-          result1 = result1 !== null ? result1 : '';
+          result1 = result1 !== null ? result1 : "";
           if (result1 !== null) {
             result2 = parse_commentPart();
-            result2 = result2 !== null ? result2 : '';
+            result2 = result2 !== null ? result2 : "";
             if (result2 !== null) {
               result0 = [result0, result1, result2];
             } else {
@@ -566,60 +633,57 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(l, o, c) {
-              if (o === "") {
-                if (l !== "") {
-                  labels[l] = curloc;
-                }
-          
-                return {};
+            if (o === null) {
+              if (l !== null && l !== "") {
+                addLabel(l, curloc);
               }
-          
-              if (!(o.op in dwops || o.op in equops || o.op in endops)) {
-                curloc = curloc % 4 === 0 ? curloc : curloc + (4-curloc%4);
-              }
-              
-              if (l !== "") {
-                if (!(o.op in baseops || o.op in endops || o.op in orgops || o.op in equops)) {
-                  labels[l] = curloc;
-                } else if (o.op in equops) {
-                  labels[l] = o.value;
-                }
-              }
-              
-              o.curloc = curloc;
-              
-              if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
-                curloc += 4;
-              } else if (o.op in orgops) {
-                curloc = o.value;
-              } else if (o.op in dwops) {
-                curloc += o.values.length;
+              return {};
+            }
+        
+            if (!(o.op in dwops || o.op in equops || o.op in endops)) {
+              curloc = curloc % 4 === 0 ? curloc : curloc + (4-curloc%4);
+            }
+        
+            if (l !== null && l !== "") {
+              if (!(o.op in baseops || o.op in endops || o.op in orgops || o.op in equops)) {
+                addLabel(l, curloc);
               } else if (o.op in equops) {
-                curloc = curloc;
-              } else if (o.op in endops) {
-                curloc = curloc;
-              } else if (o.op in dsops) {
-                curloc += o.value;
-              } else if (o.op in dwhbops) {   
-                curloc += o.size*o.values.length;
+                addLabel(l, o.value);
               }
-          
-              if (o.op in baseops) {
-                defaultBase = o.value;
-              }    
-          
-              if (o.op in endops || o.op in equops || o.op in orgops || o.op in baseops) {
-                return {};
-              } else {
-                return o;
-              }
-            })(result0[0], result0[1], result0[2]);
+            }
+        
+            o.curloc = curloc;
+        
+            if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
+              curloc += 4;
+            } else if (o.op in orgops) {
+              curloc = o.value;
+            } else if (o.op in dwops) {
+              curloc += o.values.length;
+            } else if (o.op in equops) {
+              curloc = curloc;
+            } else if (o.op in endops) {
+              curloc = curloc;
+            } else if (o.op in dsops) {
+              curloc += o.value;
+            } else if (o.op in dwhbops) {
+              curloc += o.size*o.values.length;
+            }
+        
+            if (o.op in baseops) {
+              defaultBase = o.value;
+            }
+        
+            if (o.op in endops || o.op in equops || o.op in orgops || o.op in baseops) {
+              return {};
+            } else {
+              return o;
+            }
+          })(result0[0], result0[1], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -629,22 +693,19 @@ var frisc_asm = (function(){
       }
       
       function parse_label() {
-        var cacheKey = 'label@' + pos;
+        var cacheKey = "label@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2, pos3;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        pos2 = pos;
-        reportFailures++;
-        if (input.substr(pos).match(/^[a-zA-Z]/) !== null) {
+        if (/^[a-zA-Z]/.test(input.charAt(pos))) {
           result0 = input.charAt(pos);
           pos++;
         } else {
@@ -653,16 +714,9 @@ var frisc_asm = (function(){
             matchFailed("[a-zA-Z]");
           }
         }
-        reportFailures--;
-        if (result0 !== null) {
-          result0 = '';
-          pos = pos2;
-        } else {
-          result0 = null;
-        }
         if (result0 !== null) {
           result1 = [];
-          if (input.substr(pos).match(/^[0-9a-zA-Z_]/) !== null) {
+          if (/^[0-9a-zA-Z_]/.test(input.charAt(pos))) {
             result2 = input.charAt(pos);
             pos++;
           } else {
@@ -673,7 +727,7 @@ var frisc_asm = (function(){
           }
           while (result2 !== null) {
             result1.push(result2);
-            if (input.substr(pos).match(/^[0-9a-zA-Z_]/) !== null) {
+            if (/^[0-9a-zA-Z_]/.test(input.charAt(pos))) {
               result2 = input.charAt(pos);
               pos++;
             } else {
@@ -694,15 +748,13 @@ var frisc_asm = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(l) {
-              return l.join("");
-            })(result0[1]);
+          result0 = (function(first, rest) {
+            return first + rest.join("");
+          })(result0[0], result0[1]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -712,16 +764,15 @@ var frisc_asm = (function(){
       }
       
       function parse_operationPart() {
-        var cacheKey = 'operationPart@' + pos;
+        var cacheKey = "operationPart@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2;
-        var pos0, pos1, pos2;
-        
+        var result0, result1;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -754,8 +805,6 @@ var frisc_asm = (function(){
           pos = pos0;
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -764,7 +813,7 @@ var frisc_asm = (function(){
       }
       
       function parse_operation() {
-        var cacheKey = 'operation@' + pos;
+        var cacheKey = "operation@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -772,8 +821,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         result0 = parse_dwhbop();
         if (result0 === null) {
@@ -798,7 +845,6 @@ var frisc_asm = (function(){
                             result0 = parse_cmpop();
                             if (result0 === null) {
                               result0 = parse_aluop();
-                              
                             }
                           }
                         }
@@ -811,8 +857,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -821,7 +865,7 @@ var frisc_asm = (function(){
       }
       
       function parse_regaddr() {
-        var cacheKey = 'regaddr@' + pos;
+        var cacheKey = "regaddr@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -829,8 +873,7 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0, pos1;
-        
+        var pos0;
         
         pos0 = pos;
         result0 = parse_register();
@@ -841,8 +884,6 @@ var frisc_asm = (function(){
           pos = pos0;
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -851,20 +892,19 @@ var frisc_asm = (function(){
       }
       
       function parse_sraddr() {
-        var cacheKey = 'sraddr@' + pos;
+        var cacheKey = "sraddr@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2;
-        var pos0, pos1, pos2;
-        
+        var result0, result1;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        if (input.substr(pos).match(/^[sS]/) !== null) {
+        if (/^[sS]/.test(input.charAt(pos))) {
           result0 = input.charAt(pos);
           pos++;
         } else {
@@ -874,7 +914,7 @@ var frisc_asm = (function(){
           }
         }
         if (result0 !== null) {
-          if (input.substr(pos).match(/^[rR]/) !== null) {
+          if (/^[rR]/.test(input.charAt(pos))) {
             result1 = input.charAt(pos);
             pos++;
           } else {
@@ -900,8 +940,6 @@ var frisc_asm = (function(){
           pos = pos0;
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -910,7 +948,7 @@ var frisc_asm = (function(){
       }
       
       function parse_immaddr() {
-        var cacheKey = 'immaddr@' + pos;
+        var cacheKey = "immaddr@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -918,30 +956,26 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0, pos1;
-        
+        var pos0;
         
         pos0 = pos;
-        result0 = parse_number();
+        result0 = parse_label();
         if (result0 !== null) {
-          result0 = (function(value) { return {type : "num", value : value}; })(result0);
+          result0 = (function(value) { return {type : "label", value : value}; })(result0);
         }
         if (result0 === null) {
           pos = pos0;
         }
         if (result0 === null) {
           pos0 = pos;
-          result0 = parse_label();
+          result0 = parse_number();
           if (result0 !== null) {
-            result0 = (function(value) { return {type : "label", value : value}; })(result0);
+            result0 = (function(value) { return {type : "num", value : value}; })(result0);
           }
           if (result0 === null) {
             pos = pos0;
           }
-          
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -951,20 +985,19 @@ var frisc_asm = (function(){
       }
       
       function parse_absaddr_mem() {
-        var cacheKey = 'absaddr_mem@' + pos;
+        var cacheKey = "absaddr_mem@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        if (input.substr(pos, 1) === "(") {
+        if (input.charCodeAt(pos) === 40) {
           result0 = "(";
           pos += 1;
         } else {
@@ -976,7 +1009,7 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result1 = parse_label();
           if (result1 !== null) {
-            if (input.substr(pos, 1) === ")") {
+            if (input.charCodeAt(pos) === 41) {
               result2 = ")";
               pos += 1;
             } else {
@@ -1008,7 +1041,7 @@ var frisc_asm = (function(){
         if (result0 === null) {
           pos0 = pos;
           pos1 = pos;
-          if (input.substr(pos, 1) === "(") {
+          if (input.charCodeAt(pos) === 40) {
             result0 = "(";
             pos += 1;
           } else {
@@ -1020,7 +1053,7 @@ var frisc_asm = (function(){
           if (result0 !== null) {
             result1 = parse_number();
             if (result1 !== null) {
-              if (input.substr(pos, 1) === ")") {
+              if (input.charCodeAt(pos) === 41) {
                 result2 = ")";
                 pos += 1;
               } else {
@@ -1049,10 +1082,7 @@ var frisc_asm = (function(){
           if (result0 === null) {
             pos = pos0;
           }
-          
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -1062,20 +1092,19 @@ var frisc_asm = (function(){
       }
       
       function parse_rinaddr() {
-        var cacheKey = 'rinaddr@' + pos;
+        var cacheKey = "rinaddr@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        if (input.substr(pos, 1) === "(") {
+        if (input.charCodeAt(pos) === 40) {
           result0 = "(";
           pos += 1;
         } else {
@@ -1087,7 +1116,7 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result1 = parse_regaddr();
           if (result1 !== null) {
-            if (input.substr(pos, 1) === ")") {
+            if (input.charCodeAt(pos) === 41) {
               result2 = ")";
               pos += 1;
             } else {
@@ -1117,8 +1146,6 @@ var frisc_asm = (function(){
           pos = pos0;
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1127,20 +1154,19 @@ var frisc_asm = (function(){
       }
       
       function parse_rinaddroff() {
-        var cacheKey = 'rinaddroff@' + pos;
+        var cacheKey = "rinaddroff@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5;
-        var pos0, pos1, pos2, pos3, pos4;
-        
+        var result0, result1, result2, result3;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        if (input.substr(pos, 1) === "(") {
+        if (input.charCodeAt(pos) === 40) {
           result0 = "(";
           pos += 1;
         } else {
@@ -1152,65 +1178,12 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result1 = parse_register();
           if (result1 !== null) {
-            pos2 = pos;
-            pos3 = pos;
-            reportFailures++;
             result2 = parse_numberWithoutBase();
-            reportFailures--;
-            if (result2 !== null) {
-              result2 = '';
-              pos = pos3;
-            } else {
-              result2 = null;
-            }
-            if (result2 !== null) {
-              result3 = parse_numberWithoutBase();
-              if (result3 !== null) {
-                result2 = [result2, result3];
-              } else {
-                result2 = null;
-                pos = pos2;
-              }
-            } else {
-              result2 = null;
-              pos = pos2;
-            }
             if (result2 === null) {
-              pos2 = pos;
-              pos3 = pos;
-              reportFailures++;
-              result2 = parse_numberWithoutBase();
-              reportFailures--;
-              if (result2 === null) {
-                result2 = '';
-              } else {
-                result2 = null;
-                pos = pos3;
-              }
-              if (result2 !== null) {
-                if (input.substr(pos, 0) === "") {
-                  result3 = "";
-                  pos += 0;
-                } else {
-                  result3 = null;
-                  if (reportFailures === 0) {
-                    matchFailed("\"\"");
-                  }
-                }
-                if (result3 !== null) {
-                  result2 = [result2, result3];
-                } else {
-                  result2 = null;
-                  pos = pos2;
-                }
-              } else {
-                result2 = null;
-                pos = pos2;
-              }
-              
+              result2 = "";
             }
             if (result2 !== null) {
-              if (input.substr(pos, 1) === ")") {
+              if (input.charCodeAt(pos) === 41) {
                 result3 = ")";
                 pos += 1;
               } else {
@@ -1238,15 +1211,13 @@ var frisc_asm = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(reg, val) { 
-                return {type : "regoff", value : reg, offset : val[1] === "" ? 0 : val[1]  };
-              })(result0[1], result0[2]);
+          result0 = (function(reg, val) {
+              return {type : "regoff", value : reg, offset : val[1] === "" ? 0 : val[1]  };
+            })(result0[1], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -1256,16 +1227,15 @@ var frisc_asm = (function(){
       }
       
       function parse_delimiter() {
-        var cacheKey = 'delimiter@' + pos;
+        var cacheKey = "delimiter@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4;
-        var pos0, pos1;
-        
+        var result0, result1, result2, result3;
+        var pos0;
         
         pos0 = pos;
         result0 = [];
@@ -1275,7 +1245,7 @@ var frisc_asm = (function(){
           result1 = parse_whitespace();
         }
         if (result0 !== null) {
-          if (input.substr(pos, 1) === ",") {
+          if (input.charCodeAt(pos) === 44) {
             result1 = ",";
             pos += 1;
           } else {
@@ -1306,8 +1276,6 @@ var frisc_asm = (function(){
           pos = pos0;
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1316,7 +1284,7 @@ var frisc_asm = (function(){
       }
       
       function parse_moveop_name() {
-        var cacheKey = 'moveop_name@' + pos;
+        var cacheKey = "moveop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1324,8 +1292,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 4) === "MOVE") {
           result0 = "MOVE";
@@ -1337,8 +1303,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1347,7 +1311,7 @@ var frisc_asm = (function(){
       }
       
       function parse_aluop_name() {
-        var cacheKey = 'aluop_name@' + pos;
+        var cacheKey = "aluop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1355,8 +1319,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 2) === "OR") {
           result0 = "OR";
@@ -1477,7 +1439,6 @@ var frisc_asm = (function(){
                                   matchFailed("\"ASHR\"");
                                 }
                               }
-                              
                             }
                           }
                         }
@@ -1490,8 +1451,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1500,7 +1459,7 @@ var frisc_asm = (function(){
       }
       
       function parse_cmpop_name() {
-        var cacheKey = 'cmpop_name@' + pos;
+        var cacheKey = "cmpop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1508,8 +1467,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 3) === "CMP") {
           result0 = "CMP";
@@ -1521,8 +1478,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1531,7 +1486,7 @@ var frisc_asm = (function(){
       }
       
       function parse_nonjmpop_name() {
-        var cacheKey = 'nonjmpop_name@' + pos;
+        var cacheKey = "nonjmpop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1539,8 +1494,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 4) === "RETI") {
           result0 = "RETI";
@@ -1581,12 +1534,9 @@ var frisc_asm = (function(){
                   matchFailed("\"HALT\"");
                 }
               }
-              
             }
           }
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -1596,7 +1546,7 @@ var frisc_asm = (function(){
       }
       
       function parse_jmpop_name() {
-        var cacheKey = 'jmpop_name@' + pos;
+        var cacheKey = "jmpop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1604,8 +1554,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 2) === "JP") {
           result0 = "JP";
@@ -1636,11 +1584,8 @@ var frisc_asm = (function(){
                 matchFailed("\"JR\"");
               }
             }
-            
           }
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -1650,7 +1595,7 @@ var frisc_asm = (function(){
       }
       
       function parse_memop_name() {
-        var cacheKey = 'memop_name@' + pos;
+        var cacheKey = "memop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1658,8 +1603,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 5) === "LOADB") {
           result0 = "LOADB";
@@ -1720,14 +1663,11 @@ var frisc_asm = (function(){
                       matchFailed("\"STORE\"");
                     }
                   }
-                  
                 }
               }
             }
           }
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -1737,7 +1677,7 @@ var frisc_asm = (function(){
       }
       
       function parse_stackop_name() {
-        var cacheKey = 'stackop_name@' + pos;
+        var cacheKey = "stackop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1745,8 +1685,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 3) === "POP") {
           result0 = "POP";
@@ -1767,10 +1705,7 @@ var frisc_asm = (function(){
               matchFailed("\"PUSH\"");
             }
           }
-          
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -1780,7 +1715,7 @@ var frisc_asm = (function(){
       }
       
       function parse_orgop_name() {
-        var cacheKey = 'orgop_name@' + pos;
+        var cacheKey = "orgop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1788,8 +1723,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 4) === "`ORG") {
           result0 = "`ORG";
@@ -1801,8 +1734,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1811,7 +1742,7 @@ var frisc_asm = (function(){
       }
       
       function parse_dwop_name() {
-        var cacheKey = 'dwop_name@' + pos;
+        var cacheKey = "dwop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1819,8 +1750,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 3) === "`DW") {
           result0 = "`DW";
@@ -1832,8 +1761,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1842,7 +1769,7 @@ var frisc_asm = (function(){
       }
       
       function parse_equop_name() {
-        var cacheKey = 'equop_name@' + pos;
+        var cacheKey = "equop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1850,8 +1777,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 4) === "`EQU") {
           result0 = "`EQU";
@@ -1863,8 +1788,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1873,7 +1796,7 @@ var frisc_asm = (function(){
       }
       
       function parse_dsop_name() {
-        var cacheKey = 'dsop_name@' + pos;
+        var cacheKey = "dsop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1881,8 +1804,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 3) === "`DS") {
           result0 = "`DS";
@@ -1894,8 +1815,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1904,7 +1823,7 @@ var frisc_asm = (function(){
       }
       
       function parse_endop_name() {
-        var cacheKey = 'endop_name@' + pos;
+        var cacheKey = "endop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1912,8 +1831,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 4) === "`END") {
           result0 = "`END";
@@ -1925,8 +1842,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1935,7 +1850,7 @@ var frisc_asm = (function(){
       }
       
       function parse_baseop_name() {
-        var cacheKey = 'baseop_name@' + pos;
+        var cacheKey = "baseop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1943,8 +1858,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 5) === "`BASE") {
           result0 = "`BASE";
@@ -1956,8 +1869,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -1966,7 +1877,7 @@ var frisc_asm = (function(){
       }
       
       function parse_dwhbop_name() {
-        var cacheKey = 'dwhbop_name@' + pos;
+        var cacheKey = "dwhbop_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -1974,8 +1885,6 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
-        
         
         if (input.substr(pos, 2) === "DW") {
           result0 = "DW";
@@ -2006,11 +1915,8 @@ var frisc_asm = (function(){
                 matchFailed("\"DB\"");
               }
             }
-            
           }
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2020,7 +1926,7 @@ var frisc_asm = (function(){
       }
       
       function parse_flag_name() {
-        var cacheKey = 'flag_name@' + pos;
+        var cacheKey = "flag_name@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -2028,10 +1934,8 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
         
-        
-        if (input.substr(pos, 1) === "M") {
+        if (input.charCodeAt(pos) === 77) {
           result0 = "M";
           pos += 1;
         } else {
@@ -2091,7 +1995,7 @@ var frisc_asm = (function(){
                     }
                   }
                   if (result0 === null) {
-                    if (input.substr(pos, 1) === "N") {
+                    if (input.charCodeAt(pos) === 78) {
                       result0 = "N";
                       pos += 1;
                     } else {
@@ -2101,7 +2005,7 @@ var frisc_asm = (function(){
                       }
                     }
                     if (result0 === null) {
-                      if (input.substr(pos, 1) === "P") {
+                      if (input.charCodeAt(pos) === 80) {
                         result0 = "P";
                         pos += 1;
                       } else {
@@ -2111,7 +2015,7 @@ var frisc_asm = (function(){
                         }
                       }
                       if (result0 === null) {
-                        if (input.substr(pos, 1) === "C") {
+                        if (input.charCodeAt(pos) === 67) {
                           result0 = "C";
                           pos += 1;
                         } else {
@@ -2141,7 +2045,7 @@ var frisc_asm = (function(){
                               }
                             }
                             if (result0 === null) {
-                              if (input.substr(pos, 1) === "V") {
+                              if (input.charCodeAt(pos) === 86) {
                                 result0 = "V";
                                 pos += 1;
                               } else {
@@ -2151,7 +2055,7 @@ var frisc_asm = (function(){
                                 }
                               }
                               if (result0 === null) {
-                                if (input.substr(pos, 1) === "Z") {
+                                if (input.charCodeAt(pos) === 90) {
                                   result0 = "Z";
                                   pos += 1;
                                 } else {
@@ -2230,7 +2134,6 @@ var frisc_asm = (function(){
                                                   matchFailed("\"SGT\"");
                                                 }
                                               }
-                                              
                                             }
                                           }
                                         }
@@ -2251,8 +2154,6 @@ var frisc_asm = (function(){
           }
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -2261,16 +2162,15 @@ var frisc_asm = (function(){
       }
       
       function parse_aluop() {
-        var cacheKey = 'aluop@' + pos;
+        var cacheKey = "aluop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5, result6, result7;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2, result3, result4, result5, result6;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -2294,7 +2194,6 @@ var frisc_asm = (function(){
                 result4 = parse_regaddr();
                 if (result4 === null) {
                   result4 = parse_immaddr();
-                  
                 }
                 if (result4 !== null) {
                   result5 = parse_delimiter();
@@ -2332,14 +2231,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, alusrc1, alusrc2, aludest) {
-                return { op : op, optype : 'aluop', alusrc1 : alusrc1, alusrc2 : alusrc2, aludest : aludest };
-              })(result0[0], result0[2], result0[4], result0[6]);
+              return { op : op, optype : 'aluop', alusrc1 : alusrc1, alusrc2 : alusrc2, aludest : aludest };
+            })(result0[0], result0[2], result0[4], result0[6]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2349,16 +2246,15 @@ var frisc_asm = (function(){
       }
       
       function parse_cmpop() {
-        var cacheKey = 'cmpop@' + pos;
+        var cacheKey = "cmpop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -2382,7 +2278,6 @@ var frisc_asm = (function(){
                 result4 = parse_regaddr();
                 if (result4 === null) {
                   result4 = parse_immaddr();
-                  
                 }
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
@@ -2408,14 +2303,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, alusrc1, alusrc2) {
-                return { op : op, optype : 'cmpop', alusrc1 : alusrc1, alusrc2 : alusrc2 };
-              })(result0[0], result0[2], result0[4]);
+              return { op : op, optype : 'cmpop', alusrc1 : alusrc1, alusrc2 : alusrc2 };
+            })(result0[0], result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2425,16 +2318,15 @@ var frisc_asm = (function(){
       }
       
       function parse_moveop() {
-        var cacheKey = 'moveop@' + pos;
+        var cacheKey = "moveop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -2456,7 +2348,6 @@ var frisc_asm = (function(){
               result2 = parse_sraddr();
               if (result2 === null) {
                 result2 = parse_immaddr();
-                
               }
             }
             if (result2 !== null) {
@@ -2465,7 +2356,6 @@ var frisc_asm = (function(){
                 result4 = parse_regaddr();
                 if (result4 === null) {
                   result4 = parse_sraddr();
-                  
                 }
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
@@ -2491,14 +2381,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, alusrc2, aludest) {
-                return { op : op, optype : 'moveop', alusrc2 : alusrc2, aludest : aludest };
-              })(result0[0], result0[2], result0[4]);
+              return { op : op, optype : 'moveop', alusrc2 : alusrc2, aludest : aludest };
+            })(result0[0], result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2508,16 +2396,15 @@ var frisc_asm = (function(){
       }
       
       function parse_uprop() {
-        var cacheKey = 'uprop@' + pos;
+        var cacheKey = "uprop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2, result3;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -2539,7 +2426,6 @@ var frisc_asm = (function(){
               result3 = parse_immaddr();
               if (result3 === null) {
                 result3 = parse_rinaddr();
-                
               }
               if (result3 !== null) {
                 result0 = [result0, result1, result2, result3];
@@ -2561,8 +2447,8 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, fl, addr) {
-                return { op : op, optype : 'jmpop', flag : fl, addr : addr}; 
-              })(result0[0], result0[1], result0[3]);
+              return { op : op, optype : 'jmpop', flag : fl, addr : addr};
+            })(result0[0], result0[1], result0[3]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -2585,16 +2471,13 @@ var frisc_asm = (function(){
           }
           if (result0 !== null) {
             result0 = (function(op, fl) {
-                  return { op : op, optype : 'rethaltop', flag : fl};
-                })(result0[0], result0[1]);
+                return { op : op, optype : 'rethaltop', flag : fl};
+              })(result0[0], result0[1]);
           }
           if (result0 === null) {
             pos = pos0;
           }
-          
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2604,20 +2487,19 @@ var frisc_asm = (function(){
       }
       
       function parse_flag() {
-        var cacheKey = 'flag@' + pos;
+        var cacheKey = "flag@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2;
-        var pos0, pos1, pos2;
-        
+        var result0, result1;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        if (input.substr(pos, 1) === "_") {
+        if (input.charCodeAt(pos) === 95) {
           result0 = "_";
           pos += 1;
         } else {
@@ -2646,25 +2528,14 @@ var frisc_asm = (function(){
         }
         if (result0 === null) {
           pos0 = pos;
-          if (input.substr(pos, 0) === "") {
-            result0 = "";
-            pos += 0;
-          } else {
-            result0 = null;
-            if (reportFailures === 0) {
-              matchFailed("\"\"");
-            }
-          }
+          result0 = "";
           if (result0 !== null) {
             result0 = (function(fl) {return fl;})(result0);
           }
           if (result0 === null) {
             pos = pos0;
           }
-          
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2674,16 +2545,15 @@ var frisc_asm = (function(){
       }
       
       function parse_memop() {
-        var cacheKey = 'memop@' + pos;
+        var cacheKey = "memop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -2707,7 +2577,6 @@ var frisc_asm = (function(){
                 result4 = parse_rinaddroff();
                 if (result4 === null) {
                   result4 = parse_absaddr_mem();
-                  
                 }
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
@@ -2733,14 +2602,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, reg, mem) {
-                return { op : op, optype : 'memop', reg : reg, mem : mem };
-              })(result0[0], result0[2], result0[4]);
+              return { op : op, optype : 'memop', reg : reg, mem : mem };
+            })(result0[0], result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2750,16 +2617,15 @@ var frisc_asm = (function(){
       }
       
       function parse_stackop() {
-        var cacheKey = 'stackop@' + pos;
+        var cacheKey = "stackop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -2793,14 +2659,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, reg) {
-                return { op : op, optype : 'stackop', reg : reg };
-              })(result0[0], result0[2]);
+              return { op : op, optype : 'stackop', reg : reg };
+            })(result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2810,16 +2674,15 @@ var frisc_asm = (function(){
       }
       
       function parse_orgop() {
-        var cacheKey = 'orgop@' + pos;
+        var cacheKey = "orgop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -2853,14 +2716,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, value) {
-                return { op : op, optype : 'orgop', value : value };
-              })(result0[0], result0[2]);
+              return { op : op, optype : 'orgop', value : value };
+            })(result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -2870,16 +2731,15 @@ var frisc_asm = (function(){
       }
       
       function parse_dwop() {
-        var cacheKey = 'dwop@' + pos;
+        var cacheKey = "dwop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5, result6, result7, result8, result9;
-        var pos0, pos1, pos2, pos3, pos4;
-        
+        var result0, result1, result2, result3, result4, result5, result6;
+        var pos0, pos1, pos2, pos3;
         
         pos0 = pos;
         pos1 = pos;
@@ -2900,7 +2760,7 @@ var frisc_asm = (function(){
             result3 = parse_number();
             if (result3 !== null) {
               pos3 = pos;
-              if (input.substr(pos, 1) === ",") {
+              if (input.charCodeAt(pos) === 44) {
                 result4 = ",";
                 pos += 1;
               } else {
@@ -2927,16 +2787,7 @@ var frisc_asm = (function(){
                 pos = pos3;
               }
               if (result4 === null) {
-                if (input.substr(pos, 0) === "") {
-                  result4 = "";
-                  pos += 0;
-                } else {
-                  result4 = null;
-                  if (reportFailures === 0) {
-                    matchFailed("\"\"");
-                  }
-                }
-                
+                result4 = "";
               }
               if (result4 !== null) {
                 result3 = [result3, result4];
@@ -2956,7 +2807,7 @@ var frisc_asm = (function(){
                 result3 = parse_number();
                 if (result3 !== null) {
                   pos3 = pos;
-                  if (input.substr(pos, 1) === ",") {
+                  if (input.charCodeAt(pos) === 44) {
                     result4 = ",";
                     pos += 1;
                   } else {
@@ -2983,16 +2834,7 @@ var frisc_asm = (function(){
                     pos = pos3;
                   }
                   if (result4 === null) {
-                    if (input.substr(pos, 0) === "") {
-                      result4 = "";
-                      pos += 0;
-                    } else {
-                      result4 = null;
-                      if (reportFailures === 0) {
-                        matchFailed("\"\"");
-                      }
-                    }
-                    
+                    result4 = "";
                   }
                   if (result4 !== null) {
                     result3 = [result3, result4];
@@ -3024,20 +2866,18 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, values) {
-                var vals = [];
-                
-                for (var i=0; i<values.length; i++) {
-                  vals.push(values[i][0]);
-                }
-                
-                return { op : op, optype : 'dwop', values : vals };
-              })(result0[0], result0[2]);
+              var vals = [];
+        
+              for (var i=0; i<values.length; i++) {
+                vals.push(values[i][0]);
+              }
+        
+              return { op : op, optype : 'dwop', values : vals };
+            })(result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3047,16 +2887,15 @@ var frisc_asm = (function(){
       }
       
       function parse_equop() {
-        var cacheKey = 'equop@' + pos;
+        var cacheKey = "equop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -3090,14 +2929,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, value) {
-                return { op : op, optype : 'equop', value : value };
-              })(result0[0], result0[2]);
+              return { op : op, optype : 'equop', value : value };
+            })(result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3107,16 +2944,15 @@ var frisc_asm = (function(){
       }
       
       function parse_dsop() {
-        var cacheKey = 'dsop@' + pos;
+        var cacheKey = "dsop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -3150,14 +2986,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, value) {
-                return { op : op, optype : 'dsop', value : value };
-              })(result0[0], result0[2]);
+              return { op : op, optype : 'dsop', value : value };
+            })(result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3167,7 +3001,7 @@ var frisc_asm = (function(){
       }
       
       function parse_endop() {
-        var cacheKey = 'endop@' + pos;
+        var cacheKey = "endop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -3175,8 +3009,7 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0, pos1;
-        
+        var pos0;
         
         pos0 = pos;
         result0 = parse_endop_name();
@@ -3187,8 +3020,6 @@ var frisc_asm = (function(){
           pos = pos0;
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -3197,16 +3028,15 @@ var frisc_asm = (function(){
       }
       
       function parse_baseop() {
-        var cacheKey = 'baseop@' + pos;
+        var cacheKey = "baseop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
@@ -3240,14 +3070,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, base) {
-                return { op : op, optype : 'baseop', value : base};
-              })(result0[0], result0[2]);
+              return { op : op, optype : 'baseop', value : base};
+            })(result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3257,16 +3085,15 @@ var frisc_asm = (function(){
       }
       
       function parse_dwhbop() {
-        var cacheKey = 'dwhbop@' + pos;
+        var cacheKey = "dwhbop@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5, result6, result7, result8, result9;
-        var pos0, pos1, pos2, pos3, pos4;
-        
+        var result0, result1, result2, result3, result4, result5, result6;
+        var pos0, pos1, pos2, pos3;
         
         pos0 = pos;
         pos1 = pos;
@@ -3287,7 +3114,7 @@ var frisc_asm = (function(){
             result3 = parse_immaddr();
             if (result3 !== null) {
               pos3 = pos;
-              if (input.substr(pos, 1) === ",") {
+              if (input.charCodeAt(pos) === 44) {
                 result4 = ",";
                 pos += 1;
               } else {
@@ -3314,16 +3141,7 @@ var frisc_asm = (function(){
                 pos = pos3;
               }
               if (result4 === null) {
-                if (input.substr(pos, 0) === "") {
-                  result4 = "";
-                  pos += 0;
-                } else {
-                  result4 = null;
-                  if (reportFailures === 0) {
-                    matchFailed("\"\"");
-                  }
-                }
-                
+                result4 = "";
               }
               if (result4 !== null) {
                 result3 = [result3, result4];
@@ -3343,7 +3161,7 @@ var frisc_asm = (function(){
                 result3 = parse_immaddr();
                 if (result3 !== null) {
                   pos3 = pos;
-                  if (input.substr(pos, 1) === ",") {
+                  if (input.charCodeAt(pos) === 44) {
                     result4 = ",";
                     pos += 1;
                   } else {
@@ -3370,16 +3188,7 @@ var frisc_asm = (function(){
                     pos = pos3;
                   }
                   if (result4 === null) {
-                    if (input.substr(pos, 0) === "") {
-                      result4 = "";
-                      pos += 0;
-                    } else {
-                      result4 = null;
-                      if (reportFailures === 0) {
-                        matchFailed("\"\"");
-                      }
-                    }
-                    
+                    result4 = "";
                   }
                   if (result4 !== null) {
                     result3 = [result3, result4];
@@ -3411,22 +3220,20 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(op, values) {
-                var vals = [];
-                
-                for (var i=0; i<values.length; i++) {
-                  vals.push(values[i][0]);
-                }
-          
-                var size = op === "DW" ? 4 : (op === "DH" ? 2 : 1);
-                
-                return { op : op, optype : 'dwhbop', values : vals, size : size};
-              })(result0[0], result0[2]);
+              var vals = [];
+        
+              for (var i=0; i<values.length; i++) {
+                vals.push(values[i][0]);
+              }
+        
+              var size = op === "DW" ? 4 : (op === "DH" ? 2 : 1);
+        
+              return { op : op, optype : 'dwhbop', values : vals, size : size};
+            })(result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3436,16 +3243,15 @@ var frisc_asm = (function(){
       }
       
       function parse_commentPart() {
-        var cacheKey = 'commentPart@' + pos;
+        var cacheKey = "commentPart@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5;
-        var pos0, pos1, pos2;
-        
+        var result0, result1, result2, result3;
+        var pos0, pos1;
         
         pos0 = pos;
         result0 = [];
@@ -3456,7 +3262,7 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           pos1 = pos;
-          if (input.substr(pos, 1) === ";") {
+          if (input.charCodeAt(pos) === 59) {
             result1 = ";";
             pos += 1;
           } else {
@@ -3467,7 +3273,7 @@ var frisc_asm = (function(){
           }
           if (result1 !== null) {
             result2 = [];
-            if (input.substr(pos).match(/^[^\n]/) !== null) {
+            if (/^[^\n]/.test(input.charAt(pos))) {
               result3 = input.charAt(pos);
               pos++;
             } else {
@@ -3478,7 +3284,7 @@ var frisc_asm = (function(){
             }
             while (result3 !== null) {
               result2.push(result3);
-              if (input.substr(pos).match(/^[^\n]/) !== null) {
+              if (/^[^\n]/.test(input.charAt(pos))) {
                 result3 = input.charAt(pos);
                 pos++;
               } else {
@@ -3498,7 +3304,7 @@ var frisc_asm = (function(){
             result1 = null;
             pos = pos1;
           }
-          result1 = result1 !== null ? result1 : '';
+          result1 = result1 !== null ? result1 : "";
           if (result1 !== null) {
             result0 = [result0, result1];
           } else {
@@ -3510,8 +3316,6 @@ var frisc_asm = (function(){
           pos = pos0;
         }
         
-        
-        
         cache[cacheKey] = {
           nextPos: pos,
           result:  result0
@@ -3520,7 +3324,7 @@ var frisc_asm = (function(){
       }
       
       function parse_whitespace() {
-        var cacheKey = 'whitespace@' + pos;
+        var cacheKey = "whitespace@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -3528,10 +3332,8 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0;
         
-        
-        if (input.substr(pos, 1) === " ") {
+        if (input.charCodeAt(pos) === 32) {
           result0 = " ";
           pos += 1;
         } else {
@@ -3541,19 +3343,16 @@ var frisc_asm = (function(){
           }
         }
         if (result0 === null) {
-          if (input.substr(pos, 1) === "	") {
-            result0 = "	";
+          if (input.charCodeAt(pos) === 9) {
+            result0 = "\t";
             pos += 1;
           } else {
             result0 = null;
             if (reportFailures === 0) {
-              matchFailed("\"	\"");
+              matchFailed("\"\\t\"");
             }
           }
-          
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3563,20 +3362,19 @@ var frisc_asm = (function(){
       }
       
       function parse_register() {
-        var cacheKey = 'register@' + pos;
+        var cacheKey = "register@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2;
-        var pos0, pos1, pos2;
-        
+        var result0, result1;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        if (input.substr(pos).match(/^[rR]/) !== null) {
+        if (/^[rR]/.test(input.charAt(pos))) {
           result0 = input.charAt(pos);
           pos++;
         } else {
@@ -3586,7 +3384,7 @@ var frisc_asm = (function(){
           }
         }
         if (result0 !== null) {
-          if (input.substr(pos).match(/^[0-7]/) !== null) {
+          if (/^[0-7]/.test(input.charAt(pos))) {
             result1 = input.charAt(pos);
             pos++;
           } else {
@@ -3607,14 +3405,12 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(regnum) {
-              return parseInt(regnum, 10);
-            })(result0[1]);
+            return parseInt(regnum, 10);
+          })(result0[1]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3624,21 +3420,20 @@ var frisc_asm = (function(){
       }
       
       function parse_number() {
-        var cacheKey = 'number@' + pos;
+        var cacheKey = "number@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5, result6;
-        var pos0, pos1, pos2, pos3, pos4;
-        
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1, pos2;
         
         pos0 = pos;
         pos1 = pos;
         pos2 = pos;
-        if (input.substr(pos, 1) === "%") {
+        if (input.charCodeAt(pos) === 37) {
           result0 = "%";
           pos += 1;
         } else {
@@ -3650,7 +3445,7 @@ var frisc_asm = (function(){
         if (result0 !== null) {
           result1 = parse_base();
           if (result1 !== null) {
-            if (input.substr(pos, 1) === " ") {
+            if (input.charCodeAt(pos) === 32) {
               result3 = " ";
               pos += 1;
             } else {
@@ -3663,7 +3458,7 @@ var frisc_asm = (function(){
               result2 = [];
               while (result3 !== null) {
                 result2.push(result3);
-                if (input.substr(pos, 1) === " ") {
+                if (input.charCodeAt(pos) === 32) {
                   result3 = " ";
                   pos += 1;
                 } else {
@@ -3691,19 +3486,10 @@ var frisc_asm = (function(){
           pos = pos2;
         }
         if (result0 === null) {
-          if (input.substr(pos, 0) === "") {
-            result0 = "";
-            pos += 0;
-          } else {
-            result0 = null;
-            if (reportFailures === 0) {
-              matchFailed("\"\"");
-            }
-          }
-          
+          result0 = "";
         }
         if (result0 !== null) {
-          if (input.substr(pos).match(/^[+\-]/) !== null) {
+          if (/^[+\-]/.test(input.charAt(pos))) {
             result1 = input.charAt(pos);
             pos++;
           } else {
@@ -3712,12 +3498,9 @@ var frisc_asm = (function(){
               matchFailed("[+\\-]");
             }
           }
-          result1 = result1 !== null ? result1 : '';
+          result1 = result1 !== null ? result1 : "";
           if (result1 !== null) {
-            pos2 = pos;
-            reportFailures++;
-            pos3 = pos;
-            if (input.substr(pos).match(/^[0-9]/) !== null) {
+            if (/^[0-9]/.test(input.charAt(pos))) {
               result2 = input.charAt(pos);
               pos++;
             } else {
@@ -3728,7 +3511,7 @@ var frisc_asm = (function(){
             }
             if (result2 !== null) {
               result3 = [];
-              if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
+              if (/^[0-9a-hA-H]/.test(input.charAt(pos))) {
                 result4 = input.charAt(pos);
                 pos++;
               } else {
@@ -3739,47 +3522,7 @@ var frisc_asm = (function(){
               }
               while (result4 !== null) {
                 result3.push(result4);
-                if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
-                  result4 = input.charAt(pos);
-                  pos++;
-                } else {
-                  result4 = null;
-                  if (reportFailures === 0) {
-                    matchFailed("[0-9a-hA-H]");
-                  }
-                }
-              }
-              if (result3 !== null) {
-                result2 = [result2, result3];
-              } else {
-                result2 = null;
-                pos = pos3;
-              }
-            } else {
-              result2 = null;
-              pos = pos3;
-            }
-            reportFailures--;
-            if (result2 !== null) {
-              result2 = '';
-              pos = pos2;
-            } else {
-              result2 = null;
-            }
-            if (result2 !== null) {
-              result3 = [];
-              if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
-                result4 = input.charAt(pos);
-                pos++;
-              } else {
-                result4 = null;
-                if (reportFailures === 0) {
-                  matchFailed("[0-9a-hA-H]");
-                }
-              }
-              while (result4 !== null) {
-                result3.push(result4);
-                if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
+                if (/^[0-9a-hA-H]/.test(input.charAt(pos))) {
                   result4 = input.charAt(pos);
                   pos++;
                 } else {
@@ -3808,32 +3551,31 @@ var frisc_asm = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(b, p, digits) { 
-              var d = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]; 
-              var base = (b === "") ? defaultBase : b[1];
-              for (var i=0; i<digits.length; i++) {
-                var found = false;
-                for (var j=0; j<base; j++) {
-                  if (digits[i].toLowerCase() === d[j]) {
-                    found = true;
-                    break;
-                  }
-                }
-                
-                if (!found) {
-                  return null;
+          result0 = (function(b, p, first, rest) {
+            var d = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"];
+            var base = (b === "") ? defaultBase : b[1];
+            var digits = [first].concat(rest)
+            for (var i=0; i<digits.length; i++) {
+              var found = false;
+              for (var j=0; j<base; j++) {
+                if (digits[i].toLowerCase() === d[j]) {
+                  found = true;
+                  break;
                 }
               }
-              
-              var prefix = p === "-" ? -1 : 1;
-              return prefix*parseInt(digits.join(""), base);
-            })(result0[0], result0[1], result0[3]);
+        
+              if (!found) {
+                return null;
+              }
+            }
+        
+            var prefix = p === "-" ? -1 : 1;
+            return prefix*parseInt(digits.join(""), base);
+          })(result0[0], result0[1], result0[2], result0[3]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3843,7 +3585,7 @@ var frisc_asm = (function(){
       }
       
       function parse_base() {
-        var cacheKey = 'base@' + pos;
+        var cacheKey = "base@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
@@ -3851,11 +3593,10 @@ var frisc_asm = (function(){
         }
         
         var result0;
-        var pos0, pos1;
-        
+        var pos0;
         
         pos0 = pos;
-        if (input.substr(pos).match(/^[bBoOdDhH]/) !== null) {
+        if (/^[bBoOdDhH]/.test(input.charAt(pos))) {
           result0 = input.charAt(pos);
           pos++;
         } else {
@@ -3866,24 +3607,22 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(b) {
-              b = b.toLowerCase(); 
-              
-              if(b === "b") { 
-                return 2;
-              } else if (b === "o") {
-                return 8;
-              } else if (b === "d") {
-                return 10; 
-              } else if (b === "h") {
-                return 16; 
-              } 
-            })(result0);
+            b = b.toLowerCase();
+        
+            if(b === "b") {
+              return 2;
+            } else if (b === "o") {
+              return 8;
+            } else if (b === "d") {
+              return 10;
+            } else if (b === "h") {
+              return 16;
+            }
+          })(result0);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -3893,23 +3632,19 @@ var frisc_asm = (function(){
       }
       
       function parse_numberWithoutBase() {
-        var cacheKey = 'numberWithoutBase@' + pos;
+        var cacheKey = "numberWithoutBase@" + pos;
         var cachedResult = cache[cacheKey];
         if (cachedResult) {
           pos = cachedResult.nextPos;
           return cachedResult.result;
         }
         
-        var result0, result1, result2, result3, result4, result5;
-        var pos0, pos1, pos2, pos3, pos4;
-        
+        var result0, result1, result2, result3;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
-        pos2 = pos;
-        reportFailures++;
-        pos3 = pos;
-        if (input.substr(pos).match(/^[+\-]/) !== null) {
+        if (/^[+\-]/.test(input.charAt(pos))) {
           result0 = input.charAt(pos);
           pos++;
         } else {
@@ -3919,7 +3654,7 @@ var frisc_asm = (function(){
           }
         }
         if (result0 !== null) {
-          if (input.substr(pos).match(/^[0-9]/) !== null) {
+          if (/^[0-9]/.test(input.charAt(pos))) {
             result1 = input.charAt(pos);
             pos++;
           } else {
@@ -3930,7 +3665,7 @@ var frisc_asm = (function(){
           }
           if (result1 !== null) {
             result2 = [];
-            if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
+            if (/^[0-9a-hA-H]/.test(input.charAt(pos))) {
               result3 = input.charAt(pos);
               pos++;
             } else {
@@ -3941,61 +3676,7 @@ var frisc_asm = (function(){
             }
             while (result3 !== null) {
               result2.push(result3);
-              if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
-                result3 = input.charAt(pos);
-                pos++;
-              } else {
-                result3 = null;
-                if (reportFailures === 0) {
-                  matchFailed("[0-9a-hA-H]");
-                }
-              }
-            }
-            if (result2 !== null) {
-              result0 = [result0, result1, result2];
-            } else {
-              result0 = null;
-              pos = pos3;
-            }
-          } else {
-            result0 = null;
-            pos = pos3;
-          }
-        } else {
-          result0 = null;
-          pos = pos3;
-        }
-        reportFailures--;
-        if (result0 !== null) {
-          result0 = '';
-          pos = pos2;
-        } else {
-          result0 = null;
-        }
-        if (result0 !== null) {
-          if (input.substr(pos).match(/^[+\-]/) !== null) {
-            result1 = input.charAt(pos);
-            pos++;
-          } else {
-            result1 = null;
-            if (reportFailures === 0) {
-              matchFailed("[+\\-]");
-            }
-          }
-          if (result1 !== null) {
-            result2 = [];
-            if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
-              result3 = input.charAt(pos);
-              pos++;
-            } else {
-              result3 = null;
-              if (reportFailures === 0) {
-                matchFailed("[0-9a-hA-H]");
-              }
-            }
-            while (result3 !== null) {
-              result2.push(result3);
-              if (input.substr(pos).match(/^[0-9a-hA-H]/) !== null) {
+              if (/^[0-9a-hA-H]/.test(input.charAt(pos))) {
                 result3 = input.charAt(pos);
                 pos++;
               } else {
@@ -4020,15 +3701,13 @@ var frisc_asm = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(p, digits) {
-              return (p === "-" ? -1 : 1) * parseInt(digits.join(""), defaultBase);
-            })(result0[1], result0[2]);
+          result0 = (function(p, first, rest) {
+            return (p === "-" ? -1 : 1) * parseInt( first + rest.join(""), defaultBase);
+          })(result0[0], result0[1], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
         }
-        
-        
         
         cache[cacheKey] = {
           nextPos: pos,
@@ -4052,12 +3731,12 @@ var frisc_asm = (function(){
           
           switch (failuresExpectedUnique.length) {
             case 0:
-              return 'end of input';
+              return "end of input";
             case 1:
               return failuresExpectedUnique[0];
             default:
-              return failuresExpectedUnique.slice(0, failuresExpectedUnique.length - 1).join(', ')
-                + ' or '
+              return failuresExpectedUnique.slice(0, failuresExpectedUnique.length - 1).join(", ")
+                + " or "
                 + failuresExpectedUnique[failuresExpectedUnique.length - 1];
           }
         }
@@ -4066,9 +3745,9 @@ var frisc_asm = (function(){
         var actualPos = Math.max(pos, rightmostFailuresPos);
         var actual = actualPos < input.length
           ? quote(input.charAt(actualPos))
-          : 'end of input';
+          : "end of input";
         
-        return 'Expected ' + expected + ' but ' + actual + ' found.';
+        return "Expected " + expected + " but " + actual + " found.";
       }
       
       function computeErrorPosition() {
@@ -4083,13 +3762,13 @@ var frisc_asm = (function(){
         var column = 1;
         var seenCR = false;
         
-        for (var i = 0; i <  rightmostFailuresPos; i++) {
+        for (var i = 0; i < Math.max(pos, rightmostFailuresPos); i++) {
           var ch = input.charAt(i);
-          if (ch === '\n') {
+          if (ch === "\n") {
             if (!seenCR) { line++; }
             column = 1;
             seenCR = false;
-          } else if (ch === '\r' | ch === '\u2028' || ch === '\u2029') {
+          } else if (ch === "\r" || ch === "\u2028" || ch === "\u2029") {
             line++;
             column = 1;
             seenCR = true;
@@ -4103,528 +3782,280 @@ var frisc_asm = (function(){
       }
       
       
-      
-    var defaultBase = 16;
-      
-    var curloc = 0;
-      
-    var labels = {};
-      
-    var instructions = [];
-      
-    var instruction = {};
-      
-    var linecounter = 1;
-      
-    
-      
-    var moveops = {  
-      
-      "MOVE"   : "00000"
-      
-    };
-      
-    
-      
-    var aluops = {
-      
-      "OR"     : "00001",
-      
-      "AND"    : "00010",
-      
-      "XOR"    : "00011",
-      
-      "ADD"    : "00100",
-      
-      "ADC"    : "00101",
-      
-      "SUB"    : "00110",
-      
-      "SBC"    : "00111",
-      
-      "ROTL"   : "01000", 
-      
-      "ROTR"   : "01001",
-      
-      "SHL"    : "01010",
-      
-      "SHR"    : "01011",
-      
-      "ASHR"   : "01100"
-      
-    };
-      
-    
-      
-    var cmpops = {
-      
-      "CMP"    : "01101"
-      
-    };
-      
-      // 01110 Not used
-      
-      // 01111 Not used
-      
-    
-      
-    var rethaltops = {
-      
-      "RET"    : "11011",
-      
-      "RETI"   : "11011",
-      
-      "RETN"   : "11011",
-      
-      "HALT"   : "11111"
-      
-    };
-      
-    
-      
-    var jmpops = {
-      
-      "JP"     : "11000",
-      
-      "CALL"   : "11001",
-      
-      "JR"     : "11010"
-      
-    };
-      
-    
-      
-    var memops = {
-      
-      "LOAD"   : "10110",
-      
-      "STORE"  : "10111",
-      
-      "LOADB"  : "10010",
-      
-      "STOREB" : "10011",
-      
-      "LOADH"  : "10100",
-      
-      "STOREH" : "10101"
-      
-    };
-      
-    
-      
-    var stackops = {
-      
-      "POP"    : "10000",
-      
-      "PUSH"   : "10001"
-      
-    };
-      
-    
-      
-    var orgops = {
-      
-      "`ORG" : ""
-      
-    };
-      
-    
-      
-    var dwops = {
-      
-      "`DW" : ""
-      
-    };
-      
-    
-      
-    var equops = {
-      
-      "`EQU" : ""
-      
-    };
-      
-    
-      
-    var dsops = {
-      
-      "`DS" : ""
-      
-    };
-      
-    
-      
-    var endops = {
-      
-      "`END" : ""
-      
-    };
-      
-    
-      
-    var baseops = {
-      
-      "`BASE" : ""
-      
-    };
-      
-    
-      
-    var dwhbops = {
-      
-      "DW" : "",
-      
-      "DH" : "",
-      
-      "DB" : ""
-      
-    };
-      
-    
-      
-    var flags = {
-      
-      ""   : "0000",
-      
-      "N"  : "0001",   "M"   : "0001",
-      
-      "NN" : "0010",   "P"   : "0010",
-      
-      "C"  : "0011",   "ULT" : "0011",
-      
-      "NC" : "0100",   "UGE" : "0100",
-      
-      "V"  : "0101",
-      
-      "NV" : "0110",
-      
-      "Z"  : "0111",   "EQ"  : "0111",
-      
-      "NZ" : "1000",   "NE"  : "1000",
-      
-  
-      
-      "ULE"  : "1001",
-      
-      "UGT"  : "1010",
-      
-      "SLT"  : "1011",
-      
-      "SLE"  : "1100",
-      
-      "SGE"  : "1101",
-      
-      "SGT"  : "1110"
-      
-    };
-      
-  
-      
-    var allops = {
-      
-      aluop : aluops, moveop : moveops, cmpop : cmpops, memop : memops, stackop : stackops,
-      
-      jmpop : jmpops, rethaltop : rethaltops, equop : equops, dwop : dwops, orgop : orgops, dsop : dsops, 
-      
-      endop : endops, dwhbop : dwhbops, baseop : baseops
-      
-    };
-      
-  
-      
-    var generateMachineCode = function(node) {
-      
-      if (typeof node === 'undefined' || typeof node.op === 'undefined' || typeof node.optype === 'undefined' ||
-      
-          typeof allops[node.optype] === 'undefined' || typeof allops[node.optype][node.op] === 'undefined') {
-      
-        throw new Error("Undefined instruction, operation or operation type." + JSON.stringify(node));
-      
-      }
-      
-  
-      
-      var machineCode = null;
-      
-  
-      
-      if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, rethaltop: null}) {
-      
-        // set opcode
-      
-        machineCode = "00000000000000000000000000000000".split("");
-      
-        setBits(machineCode, 27, 31, allops[node.optype][node.op]);
-      
-      } else {
-      
-        machineCode = [];
-      
-      }
-      
-  
-      
-      switch(node.optype) {
-      
-        case 'cmpop':
-      
-        case 'aluop':
-      
-          if (node.optype === 'aluop') {
-      
-            setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
-      
-          }
-      
-          setBits(machineCode, 20, 22, convertIntToBinary(node.alusrc1.value, 3));
-      
-          
-      
-          if (node.alusrc2.type === "reg") {
-      
-            setBits(machineCode, 26, 26, "0");
-      
-            setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
-      
-            setBits(machineCode, 0, 16, "00000000000000000");
-      
+        var defaultBase = 16;
+        var curloc = 0;
+        var labels = {};
+        var instructions = [];
+        var instruction = {};
+        var linecounter = 1;
+      
+        var moveops = {
+          "MOVE"   : "00000"
+        };
+      
+        var aluops = {
+          "OR"     : "00001",
+          "AND"    : "00010",
+          "XOR"    : "00011",
+          "ADD"    : "00100",
+          "ADC"    : "00101",
+          "SUB"    : "00110",
+          "SBC"    : "00111",
+          "ROTL"   : "01000",
+          "ROTR"   : "01001",
+          "SHL"    : "01010",
+          "SHR"    : "01011",
+          "ASHR"   : "01100"
+        };
+      
+        var cmpops = {
+          "CMP"    : "01101"
+        };
+          // 01110 Not used
+          // 01111 Not used
+      
+        var rethaltops = {
+          "RET"    : "11011",
+          "RETI"   : "11011",
+          "RETN"   : "11011",
+          "HALT"   : "11111"
+        };
+      
+        var jmpops = {
+          "JP"     : "11000",
+          "CALL"   : "11001",
+          "JR"     : "11010"
+        };
+      
+        var memops = {
+          "LOAD"   : "10110",
+          "STORE"  : "10111",
+          "LOADB"  : "10010",
+          "STOREB" : "10011",
+          "LOADH"  : "10100",
+          "STOREH" : "10101"
+        };
+      
+        var stackops = {
+          "POP"    : "10000",
+          "PUSH"   : "10001"
+        };
+      
+        var orgops = {
+          "`ORG" : ""
+        };
+      
+        var dwops = {
+          "`DW" : ""
+        };
+      
+        var equops = {
+          "`EQU" : ""
+        };
+      
+        var dsops = {
+          "`DS" : ""
+        };
+      
+        var endops = {
+          "`END" : ""
+        };
+      
+        var baseops = {
+          "`BASE" : ""
+        };
+      
+        var dwhbops = {
+          "DW" : "",
+          "DH" : "",
+          "DB" : ""
+        };
+      
+        var flags = {
+          ""   : "0000",
+          "N"  : "0001",   "M"   : "0001",
+          "NN" : "0010",   "P"   : "0010",
+          "C"  : "0011",   "ULT" : "0011",
+          "NC" : "0100",   "UGE" : "0100",
+          "V"  : "0101",
+          "NV" : "0110",
+          "Z"  : "0111",   "EQ"  : "0111",
+          "NZ" : "1000",   "NE"  : "1000",
+      
+          "ULE"  : "1001",
+          "UGT"  : "1010",
+          "SLT"  : "1011",
+          "SLE"  : "1100",
+          "SGE"  : "1101",
+          "SGT"  : "1110"
+        };
+      
+        var allops = {
+          aluop : aluops, moveop : moveops, cmpop : cmpops, memop : memops, stackop : stackops,
+          jmpop : jmpops, rethaltop : rethaltops, equop : equops, dwop : dwops, orgop : orgops, dsop : dsops,
+          endop : endops, dwhbop : dwhbops, baseop : baseops
+        };
+      
+        var addLabel = function(label, value) {
+          label = label.trim();
+      
+          if (typeof labels[label] === 'undefined') {
+            labels[label] = value;
           } else {
+            var err = new Error("Existing label: " + label);
+            err.line = linecounter;
+            err.column = 1;
+            throw err;
+          }
+        };
       
-            setBits(machineCode, 26, 26, "1");
-      
-            setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
-      
+        var generateMachineCode = function(node) {
+          if (typeof node === 'undefined' || typeof node.op === 'undefined' || typeof node.optype === 'undefined' ||
+              typeof allops[node.optype] === 'undefined' || typeof allops[node.optype][node.op] === 'undefined') {
+            throw new Error("Undefined instruction, operation or operation type." + JSON.stringify(node));
           }
       
-  
+          var machineCode = null;
       
-          break;
-      
-        case 'moveop':
-      
-          if (node.aludest.type === "reg" && (node.alusrc2.type === "reg" || node.alusrc2.type === "num")) {
-      
-            // Kada je odredište opći registar, a izvor opći registar ili podatak:
-      
-            setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
-      
-            setBits(machineCode, 20, 22, "000");
-      
-            if (node.alusrc2.type === "reg") {
-      
-              setBits(machineCode, 26, 26, "0");
-      
-              setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
-      
-            } else {
-      
-              setBits(machineCode, 26, 26, "1");
-      
-              setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
-      
-            }
-      
-          } else if (node.aludest.type === "sr") {
-      
-            // Kada je odredište registar SR:
-      
-            setBits(machineCode, 20, 22, "001");
-      
-            if (node.alusrc2.type === "reg") {
-      
-              setBits(machineCode, 26, 26, "0");
-      
-              setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
-      
-            } else {
-      
-              setBits(machineCode, 26, 26, "1");
-      
-              setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
-      
-            }
-      
-          } else if (node.alusrc2.type === "sr") {
-      
-            // Kada je izvor registar SR:
-      
-            setBits(machineCode, 20, 22, "010");
-      
-            setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
-      
-            setBits(machineCode, 0, 19, "00000000000000000000");
-      
-          }
-      
-  
-      
-          break;
-      
-        case 'jmpop':
-      
-          setBits(machineCode, 20, 21, "00");
-      
-          setBits(machineCode, 22, 25, flags[node.flag]);
-      
-          if (node.addr.type === "num") {
-      
-            setBits(machineCode, 26, 26, "1");
-      
-            setBits(machineCode, 0, 19, convertIntToBinary(node.addr.value, 20));
-      
-          } else { 
-      
-            setBits(machineCode, 26, 26, "0");
-      
-            setBits(machineCode, 17, 19, convertIntToBinary(node.addr.value, 3));
-      
-          }
-      
-          break;
-      
-        case 'rethaltop':
-      
-          setBits(machineCode, 22, 25, flags[node.flag]);
-      
-          if (node.op === 'RET') {
-      
-            setBits(machineCode, 0, 0, "0");
-      
-            setBits(machineCode, 1, 1, "0");
-      
-          } else if (node.op === 'RETI') {
-      
-            setBits(machineCode, 0, 0, "1");
-      
-            setBits(machineCode, 1, 1, "0");
-      
-          } else if (node.op === 'RETN') {
-      
-            setBits(machineCode, 0, 0, "1");
-      
-            setBits(machineCode, 1, 1, "1");
-      
-          }
-      
-  
-      
-          break;
-      
-        case 'memop':
-      
-          setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
-      
-          if (node.mem.type === "regoff") {
-      
-            setBits(machineCode, 26, 26, "1");
-      
-            setBits(machineCode, 20, 22, convertIntToBinary(node.mem.value, 3));
-      
-            setBits(machineCode, 0, 19, convertIntToBinary(node.mem.offset, 20));
-      
+          if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, rethaltop: null}) {
+            // set opcode
+            machineCode = "00000000000000000000000000000000".split("");
+            setBits(machineCode, 27, 31, allops[node.optype][node.op]);
           } else {
-      
-            setBits(machineCode, 26, 26, "0");
-      
-            setBits(machineCode, 0, 19, convertIntToBinary(node.mem.value, 20));
-      
+            machineCode = [];
           }
       
-          break;
+          switch(node.optype) {
+            case 'cmpop':
+            case 'aluop':
+              if (node.optype === 'aluop') {
+                setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
+              }
+              setBits(machineCode, 20, 22, convertIntToBinary(node.alusrc1.value, 3));
       
-        case 'stackop':
+              if (node.alusrc2.type === "reg") {
+                setBits(machineCode, 26, 26, "0");
+                setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
+                setBits(machineCode, 0, 16, "00000000000000000");
+              } else {
+                setBits(machineCode, 26, 26, "1");
+                setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
+              }
       
-          setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
+              break;
+            case 'moveop':
+              if (node.aludest.type === "reg" && (node.alusrc2.type === "reg" || node.alusrc2.type === "num")) {
+                // Kada je odredište opći registar, a izvor opći registar ili podatak:
+                setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
+                setBits(machineCode, 20, 22, "000");
+                if (node.alusrc2.type === "reg") {
+                  setBits(machineCode, 26, 26, "0");
+                  setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
+                } else {
+                  setBits(machineCode, 26, 26, "1");
+                  setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
+                }
+              } else if (node.aludest.type === "sr") {
+                // Kada je odredište registar SR:
+                setBits(machineCode, 20, 22, "001");
+                if (node.alusrc2.type === "reg") {
+                  setBits(machineCode, 26, 26, "0");
+                  setBits(machineCode, 17, 19, convertIntToBinary(node.alusrc2.value, 3));
+                } else {
+                  setBits(machineCode, 26, 26, "1");
+                  setBits(machineCode, 0, 19, convertIntToBinary(node.alusrc2.value, 20));
+                }
+              } else if (node.alusrc2.type === "sr") {
+                // Kada je izvor registar SR:
+                setBits(machineCode, 20, 22, "010");
+                setBits(machineCode, 23, 25, convertIntToBinary(node.aludest.value, 3));
+                setBits(machineCode, 0, 19, "00000000000000000000");
+              }
       
-          break;
+              break;
+            case 'jmpop':
+              setBits(machineCode, 20, 21, "00");
+              setBits(machineCode, 22, 25, flags[node.flag]);
+              if (node.addr.type === "num") {
+                setBits(machineCode, 26, 26, "1");
+                setBits(machineCode, 0, 19, convertIntToBinary(node.addr.value, 20));
+              } else {
+                setBits(machineCode, 26, 26, "0");
+                setBits(machineCode, 17, 19, convertIntToBinary(node.addr.value, 3));
+              }
+              break;
+            case 'rethaltop':
+              setBits(machineCode, 22, 25, flags[node.flag]);
+              if (node.op === 'RET') {
+                setBits(machineCode, 0, 0, "0");
+                setBits(machineCode, 1, 1, "0");
+              } else if (node.op === 'RETI') {
+                setBits(machineCode, 0, 0, "1");
+                setBits(machineCode, 1, 1, "0");
+              } else if (node.op === 'RETN') {
+                setBits(machineCode, 0, 0, "1");
+                setBits(machineCode, 1, 1, "1");
+              }
       
-        case 'dwop':
+              break;
+            case 'memop':
+              setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
+              if (node.mem.type === "regoff") {
+                setBits(machineCode, 26, 26, "1");
+                setBits(machineCode, 20, 22, convertIntToBinary(node.mem.value, 3));
+                setBits(machineCode, 0, 19, convertIntToBinary(node.mem.offset, 20));
+              } else {
+                setBits(machineCode, 26, 26, "0");
+                setBits(machineCode, 0, 19, convertIntToBinary(node.mem.value, 20));
+              }
+              break;
+            case 'stackop':
+              setBits(machineCode, 23, 25, convertIntToBinary(node.reg.value, 3));
+              break;
+            case 'dwop':
+              for (var i=0; i<node.values.length; i++) {
+                machineCode.push(convertIntToBinary(node.values[i], 8));
+              }
+              break;
+            case 'dsop':
+              for (var i=0; i<node.value; i++) {
+                machineCode.push(convertIntToBinary(0, 8));
+              }
+              break;
+            case 'dwhbop':
+              for (var i=0; i<node.values.length; i++) {
+                machineCode.push(convertIntToBinary(node.values[i], node.size*8));
+              }
+              break;
+          }
+          if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, rethaltop : null}) {
+            node.machineCode = machineCode.join("");
+          } else {
+            node.machineCode = machineCode;
+          }
+        };
       
-          for (var i=0; i<node.values.length; i++) {
+        var setBits = function(oldBits, from, to, newBits) {
+          var len = oldBits.length;
       
-            machineCode.push(convertIntToBinary(node.values[i], 8));
-      
+          for (var i=0; i<from-to+1 || i<newBits.length; i++) {
+            oldBits[len-to-1+i] = newBits[i];
           }
       
-          break;
+          return oldBits;
+        };
       
-        case 'dsop':
+        /* Converts integer value to binary, specifying the length in bits of output */
+        function convertIntToBinary(value, numberOfBits) {
+          var retVal = new Array(numberOfBits);
       
-          for (var i=0; i<node.value; i++) {
-      
-            machineCode.push(convertIntToBinary(0, 8));
-      
+          for (var i=0; i<numberOfBits; i++) {
+            retVal[numberOfBits-i-1] = (Math.pow(2, i) & value) ? 1 : 0;
           }
       
-          break;
+          return retVal.join("");
+        }
       
-        case 'dwhbop':
-      
-          for (var i=0; i<node.values.length; i++) {
-      
-            machineCode.push(convertIntToBinary(node.values[i], node.size*8));
-      
-          }
-      
-          break;
-      
-      }
-      
-      if (node.optype in {cmpop : null, aluop : null, moveop : null, memop : null, stackop : null, jmpop : null, rethaltop : null}) {
-      
-        node.machineCode = machineCode.join("");
-      
-      } else {
-      
-        node.machineCode = machineCode;
-      
-      }
-      
-    };
-      
-  
-      
-    var setBits = function(oldBits, from, to, newBits) {
-      
-      var len = oldBits.length;
-      
-      
-      
-      for (var i=0; i<from-to+1 || i<newBits.length; i++) {
-      
-        oldBits[len-to-1+i] = newBits[i];
-      
-      }
-      
-  
-      
-      return oldBits;
-      
-    };
-      
-  
-      
-    /* Converts integer value to binary, specifying the length in bits of output */
-      
-    function convertIntToBinary(value, numberOfBits) {
-      
-      var retVal = new Array(numberOfBits);
-      
-      
-      
-      for (var i=0; i<numberOfBits; i++) {
-      
-        retVal[numberOfBits-i-1] = (Math.pow(2, i) & value) ? 1 : 0; 
-      
-      }
-      
-      
-      
-      return retVal.join("");
-      
-    }  
-      
-  
       
       var result = parseFunctions[startRule]();
       
@@ -4671,7 +4102,7 @@ var frisc_asm = (function(){
   /* Thrown when a parser encounters a syntax error. */
   
   result.SyntaxError = function(message, line, column) {
-    this.name = 'SyntaxError';
+    this.name = "SyntaxError";
     this.message = message;
     this.line = line;
     this.column = column;
