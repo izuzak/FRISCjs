@@ -6,24 +6,24 @@
     <meta name="author" content="Ivan Zuzak" />
 
     <title> FRISCjs - FRISC processor simulator in JavaScript</title>
-    <link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css" />
+    <link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" />
     <link rel="stylesheet" href="ace-mode-frisc.css" />
     <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
     <script type="text/javascript" src="friscasm.js"></script>
     <script type="text/javascript" src="friscjs.js"></script>
     <script type="text/javascript" src="https://raw.github.com/ajaxorg/ace/master/build/src/ace.js"></script>
-    <script type="text/javascript" src="http://twitter.github.com/bootstrap/1.4.0/bootstrap-tabs.js"></script>
+    <script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js"></script>
     <script type="text/javascript" src="ace-mode-frisc.js"></script>
   </head>
   <body>
     <div class="container" style="width: 1140px">
       <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
-      <ul class="tabs" data-tabs="tabs">
-        <li class="active"><a href="#sim">Simulator</a></li>
-        <li><a href="#frisc-header">Help & Usage</a></li>
+      <ul class="nav nav-tabs">
+        <li class="active"><a href="#sim" data-toggle="tab">Simulator</a></li>
+        <li><a href="#frisc-header" data-toggle="tab">Help & Usage</a></li>
       </ul>
     <div class="tab-content">
-    <div class="container" id="frisc-header" style="margin-bottom: 20px; width: auto;">
+    <div class="container tab-pane" id="frisc-header" style="margin-bottom: 20px; width: auto;">
       <div id="frisc-upute" class="well" style="visible: false">
         <h3> About </h3>
         <p>
@@ -58,30 +58,30 @@
           </p>
       </div>
     </div>
-    <div class="active container-fluid" id="sim">
-    <div class="sidebar" id="frisc-inputdiv" style="left: 0px; position: absolute; width: 450px; height: 500px;">
+    <div class="active container-fluid tab-pane" style="padding-left: 0px;" id="sim">
+    <div class="sidebar" id="frisc-inputdiv" style="width: 450px; height: 500px;">
     </div>
-    <div class="content" style="margin-left: 440px;">
+    <div class="content" style="margin-left: 460px;">
     <div id="frisc-controls" style="float: left; margin-left: 10px;">
-      <div id="frisc-cpu-controls" style="width: 650px;">
-        <button type="button" class="btn success" id="frisc-load">Load</button>
-        <button type="button" class="btn primary" id="frisc-execute">Run all</button>
-        <button type="button" class="btn primary" id="frisc-next">Run one</button>
-        <button type="button" class="btn primary" id="frisc-pause">Pause</button>
-        <button type="button" class="btn danger" id="frisc-stop">Stop</button>
-        <input type="text" class="span2" id="frisc-freq" value="1000" />
+      <div id="frisc-cpu-controls" class="form-inline" style="width: 650px;">
+        <button type="button" class="btn btn-success" id="frisc-load">Load</button>
+        <button type="button" class="btn btn-primary" id="frisc-execute">Run all</button>
+        <button type="button" class="btn btn-primary" id="frisc-next">Run one</button>
+        <button type="button" class="btn btn-primary" id="frisc-pause">Pause</button>
+        <button type="button" class="btn btn-danger" id="frisc-stop">Stop</button>
+        <input type="text" class="input-small" style="margin-bottom: 0px;" id="frisc-freq" value="1000" />
         <button type="button" class="btn" id="frisc-freqset">Set CPU freq</button>
-        <button type="button" class="btn primary" id="frisc-clear">Clear</button>
+        <button type="button" class="btn btn-primary" id="frisc-clear">Clear</button>
       </div>
-      <div id="cpuout" style="font: 10pt courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
-      <div id="frisc-memcontrols" style="width: 650px; margin-top: 15px;">
-        <label style="float: none;">Lower memory bound:</label>
-        <input type="text" class="span2" id="frisc-mem-lower" value="0" />
-        <label style="float: none;">Upper memory bound:</label>
-        <input type="text" class="span2" id="frisc-mem-upper" value="100" />
+      <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
+      <div id="frisc-memcontrols" class="form-inline" style="width: 650px; margin-top: 15px;">
+        <label>Lower memory bound:</label>
+        <input type="text" class="input-small" id="frisc-mem-lower" value="0" />
+        <label>Upper memory bound:</label>
+        <input class="input-small" id="frisc-mem-upper" value="100" />
         <button type="button" class="btn" id="frisc-mem-refresh">Show memory state</button>
       </div>
-      <div id="memout" style="font: 10pt courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
+      <div id="memout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
     </div>
     <script type="text/javascript">
       $("#frisc-input").height(($("body").height() - ($("#frisc-header").height()) - 40 + "px"));
@@ -155,7 +155,7 @@ editor.resize();
           marginLeft = "0px";
         }
         
-        $("#cpuout").append("<p style='margin: 1px; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</p>");
+        $("#cpuout").append("<div style='margin: 1px; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</div>");
         $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
       }
 
@@ -233,24 +233,24 @@ editor.resize();
       }
       
       simulator.CPU.onBeforeRun = function() {
-        simulatorLog("<span class='label success'><b>Starting (or continuing) simulation!</b></span>");
+        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Starting (or continuing) simulation!</b></span>");
       };
       
       simulator.CPU.onBeforeCycle = function() {
-        simulatorLog("<span class='label success'><b>New CPU cycle starting!</b></span>");
-        simulatorLog("<span class='label notice'>CPU state:</span>" + " " + cpuStateToString(), "10px");
+        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>New CPU cycle starting!</b></span>");
+        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
       };
       
       simulator.CPU.onAfterCycle = function() {
-        simulatorLog("<span class='label notice'>CPU state:</span>" + " " + cpuStateToString(), "10px");
+        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
       };
 
       simulator.CPU.onBeforeExecute = function(instruction) {
-        simulatorLog("<span class='label notice'>Executing FRISC instruction:</span>" + " " + instructionToString(instruction), "10px");
+        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-info'>Executing FRISC instruction:</span>" + " " + instructionToString(instruction), "10px");
       };
       
       simulator.CPU.onStop = function() {
-        simulatorLog("<span class='label warning'><b>FRISC processor stopped!</b></span>");
+        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-warning'><b>FRISC processor stopped!</b></span>");
         changeState("stopped");
       };
 
@@ -261,11 +261,11 @@ editor.resize();
             var result = frisc_asm.parse(editor.getSession().getValue());
             simulator.MEM.loadBinaryString(result.mem);
 
-            simulatorLog("<span class='label success'><b>Input program parsed successfully.</b></span>");
+            simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Input program parsed successfully.</b></span>");
   
             changeState("loaded");
           } catch (e) {
-            simulatorLog("<span class='label important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
+            simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
           }
         }
       });
