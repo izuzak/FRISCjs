@@ -13,6 +13,7 @@
     <script type="text/javascript" src="friscjs.js"></script>
     <script type="text/javascript" src="https://raw.github.com/ajaxorg/ace/master/build/src/ace.js"></script>
     <script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/madrobby/keymaster/master/keymaster.js"></script>
     <script type="text/javascript" src="ace-mode-frisc.js"></script>
   </head>
   <body>
@@ -84,6 +85,8 @@
       <div id="memout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
     </div>
     <script type="text/javascript">
+      key('backspace', function(){ });
+
       $("#frisc-input").height(($("body").height() - ($("#frisc-header").height()) - 40 + "px"));
 
       var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight() * 2)/2 - 40 + "px";
