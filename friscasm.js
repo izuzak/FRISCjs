@@ -584,6 +584,13 @@ var frisc_asm = (function(){
             if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
               curloc += 4;
             } else if (o.op in orgops) {
+              if (o.value < curloc) {
+                var err = new Error("ORG op must not point to previous addresses.");
+                err.line = linecounter;
+                err.column = 1;
+                throw err;
+              }
+        
               curloc = o.value;
             } else if (o.op in dwops) {
               curloc += o.values.length;
