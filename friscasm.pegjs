@@ -276,7 +276,6 @@
 
 instructions_main
   = ins:instructions {
-
     var instrs = [];
     var machinecode = [];
     var unknownlabels = [];
@@ -353,7 +352,7 @@ instructions_main
       if (typeof machinecode[opCount].curloc === "undefined") {
         opCount++;
       } else {
-        if (machinecode[opCount].curloc !== memCount) {
+        if (machinecode[opCount].curloc > memCount) {
           memCount = writeToMemory("00000000", memCount, mem);
         } else {
           if (typeof machinecode[opCount].machineCode === "string") {
@@ -372,7 +371,7 @@ instructions_main
   }
 
 instructions
-  = ins:(instruction_or_end &{linecounter++; return true;})+ !(.+) {
+  = ins:(instruction_or_end &{ linecounter++; return true;})+ !(.+) {
       return ins;
     }
 
@@ -381,7 +380,7 @@ newline
 
 instruction_or_end
   = i:instruction_end { var ins = i; ins.line = linecounter-1; return {}} /
-    i:instruction [\n] { var ins = i; ins.line = linecounter; return ins;}
+    i:instruction newline { var ins = i; ins.line = linecounter; return ins;}
 
 instruction_end
   = l:labelPart? whitespace+ o:endop c:commentPart? (newline .*)? {
@@ -390,7 +389,7 @@ instruction_end
 
 instruction
   = l:labelPart? o:operationPart? c:commentPart? {
-    if (o === null) {
+    if (o === null || o === "") {
       if (l !== null && l !== "") {
         addLabel(l, curloc);
       }

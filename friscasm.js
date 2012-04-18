@@ -151,7 +151,6 @@ var frisc_asm = (function(){
         result0 = parse_instructions();
         if (result0 !== null) {
           result0 = (function(offset, ins) {
-        
             var instrs = [];
             var machinecode = [];
             var unknownlabels = [];
@@ -228,7 +227,7 @@ var frisc_asm = (function(){
               if (typeof machinecode[opCount].curloc === "undefined") {
                 opCount++;
               } else {
-                if (machinecode[opCount].curloc !== memCount) {
+                if (machinecode[opCount].curloc > memCount) {
                   memCount = writeToMemory("00000000", memCount, mem);
                 } else {
                   if (typeof machinecode[opCount].machineCode === "string") {
@@ -261,7 +260,7 @@ var frisc_asm = (function(){
         pos2 = pos;
         result1 = parse_instruction_or_end();
         if (result1 !== null) {
-          result2 = (function(offset) {linecounter++; return true;})(pos) ? "" : null;
+          result2 = (function(offset) { linecounter++; return true;})(pos) ? "" : null;
           if (result2 !== null) {
             result1 = [result1, result2];
           } else {
@@ -279,7 +278,7 @@ var frisc_asm = (function(){
             pos2 = pos;
             result1 = parse_instruction_or_end();
             if (result1 !== null) {
-              result2 = (function(offset) {linecounter++; return true;})(pos) ? "" : null;
+              result2 = (function(offset) { linecounter++; return true;})(pos) ? "" : null;
               if (result2 !== null) {
                 result1 = [result1, result2];
               } else {
@@ -416,15 +415,7 @@ var frisc_asm = (function(){
           pos1 = pos;
           result0 = parse_instruction();
           if (result0 !== null) {
-            if (/^[\n]/.test(input.charAt(pos))) {
-              result1 = input.charAt(pos);
-              pos++;
-            } else {
-              result1 = null;
-              if (reportFailures === 0) {
-                matchFailed("[\\n]");
-              }
-            }
+            result1 = parse_newline();
             if (result1 !== null) {
               result0 = [result0, result1];
             } else {
@@ -569,7 +560,7 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, l, o, c) {
-            if (o === null) {
+            if (o === null || o === "") {
               if (l !== null && l !== "") {
                 addLabel(l, curloc);
               }
