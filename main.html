@@ -258,7 +258,11 @@ editor.resize();
         if (_state === "stopped") {
           try {
             simulator.CPU.reset();
-            var result = frisc_asm.parse(editor.getSession().getValue());
+            var source = editor.getSession().getValue();
+            if (source.length > 0 && source[source.length-1] !== '\n') {
+              source += '\n';
+            }
+            var result = frisc_asm.parse(source);
             simulator.MEM.loadBinaryString(result.mem);
 
             simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Input program parsed successfully.</b></span>");
