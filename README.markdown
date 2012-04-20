@@ -15,7 +15,7 @@ The Web application interface is available [here](https://izuzak.github.com/FRIS
 
 ## Credits
 
-FRISCjs was developed by [Ivan Zuzak](http://ivanzuzak.info). Contributors: [Ivan Budiselic](https://github.com/ibudiselic).
+FRISCjs was developed by [Ivan Zuzak](http://ivanzuzak.info). Contributors: [Ivan Budiselic](https://github.com/ibudiselic), [Stanko Krtalic](https://github.com/Stankec).
 
 FRISCjs is built with many open-source projects: 
 
