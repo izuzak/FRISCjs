@@ -325,11 +325,12 @@ editor.resize();
       $("#frisc-mem-refresh").click(function() {
         var lower  = parseInt($("#frisc-mem-lower").val());
         var higher = parseInt($("#frisc-mem-upper").val());
-        if(getBase()==0) { //If HEX 
-          lower  = parseInt($("#frisc-mem-lower").val(), 16);;
-          higher = parseInt($("#frisc-mem-upper").val(), 16);;
+
+        if(getBase() === 16) { //If HEX 
+          lower  = parseInt($("#frisc-mem-lower").val(), 16);
+          higher = parseInt($("#frisc-mem-upper").val(), 16);
         }
-            memLog(getMemState(lower, higher));
+        memLog(getMemState(lower, higher));
       });
       $("#skrBaseRadioDec, #skrBaseRadioHex").click(function() {
         // $("#frisc-mem-refresh").click();
