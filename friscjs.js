@@ -668,12 +668,12 @@ var FRISC = function() {
       STOREH: function(addr, offset, reg) {
         var destAddr = (typeof addr === 'string' ? this._r[addr] : 0) + (typeof offset === 'number' ? offset : 0);
         destAddr &= ~(0x01);
-        MEM.write(destAddr, this._r[reg]);
+        MEM.writew(destAddr, this._r[reg]);
       },
       
       STOREB: function(addr, offset, reg) {
         var destAddr = (typeof addr === 'string' ? this._r[addr] : 0) + (typeof offset === 'number' ? offset : 0);
-        MEM.write(destAddr, this._r[reg]);
+        MEM.writeb(destAddr, this._r[reg]);
       },
       
       JP: function(cond, dest) {
