@@ -70,18 +70,19 @@
         <button type="button" class="btn btn-primary" id="frisc-next">Run one</button>
         <button type="button" class="btn btn-primary" id="frisc-pause">Pause</button>
         <button type="button" class="btn btn-danger" id="frisc-stop">Stop</button>
-        <input type="text" class="input-small" style="margin-bottom: 0px;" id="frisc-freq" value="1000" />
+        <input type="text" class="input-mini" style="margin-bottom: 0px;" id="frisc-freq" value="1000" />
         <button type="button" class="btn" id="frisc-freqset">Set CPU freq</button>
         <button type="button" class="btn btn-primary" id="frisc-clear">Clear</button>
       </div>
       <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
-      <div id="frisc-memcontrols" class="form-inline" style="width: 680px; margin-top: 15px;">
+      <div id="frisc-memcontrols" class="form-inline" style="width: 650px; margin-top: 15px;">
         <label>Lower memory bound:</label>
-        <input type="text" class="input-small" id="frisc-mem-lower" value="0" />
+        <input type="text" class="input-mini" id="frisc-mem-lower" value="0" />
         <label>Upper memory bound:</label>
-        <input class="input-small" id="frisc-mem-upper" value="100" />
+        <input type="text" class="input-mini" id="frisc-mem-upper" value="100" />
+        <label class="radio"> <input type="radio" name="optionsRadios" id="skrBaseRadioDec" value="option1" checked=""> DEC </label>
+        <label class="radio"> <input type="radio" name="optionsRadios" id="skrBaseRadioHex" value="option2"> HEX </label>
         <button type="button" class="btn" id="frisc-mem-refresh">Show memory state</button>
-        <button type="button" class="btn" id="skrBaseButton">DEC</button>
       </div>
       <div id="memout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
     </div>
@@ -168,8 +169,11 @@ editor.resize();
       }
 
       function getBase () {
-        if ($("#skrBaseButton").html()=='DEC') return 1;
-        else return 0;
+        if ($("#skrBaseRadioDec").is(':checked')) { 
+          return 10;
+        } else {
+          return 16;
+        }
       }
 
       function getMemState(lower, upper) {
@@ -179,12 +183,7 @@ editor.resize();
         for (var i=lower; i>=0 && i<simulator.MEM._memory.length && i<upper; i+=4) {
           var decoded = simulator.CPU._decode(simulator.MEM.read(i));
           decoded = decoded ? " - " + instructionToString(decoded) : "";
-
-          if(base==0) { //Hex
-            memStateString += i.toString(16)+ ": " + simulator.MEM.read(i).toString() + " - " + convertIntToBinary(simulator.MEM.read(i), 32) + decoded + "</br>";
-          } else { //Decimal
-            memStateString += i.toString() + ": " + simulator.MEM.read(i).toString() + " - " + convertIntToBinary(simulator.MEM.read(i), 32) + decoded + "</br>";
-          }
+          memStateString += i.toString(base)+ ": " + simulator.MEM.read(i).toString() + " - " + convertIntToBinary(simulator.MEM.read(i), 32) + decoded + "</br>";
         }
 
         return memStateString;
@@ -332,10 +331,8 @@ editor.resize();
         }
             memLog(getMemState(lower, higher));
       });
-      $("#skrBaseButton").click(function() {
-        if($("#skrBaseButton").html()=='DEC') $("#skrBaseButton").html('HEX');
-        else $("#skrBaseButton").html('DEC');
-        $("#frisc-mem-refresh").click();
+      $("#skrBaseRadioDec, #skrBaseRadioHex").click(function() {
+        // $("#frisc-mem-refresh").click();
       });
     </script>
     </script>
