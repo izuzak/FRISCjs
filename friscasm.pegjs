@@ -601,8 +601,12 @@ whitespace
   = " " / "\t"
 
 register
-  = [rR]regnum:[0-7] {
-    return parseInt(regnum, 10);
+  = [rR]regnum:[0-7] / [sS][pP] {
+    if (typeof regnum === 'undefined') {
+      return 7; // SP == R7
+    } else {
+      return parseInt(regnum, 10);
+    }
   }
 
 number
