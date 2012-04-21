@@ -21,17 +21,12 @@
       <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
       <ul class="nav nav-tabs">
         <li class="active"><a href="#sim" data-toggle="tab">Simulator</a></li>
-        <li><a href="#frisc-header" data-toggle="tab">Help & Usage</a></li>
+        <li><a href="#frisc-usage" data-toggle="tab">Usage instructions</a></li>
+        <li><a href="#frisc-about" data-toggle="tab">About</a></li>
       </ul>
     <div class="tab-content">
-    <div class="container tab-pane" id="frisc-header" style="margin-bottom: 20px; width: auto;">
+    <div class="container tab-pane" id="frisc-usage" style="margin-bottom: 20px; width: auto;">
       <div id="frisc-upute" class="well" style="visible: false">
-        <h3> About </h3>
-        <p>
-        FRISCjs is a simulator of the FRISC processor written in JavaScript.
-        The simulator has two parts: a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs">FRISC assembler</a> (built using PEGjs) which translates FRISC assembly code to machine code and a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscjs.js">FRISC CPU simulator</a> which executes machine code.
-        This Web application is a graphical interface for the simulator, while there also exists a <a href="https://github.com/izuzak/FRISCjs/blob/master/main.js">console interface which runs on NodeJS</a>.
-        </p>
         <h3> Usage instructions </h3>
         <ol>
           <li> Enter your FRISC assembler program into the textbox on the left. Note: the simulator has a memory module of 256KB, i.e. from 0x00000000 to 0x0003FFFF.</li>
@@ -42,8 +37,22 @@
           <li> Press the <b>"Run one"</b> button to force the CPU to execute the next instruction.</li>
           <li> Press the <b>"Stop"</b> button to stop the CPU completely and return to defining the program.  </li>
           <li> Press the <b>"Clear"</b> button to clear the log output screen. </li>
-          <li> To view the state of a part of memory, enter the lower and upper bound into the textboxes and press <b>"Show memory state"</b>. </li>
+          <li> To view the state of a part of memory, enter the lower and upper bound into the textboxes and press <b>"Show memory state"</b>. 
+               <p>You can choose wether you want the memory to be displayed in <b>hexadecimal</b> or <b>decimal</b> form by clicking on the button next to HEX, or DEC.</p>
+          </li>
         </ol>
+        <p>You can read more about how FRISC works <a href="http://www.fer.unizg.hr/_download/repository/knjiga_FRISC_izvadak.pdf">here</a>. You can find the FRISC cheat sheet <a href="http://www.fer.unizg.hr/_download/repository/salabahter_cijeli.pdf">here</a>.</p>
+      </div>
+    </div>
+    <div class="container tab-pane" id="frisc-about" style="margin-bottom: 20px; width: auto;">
+      <div id="frisc-about" class="well" style="visible: false">
+        <h3> About </h3>
+        <p>
+        FRISCjs is a simulator of the FRISC processor written in JavaScript.<br>
+        FRISC is a simple RISC processor developed at the <a href="http://fer.unizg.hr/en">Faculty of Electrical Engineering and Computer Science</a>, Zagreb. <a href="http://www.fer.unizg.hr/rasip/knjige/frisc">More...</a><br>
+        The simulator has two parts: a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs">FRISC assembler</a> (built using PEGjs) which translates FRISC assembly code to machine code and a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscjs.js">FRISC CPU simulator</a> which executes machine code.<br>
+        This Web application is a graphical interface for the simulator, while there also exists a <a href="https://github.com/izuzak/FRISCjs/blob/master/main.js">console interface which runs on NodeJS</a>.
+        </p>
 
         <h3> Source code and bug reports </h3>
           <p>
@@ -89,7 +98,7 @@
     <script type="text/javascript">
       key('backspace', function(){ return false; });
 
-      $("#frisc-input").height(($("body").height() - ($("#frisc-header").height()) - 40 + "px"));
+      $("#frisc-input").height(($("body").height() - ($("#frisc-usage").height()) - 40 + "px"));
 
       var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight() * 2)/2 - 40 + "px";
       $("#cpuout").height(height);
