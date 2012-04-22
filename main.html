@@ -84,13 +84,16 @@
         <button type="button" class="btn btn-primary" id="frisc-clear"><i class="icon-remove-sign icon-white"></i> Clear</button>
       </div>
       <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
-      <div id="frisc-memcontrols" class="form-inline" style="width: 650px; margin-top: 15px;">
+      <div id="frisc-memcontrols" class="form-inline" style="width: 666px; margin-top: 15px;">
         <label>Lower memory bound:</label>
         <input type="text" class="input-mini" id="frisc-mem-lower" value="0" />
         <label>Upper memory bound:</label>
         <input type="text" class="input-mini" id="frisc-mem-upper" value="100" />
-        <label class="radio"> <input type="radio" name="optionsRadios" id="skrBaseRadioDec" value="option1" checked=""> DEC </label>
-        <label class="radio"> <input type="radio" name="optionsRadios" id="skrBaseRadioHex" value="option2"> HEX </label>
+        <div class="btn-group" data-toggle-name="dec_or_hex" style="display:inline-block; vertical-align: middle;" data-toggle="buttons-radio">
+          <button type="button" value="10" class="btn" data-toggle="button" id="skrBaseRadioDec">DEC</button>
+          <button type="button" value="16" class="btn" data-toggle="button" id="skrBaseRadioHex">HEX</button>
+        </div>
+        <input type="hidden" name="dec_or_hex" value="16" id="skrBaseHolder" />
         <button type="button" class="btn" id="frisc-mem-refresh">Show memory state</button>
       </div>
       <div id="memout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
@@ -177,17 +180,9 @@ editor.resize();
         $("#memout").html(text);
       }
 
-      function getBase () {
-        if ($("#skrBaseRadioDec").is(':checked')) { 
-          return 10;
-        } else {
-          return 16;
-        }
-      }
-
       function getMemState(lower, upper) {
         var memStateString = ""; 
-        var base = getBase();
+        var base = $("#skrBaseHolder").val();
         
         for (var i=lower; i>=0 && i<simulator.MEM._memory.length && i<upper; i+=4) {
           var decoded = simulator.CPU._decode(simulator.MEM.read(i));
@@ -335,14 +330,31 @@ editor.resize();
         var lower  = parseInt($("#frisc-mem-lower").val());
         var higher = parseInt($("#frisc-mem-upper").val());
 
-        if(getBase() === 16) { //If HEX 
+        if($("#skrBaseHolder").val() === 16) { //If HEX 
           lower  = parseInt($("#frisc-mem-lower").val(), 16);
           higher = parseInt($("#frisc-mem-upper").val(), 16);
         }
         memLog(getMemState(lower, higher));
       });
-      $("#skrBaseRadioDec, #skrBaseRadioHex").click(function() {
-        // $("#frisc-mem-refresh").click();
+
+      //Enables segmented buttons
+      $('div.btn-group[data-toggle-name=*]').each(function(){
+          var group   = $(this);
+          var form    = group.parents().eq(0);
+          var name    = group.attr('data-toggle-name');
+          var hidden  = $('input[name="' + name + '"]', form);
+          $('button', group).each(function(){
+            var button = $(this);
+            button.click(function(){
+                hidden.val($(this).val());
+                $('button', group).each(function(){
+                  $(this).removeClass('active');
+                });
+                button.addClass('active');
+            });
+            //Initial setup
+            if(button.val() == hidden.val()) button.addClass('active');
+        });
       });
     </script>
     </script>
