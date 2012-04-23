@@ -19,10 +19,17 @@ var debug = function(str) {
 var cpufreq = 1000;
 
 if (argv.indexOf("-cpufreq") > -1) {
-  console.log(argv);
   cpufreq = parseInt(argv[argv.indexOf("-cpufreq") + 1]);
   argv.splice(argv.indexOf("-cpufreq") + 1, 1);
   argv.splice(argv.indexOf("-cpufreq"), 1);
+}
+
+var memsize = 256*1024;
+
+if (argv.indexOf("-memsize") > -1) {
+  memsize = 1024*parseInt(argv[argv.indexOf("-memsize") + 1]);
+  argv.splice(argv.indexOf("-memsize") + 1, 1);
+  argv.splice(argv.indexOf("-memsize"), 1);
 }
 
 console.error("");
@@ -52,6 +59,13 @@ console.error("** ");
 console.error("**     > node main.js -cpufreq 2 filename");
 console.error("**   or");
 console.error("**     > cat filename | node main.js -cpufreq 2");
+console.error("** ");
+console.error("** Memory size (in number of 1K locations) can be set with");
+console.error("**   the -memsize flag argument (default value is 256):");
+console.error("** ");
+console.error("**     > node main.js -memsize 64 filename");
+console.error("**   or");
+console.error("**     > cat filename | node main.js -memsize 64");
 console.error("** ");
 console.error("** Execution flow:");
 console.error("** ");
@@ -164,6 +178,7 @@ function runProgram(frisc_asmsource) {
   }
 
   simulator = new sim();
+  simulator.MEM._size = memsize;
   simulator.CPU._frequency = cpufreq;
 
   simulator.CPU.onBeforeRun = function() {
