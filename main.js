@@ -16,6 +16,15 @@ var debug = function(str) {
   }
 };
 
+var cpufreq = 1000;
+
+if (argv.indexOf("-cpufreq") > -1) {
+  console.log(argv);
+  cpufreq = parseInt(argv[argv.indexOf("-cpufreq") + 1]);
+  argv.splice(argv.indexOf("-cpufreq") + 1, 1);
+  argv.splice(argv.indexOf("-cpufreq"), 1);
+}
+
 console.error("");
 console.error("*********************************************************");
 console.error("** FRISCjs - FRISC simulator in JavaScript");
@@ -36,6 +45,13 @@ console.error("** ");
 console.error("**     > node main.js -v filename");
 console.error("**   or");
 console.error("**     > cat filename | node main.js -v");
+console.error("** ");
+console.error("** The CPU frequency (in Hz) can be set with the -cpufreq");
+console.error("**   flag argument (default value is 1000):");
+console.error("** ");
+console.error("**     > node main.js -cpufreq 2 filename");
+console.error("**   or");
+console.error("**     > cat filename | node main.js -cpufreq 2");
 console.error("** ");
 console.error("** Execution flow:");
 console.error("** ");
@@ -68,7 +84,7 @@ if (argv.length > 2) {
   console.error("*********************************************************");
   console.error("");
 
-  if (!(path.existsSync(filename))) {
+  if (!(fs.existsSync(filename))) {
     console.error("ERROR: File does not exist!");
     console.log("ERROR");
   } else {
@@ -148,8 +164,8 @@ function runProgram(frisc_asmsource) {
   }
 
   simulator = new sim();
-  simulator.CPU._frequency = 1000;
-   
+  simulator.CPU._frequency = cpufreq;
+
   simulator.CPU.onBeforeRun = function() {
     console.error("");
     console.error("*********************************************************");
