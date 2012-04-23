@@ -13,6 +13,7 @@
     <script type="text/javascript" src="friscjs.js"></script>
     <script type="text/javascript" src="https://raw.github.com/ajaxorg/ace/master/build/src/ace.js"></script>
     <script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js"></script>
+    <script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/bootstrap-button.js"></script>
     <script type="text/javascript" src="https://raw.github.com/madrobby/keymaster/master/keymaster.js"></script>
     <script type="text/javascript" src="ace-mode-frisc.js"></script>
   </head>
@@ -72,7 +73,7 @@
     </div>
     <div class="content" style="margin-left: 460px;">
     <div id="frisc-controls" style="float: left; margin-left: 10px;">
-      <div id="frisc-cpu-controls" class="form-inline" style="width: 650px;">
+      <div id="frisc-cpu-controls" class="form-inline" style="width: 666px;">
         <button type="button" class="btn btn-success" id="frisc-load"><i class="icon-download-alt icon-white"></i> Load</button>
         <button type="button" class="btn btn-primary" id="frisc-execute"><i class="icon-fast-forward icon-white"></i> Run all</button>
         <button type="button" class="btn btn-primary" id="frisc-next"><i class="icon-step-forward icon-white"></i> Run one</button>
@@ -83,13 +84,15 @@
         <button type="button" class="btn btn-primary" id="frisc-clear"><i class="icon-remove-sign icon-white"></i> Clear</button>
       </div>
       <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
-      <div id="frisc-memcontrols" class="form-inline" style="width: 650px; margin-top: 15px;">
+      <div id="frisc-memcontrols" class="form-inline" style="width: 666px; margin-top: 15px;">
         <label>Lower memory bound:</label>
         <input type="text" class="input-mini" id="frisc-mem-lower" value="0" />
         <label>Upper memory bound:</label>
         <input type="text" class="input-mini" id="frisc-mem-upper" value="100" />
-        <label class="radio"> <input type="radio" name="optionsRadios" id="skrBaseRadioDec" value="option1" checked=""> DEC </label>
-        <label class="radio"> <input type="radio" name="optionsRadios" id="skrBaseRadioHex" value="option2"> HEX </label>
+        <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
+          <button class="btn"         id="skrBaseRadioDec">DEC</button>
+          <button class="btn active"  id="skrBaseRadioHex">HEX</button>
+        </div>
         <button type="button" class="btn" id="frisc-mem-refresh">Show memory state</button>
       </div>
       <div id="memout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
@@ -177,11 +180,8 @@ editor.resize();
       }
 
       function getBase () {
-        if ($("#skrBaseRadioDec").is(':checked')) { 
-          return 10;
-        } else {
-          return 16;
-        }
+        if ($("#skrBaseRadioDec").attr('class')=="btn active") return 10;
+        return 16;
       }
 
       function getMemState(lower, upper) {
@@ -331,13 +331,8 @@ editor.resize();
       });
 
       $("#frisc-mem-refresh").click(function() {
-        var lower  = parseInt($("#frisc-mem-lower").val());
-        var higher = parseInt($("#frisc-mem-upper").val());
-
-        if(getBase() === 16) { //If HEX 
-          lower  = parseInt($("#frisc-mem-lower").val(), 16);
-          higher = parseInt($("#frisc-mem-upper").val(), 16);
-        }
+        var lower  = parseInt($("#frisc-mem-lower").val(), getBase());
+        var higher = parseInt($("#frisc-mem-upper").val(), getBase());
         memLog(getMemState(lower, higher));
       });
       $("#skrBaseRadioDec, #skrBaseRadioHex").click(function() {
