@@ -163,6 +163,10 @@ var FRISC = function() {
     loadByteString: function(str) {
       this.reset();
       
+      if (this._size < str.length) {
+        throw new Error("Memory too small to fit program.");
+      }
+ 
       for (var i=0; i<str.length; i++) {
         this.writeb(i, str.charCodeAt(i));
       }
@@ -171,6 +175,10 @@ var FRISC = function() {
     /* Load memory with some program, byte by byte */
     loadBytes: function(bytes) {
       this.reset();
+
+      if (this._size < bytes.length) {
+        throw new Error("Memory too small to fit program.");
+      }
       
       for (var i=0; i<bytes.length; i++) {
         this.writeb(i, bytes[i]);
@@ -180,6 +188,10 @@ var FRISC = function() {
     /* Load memory with some program, binary string by binary string */
     loadBinaryString: function(binaryStrings) {
       this.reset();
+
+      if (this._size < binaryStrings.length) {
+        throw new Error("Memory too small to fit program.");
+      }
       
       for (var i=0; i<binaryStrings.length; i++) {
         this.writeb(i, parseInt(binaryStrings[i], 2));

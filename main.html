@@ -82,11 +82,16 @@
               <button id="frisc-next" type="button" class="btn btn-primary"><i class="icon-step-forward icon-white"></i> Run one</button>
               <button id="frisc-pause" type="button" class="btn btn-primary"><i class="icon-pause icon-white"></i> Pause</button>
               <button id="frisc-stop" type="button" class="btn btn-danger"><i class="icon-stop icon-white"></i> Stop</button>
-              <input id="frisc-freq" type="text" class="input-mini" style="margin-bottom: 0px;" value="1000" />
-              <button id="frisc-freqset" type="button" class="btn">Set CPU freq</button>
-              <button id="frisc-clear" type="button" class="btn btn-primary"><i class="icon-remove-sign icon-white"></i> Clear</button>
+              <button id="frisc-clear" type="button" class="btn btn-primary"><i class="icon-remove-sign icon-white"></i> Clear log</button>
+              <button id="frisc-showhidesettings" type="button" class="btn btn-primary" data-toggle="button"><i class="icon-wrench icon-white"></i> Settings</button>
             </div>
-            <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
+            <div id="frisc-settings" style="display: none; margin-top: 15px;" class="form-inline">
+              <label for="frisc-freq" style="margin-bottom: 0px;">CPU frequency (Hz):</label>
+              <input id="frisc-freq" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="1000" />
+              <label for="frisc-memsize" style="margin-bottom: 0px;">MEM size (KB):</label>
+              <input id="frisc-memsize" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="256" />
+            </div>
+            <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
             <div id="frisc-memcontrols" class="form-inline" style="width: 666px; margin-top: 15px;">
               <label>Lower memory bound:</label>
               <input id="frisc-mem-lower" type="text" class="input-mini" value="0" />
@@ -204,16 +209,16 @@ lab23 ADD R1, R2, R3\n\
 
       function changeState(st) {
         if (st === "stopped") {
-          enableElements(["#frisc-load"]);
+          enableElements(["#frisc-load", "#frisc-freq", "#frisc-memsize"]);
           disableElements(["#frisc-execute", "#frisc-next", "#frisc-pause", "#frisc-stop"]);
           _state = st;
         } else if (st ==="loaded") {
           enableElements(["#frisc-execute", "#frisc-next", "#frisc-stop"]);
-          disableElements(["#frisc-load", "#frisc-pause"]);
+          disableElements(["#frisc-load", "#frisc-pause", "#frisc-freq", "#frisc-memsize"]);
           _state = st;
         } else if (st === "running") {
           enableElements(["#frisc-stop", "#frisc-pause", "#frisc-next"]);
-          disableElements(["frisc-execute", "#frisc-load"]);
+          disableElements(["frisc-execute", "#frisc-load", "#frisc-freq", "#frisc-memsize"]);
           _state = st;
         }
       }
@@ -287,14 +292,22 @@ lab23 ADD R1, R2, R3\n\
               source += '\n';
             }
             var result = frisc_asm.parse(source);
-            simulator.MEM.loadBinaryString(result.mem);
-
-            simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Input program parsed successfully.</b></span>");
-  
-            changeState("loaded");
           } catch (e) {
             simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
+            return;
           }
+
+          try {
+            simulator.CPU._frequency = parseInt($("#frisc-freq").val());
+            simulator.MEM._size = parseInt($("#frisc-memsize").val()) * 1024;
+            simulator.MEM.loadBinaryString(result.mem);
+          } catch (e) {
+            simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>Loading error</b></span>" + " -- " + e.toString() + "");
+            return
+          }
+
+          simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Input program parsed successfully.</b></span>");
+          changeState("loaded");
         }
       });
 
@@ -337,6 +350,17 @@ lab23 ADD R1, R2, R3\n\
         var lower  = parseInt($("#frisc-mem-lower").val(), getBase());
         var higher = parseInt($("#frisc-mem-upper").val(), getBase());
         memLog(getMemState(lower, higher));
+      });
+      
+      $("#frisc-showhidesettings").click(function() {
+        if ($("#frisc-settings").is(":visible")) {
+          $("#frisc-settings").hide();
+          $("#cpuout").height(height);
+          
+        } else {
+          $("#frisc-settings").show();
+          $("#cpuout").height(parseInt(height)-$("#frisc-settings").outerHeight(true) + "px");
+        }
       });
     </script>
     <script type="text/javascript">
