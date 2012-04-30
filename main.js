@@ -173,7 +173,6 @@ function runProgram(frisc_asmsource) {
     var result = parser.parse(frisc_asmsource.toString());
   } catch (e) { 
     console.error("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
-    console.log("ERROR");
     return;
   }
 
@@ -215,6 +214,12 @@ function runProgram(frisc_asmsource) {
     console.log(simulator.CPU._r.r6);
   };
   
-  simulator.MEM.loadBinaryString(result.mem);
+  try {
+    simulator.MEM.loadBinaryString(result.mem);
+  } catch (e) {
+    console.error("Loading error -- " + e.toString());
+    return;
+  }
+  
   simulator.CPU.run();
 } 
