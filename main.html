@@ -72,6 +72,22 @@
     <div class="active container-fluid tab-pane" style="padding-left: 0px;" id="sim">
     <div class="sidebar" id="frisc-inputdiv" style="width: 450px; height: 500px;">
     </div>
+
+    <div class="sidebar ace_editor ace-tm" id="frisc-memorylist-hold" style="width: 450px; height: 470px; display:none;">
+      <div style="width: 450px; height: 30px; display:inline-block;  position:absolute; top:0px;">
+        <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
+            <button class="btn"         id="skrBaseRadioDec">DEC</button>
+            <button class="btn active"  id="skrBaseRadioHex">HEX</button>
+        </div>
+        <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
+            <button class="btn active"  id="skrMemDispWhole">Whole</button>
+            <button class="btn "        id="skrMemDispChang">Changed</button>
+        </div>
+      </div>
+      <div id="frisc-memorylist" style="width: 450px; height: 435px; position:absolute; top:35px; overflow: auto ;display:inline-block;">
+      
+      </div>
+    </div>
     <div class="content" style="margin-left: 460px;">
     <div id="frisc-controls" style="float: left; margin-left: 10px;">
       <div id="frisc-cpu-controls" class="form-inline" style="width: 666px;">
@@ -84,19 +100,7 @@
         <button type="button" class="btn" id="frisc-freqset">Set CPU freq</button>
         <button type="button" class="btn btn-primary" id="frisc-clear"><i class="icon-remove-sign icon-white"></i> Clear</button>
       </div>
-      <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
-      <div id="frisc-memcontrols" class="form-inline" style="width: 666px; margin-top: 15px;">
-        <label>Lower memory bound:</label>
-        <input type="text" class="input-mini" id="frisc-mem-lower" value="0" />
-        <label>Upper memory bound:</label>
-        <input type="text" class="input-mini" id="frisc-mem-upper" value="100" />
-        <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
-          <button class="btn"         id="skrBaseRadioDec">DEC</button>
-          <button class="btn active"  id="skrBaseRadioHex">HEX</button>
-        </div>
-        <button type="button" class="btn" id="frisc-mem-refresh">Show memory state</button>
-      </div>
-      <div id="memout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 150px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div> 
+      <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; height: 435px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
     </div>
     <script type="text/javascript">
       key('backspace', function(){ return false; });
@@ -104,8 +108,6 @@
       $("#frisc-input").height(($("body").height() - ($("#frisc-usage").height()) - 40 + "px"));
 
       var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight() * 2)/2 - 40 + "px";
-      $("#cpuout").height(height);
-      $("#memout").height(height);
 
       var _state = "stopped";
 
@@ -160,7 +162,7 @@ lab22 DW 54\n\
 lab20 `END\n\
 lab23 ADD R1, R2, R3\n\
 ; fds fsd';");
-editor.resize();
+        editor.resize();
       };
 
       function simulatorLog(text, marginLeft) {
@@ -181,8 +183,7 @@ editor.resize();
       }
 
       function getBase () {
-        if ($("#skrBaseRadioDec").attr('class')=="btn active") return 10;
-        return 16;
+        if ($("#skrBaseRadioDec").attr('class')=="btn active") return 10; return 16;
       }
 
       function getMemState(lower, upper) {
@@ -196,6 +197,143 @@ editor.resize();
         }
 
         return memStateString;
+      }
+
+      function createMemList(div) {
+        var rowHeight = 18;
+        var lastDivMessage="Back to top?"
+        var ofF = 1.4;
+
+        //Don't edit this
+        var maxRows = Math.floor($('#'+div).height()/rowHeight)*ofF;
+        maxRows = maxRows ? maxRows : 100;
+        if(Math.floor(maxRows/2)*2 == maxRows) maxRows++;
+
+        var base = getBase();
+        var decoded = "";
+        var bgColor = "#ffffff";
+        $("#"+div).html("");
+        
+        for (var i=0; i>=0 && i<maxRows*4 && i<simulator.MEM._memory.length; i+=4) {
+          decoded = simulator.CPU._decode(simulator.MEM.read(i));
+          decoded = decoded ? instructionToString(decoded) : "";
+
+          bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
+
+          $("#"+div).html($("#"+div).html()+"<div style='height:"+rowHeight+"px; width:100%; background-color:"+bgColor+"; position:absolute; top:"+((i/4)*rowHeight)+"px'>"+
+                                              "<div style='display:inline-block; width:10%; ' class='memoryTableNumbering'>"+i.toString(base)+"</div>"+
+                                              "<div style='display:inline-block; width:45%; '>"+simulator.MEM.read(i).toString()+"</div>"+
+                                              "<div style='display:inline-block; width:45%; '>"+decoded+"</div>"+
+                                            "</div>");
+        }
+
+        $("#"+div).html($("#"+div).html()+"<div style='height:"+rowHeight+"px; background-color:#aaaaaa; position:relative; top:"+((simulator.MEM._memory.length/4)*rowHeight)+"px;'>"+lastDivMessage+"</div>");
+        
+        var prevScrollPos = 0;
+        $("#"+div).scroll(function(){
+
+          //Normal scrolling
+          if  (prevScrollPos > $("#"+div).scrollTop()) { //scrolled UP
+            $("#"+div).children().each(function(){
+              if (($(this).position().top>$("#"+div).height()) && ($(this).html()!=lastDivMessage)){
+                //Find the lowest child and it's value
+                var highest = simulator.MEM._memory.length*rowHeight; //highest possible position
+                var highVal = (simulator.MEM._memory.length*rowHeight);
+                $("#"+div).children().each(function(){
+                  if (parseInt($(this).css("top").replace("px",""))<highest) {
+                    highest = parseInt($(this).css("top").replace("px",""));
+                    highVal = parseInt($(this).children().html(),base);
+                  }
+                });
+
+                highVal = highVal - 4;
+                if (highVal>=0) { 
+                  base = getBase();
+                  $(this).css({ top: ''+(highest-rowHeight)+'px' });
+                  decoded = simulator.CPU._decode(simulator.MEM.read(highVal));
+                  decoded = decoded ? instructionToString(decoded) : "";
+
+                  bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
+                  $(this).css("background-color",''+bgColor );
+
+                  $(this).html(""+"<div style='display:inline-block; width:10%; ' class='memoryTableNumbering'>"+highVal.toString(base)+"</div>"+
+                                "<div style='display:inline-block; width:45%; '>"+simulator.MEM.read(highVal).toString()+"</div>"+
+                                "<div style='display:inline-block; width:45%; '>"+decoded+"</div>");
+                }
+              }
+            });
+          } else { //scrolled DOWN
+            $("#"+div).children().each(function(){
+              if (($(this).position().top<(-1*rowHeight)) && ($(this).html()!=lastDivMessage)){
+                //Find the lowest child and it's value
+                var highest = simulator.MEM._memory.length*rowHeight*-1; //highest possible position
+                var highVal = 0;
+                $("#"+div).children().each(function(){
+                  if ((parseInt($(this).css("top").replace("px",""))>highest) && ($(this).html()!=lastDivMessage)) {
+                    highest = parseInt($(this).css("top").replace("px",""));
+                    highVal = parseInt($(this).children().html(),base);
+                  }
+                });
+                highVal = highVal + 4;
+                if (highVal<simulator.MEM._memory.length) { 
+                  base = getBase();
+                  $(this).css({ top: ''+(highest+rowHeight)+'px' });
+
+                  decoded = simulator.CPU._decode(simulator.MEM.read(highVal));
+                  decoded = decoded ? instructionToString(decoded) : "";
+
+                  bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
+                  $(this).css("background-color",''+bgColor );
+
+                  $(this).html(""+"<div style='display:inline-block; width:10%; ' class='memoryTableNumbering'>"+highVal.toString(base)+"</div>"+
+                                "<div style='display:inline-block; width:45%; '>"+simulator.MEM.read(highVal).toString()+"</div>"+
+                                "<div style='display:inline-block; width:45%; '>"+decoded+"</div>");
+                }
+              }
+            });
+          };
+
+          prevScrollPos = $("#"+div).scrollTop();
+
+          //Check if the user scrolled too fast
+          var invisibleCounter = 0;
+          $("#"+div).children().each(function() { if ( (($(this).position().top>$("#"+div).height()) || ($(this).position().top<0)) && ($(this).html()!=lastDivMessage)) { invisibleCounter++; }; });
+          if (invisibleCounter >= maxRows)  { //If all rows are invisible
+            var i = Math.floor((prevScrollPos / rowHeight)) * 4;
+            var x = i; //visual bug fix
+            $("#"+div).children().each(function(){
+              if (($(this).html()!=lastDivMessage) && (i<simulator.MEM._memory.length) && (i>=0)) {
+                base = getBase();
+                decoded = simulator.CPU._decode(simulator.MEM.read(i));
+                decoded = decoded ? instructionToString(decoded) : "";
+
+                bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
+
+                $(this).css({ top: ''+((i/4)*rowHeight)+'px' });
+
+                $(this).html( "<div style='display:inline-block; width:10%; ' class='memoryTableNumbering'>"+i.toString(base)+"</div>"+
+                              "<div style='display:inline-block; width:45%; '>"+simulator.MEM.read(i).toString()+"</div>"+
+                              "<div style='display:inline-block; width:45%; '>"+decoded+"</div>");
+                i += 4;
+              } else if (($(this).html()!=lastDivMessage) && (i>=simulator.MEM._memory.length) && (i>=0) && (x>=0)) { //visual bug fix
+                //fixes minor glitching when the user drags the scroller to the bottom of the memory view;
+                base = getBase();
+                decoded = simulator.CPU._decode(simulator.MEM.read(x));
+                decoded = decoded ? instructionToString(decoded) : "";
+
+                bgColor = (((x/4)%2)==0) ? "#ffffff" : "#f8f8f8";
+
+                $(this).css({ top: ''+((x/4)*rowHeight)+'px' });
+
+                $(this).html( "<div style='display:inline-block; width:10%; ' class='memoryTableNumbering'>"+x.toString(base)+"</div>"+
+                              "<div style='display:inline-block; width:45%; '>"+simulator.MEM.read(x).toString()+"</div>"+
+                              "<div style='display:inline-block; width:45%; '>"+decoded+"</div>");
+                i += 4;
+                x -= 4;
+              };
+            });
+          };
+        });
       }
 
       function changeState(st) {
@@ -290,12 +428,18 @@ editor.resize();
             simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Input program parsed successfully.</b></span>");
   
             changeState("loaded");
+
+            //document.getElementById("frisc-inputdiv").style.display =   "none";
+            //document.getElementById("frisc-memorylist-hold").style.display = "inline";
+            $("#frisc-inputdiv").hide();
+            $("#frisc-memorylist-hold").show();
+            createMemList("frisc-memorylist");
+
           } catch (e) {
             simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
           }
         }
       });
-
       $("#frisc-execute").click(function() {
         if (_state === "loaded") {
           simulator.CPU.run();
@@ -305,7 +449,10 @@ editor.resize();
 
       $("#frisc-stop").click(function() {
         if (_state === "running" || _state === "loaded") {
+          $("#frisc-inputdiv").show();
+          $("#frisc-memorylist-hold").hide();
           simulator.CPU.stop();
+          editor.getSession().setValue(sourceSave.sourceCode);
           changeState("stopped");
         }
       });
@@ -337,7 +484,7 @@ editor.resize();
         memLog(getMemState(lower, higher));
       });
       $("#skrBaseRadioDec, #skrBaseRadioHex").click(function() {
-        // $("#frisc-mem-refresh").click();
+        //document.write("<p>" + sourceSave.sourceCode + "</p>"); //Just testing stuff here
       });
     </script>
     </script>
