@@ -163,6 +163,10 @@ var FRISC = function() {
     loadByteString: function(str) {
       this.reset();
       
+      if (this._size < str.length) {
+        throw new Error("Memory too small to fit program.");
+      }
+ 
       for (var i=0; i<str.length; i++) {
         this.writeb(i, str.charCodeAt(i));
       }
@@ -171,6 +175,10 @@ var FRISC = function() {
     /* Load memory with some program, byte by byte */
     loadBytes: function(bytes) {
       this.reset();
+
+      if (this._size < bytes.length) {
+        throw new Error("Memory too small to fit program.");
+      }
       
       for (var i=0; i<bytes.length; i++) {
         this.writeb(i, bytes[i]);
@@ -180,6 +188,10 @@ var FRISC = function() {
     /* Load memory with some program, binary string by binary string */
     loadBinaryString: function(binaryStrings) {
       this.reset();
+
+      if (this._size < binaryStrings.length) {
+        throw new Error("Memory too small to fit program.");
+      }
       
       for (var i=0; i<binaryStrings.length; i++) {
         this.writeb(i, parseInt(binaryStrings[i], 2));
@@ -193,7 +205,6 @@ var FRISC = function() {
   
   var CPU = {
     // Internal state
-    _state : "stopped",
     _r: {r0:0, r1:0, r2:0, r3:0, r4:0, r5:0, r6:0, r7:0, pc:0, sr:0, iif:1},
     _regMap: { "000" : "r0", "001" : "r1", "010" : "r2", "011" : "r3", "100" : "r4", "101" : "r5", "110" : "r6", "111" : "r7" },
     _f: {INT2:1024, INT1:512, INT0:256, GIE:128, EINT2:64, EINT1:32, EINT0:16, Z:8, V:4, C:2, N:1},   //C=prijenos, V=preljev, Z=ništica, N=predznak

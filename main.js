@@ -16,6 +16,22 @@ var debug = function(str) {
   }
 };
 
+var cpufreq = 1000;
+
+if (argv.indexOf("-cpufreq") > -1) {
+  cpufreq = parseInt(argv[argv.indexOf("-cpufreq") + 1]);
+  argv.splice(argv.indexOf("-cpufreq") + 1, 1);
+  argv.splice(argv.indexOf("-cpufreq"), 1);
+}
+
+var memsize = 256*1024;
+
+if (argv.indexOf("-memsize") > -1) {
+  memsize = 1024*parseInt(argv[argv.indexOf("-memsize") + 1]);
+  argv.splice(argv.indexOf("-memsize") + 1, 1);
+  argv.splice(argv.indexOf("-memsize"), 1);
+}
+
 console.error("");
 console.error("*********************************************************");
 console.error("** FRISCjs - FRISC simulator in JavaScript");
@@ -36,6 +52,20 @@ console.error("** ");
 console.error("**     > node main.js -v filename");
 console.error("**   or");
 console.error("**     > cat filename | node main.js -v");
+console.error("** ");
+console.error("** The CPU frequency (in Hz) can be set with the -cpufreq");
+console.error("**   flag argument (default value is 1000):");
+console.error("** ");
+console.error("**     > node main.js -cpufreq 2 filename");
+console.error("**   or");
+console.error("**     > cat filename | node main.js -cpufreq 2");
+console.error("** ");
+console.error("** Memory size (in number of 1K locations) can be set with");
+console.error("**   the -memsize flag argument (default value is 256):");
+console.error("** ");
+console.error("**     > node main.js -memsize 64 filename");
+console.error("**   or");
+console.error("**     > cat filename | node main.js -memsize 64");
 console.error("** ");
 console.error("** Execution flow:");
 console.error("** ");
@@ -68,7 +98,7 @@ if (argv.length > 2) {
   console.error("*********************************************************");
   console.error("");
 
-  if (!(path.existsSync(filename))) {
+  if (!(fs.existsSync(filename))) {
     console.error("ERROR: File does not exist!");
     console.log("ERROR");
   } else {
@@ -143,13 +173,13 @@ function runProgram(frisc_asmsource) {
     var result = parser.parse(frisc_asmsource.toString());
   } catch (e) { 
     console.error("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
-    console.log("ERROR");
     return;
   }
 
   simulator = new sim();
-  simulator.CPU._frequency = 1000;
-   
+  simulator.MEM._size = memsize;
+  simulator.CPU._frequency = cpufreq;
+
   simulator.CPU.onBeforeRun = function() {
     console.error("");
     console.error("*********************************************************");
@@ -184,6 +214,12 @@ function runProgram(frisc_asmsource) {
     console.log(simulator.CPU._r.r6);
   };
   
-  simulator.MEM.loadBinaryString(result.mem);
+  try {
+    simulator.MEM.loadBinaryString(result.mem);
+  } catch (e) {
+    console.error("Loading error -- " + e.toString());
+    return;
+  }
+  
   simulator.CPU.run();
 } 

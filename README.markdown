@@ -6,12 +6,14 @@ This project was inspited by the [GameBoy emulator in JavaScript](http://imranna
 
 <img src="https://raw.github.com/izuzak/FRISCjs/master/friscjs-screenshot.png" />
 
-## 
-
 The FRISCjs simulator has two parts: a [FRISC assembler](https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](https://github.com/izuzak/FRISCjs/blob/master/friscjs.js) which executes machine code.
 
 Furthermore, there are two user interfaces to the simulator: a [Web application graphical interface](https://github.com/izuzak/FRISCjs/blob/master/main.html) and a [NodeJS command-line interface](https://github.com/izuzak/FRISCjs/blob/master/main.js). 
 The Web application interface is available [here](https://izuzak.github.com/FRISCjs/main.html).
+
+## FRISCjs API
+
+The API of the core FRISCjs components is described [here](https://github.com/izuzak/FRISCjs/blob/master/API.markdown).
 
 ## Credits
 
@@ -24,6 +26,7 @@ FRISCjs is built with many open-source projects:
  * [jQuery](http://jquery.com) - used for the Web application version of the simulator.
  * [Bootstrap](http://twitter.github.com/bootstrap) - used for the Web application version of the simulator.
  * [Ace](http://ace.ajax.org/) - used as the editor for the Web application version of the simulator.
+ * [Keymaster](https://github.com/madrobby/keymaster) - used for reconfiguring/disabling keyboard shortcuts. 
 
 ## License
 
