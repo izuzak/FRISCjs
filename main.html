@@ -103,25 +103,6 @@
                       </div>
                     </td>
                   </tr>
-                  <tr>
-                    <td> Value: </td>
-                    <td>
-                      <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
-                        <button class="btn active disabled"  id="skrBaseRadioDec">DEC</button>
-                        <button class="btn disabled"         id="skrBaseRadioHex">BIN</button>
-                        <button class="btn disabled"         id="skrBaseRadioHex">HEX</button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td> Memory Display: </td>
-                    <td>
-                      <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
-                          <button class="btn active disabled"  id="skrMemDispWhole">Whole</button>
-                          <button class="btn disabled"  id="skrMemDispChang">Changed</button>
-                      </div>
-                    </td>
-                  </tr>
                 </table>
               </div>
             </div>
@@ -555,10 +536,10 @@ lab23 ADD R1, R2, R3\n\
 
       $("#frisc-memorylist-settingstoggle").click(function() {
         if ($("#frisc-memorylist-settings").is(":visible")) {
-          $('#frisc-memorylist').animate({ height: '+=140', top:'-=140' }, 603, function() {;});
+          $('#frisc-memorylist').animate({ height: '+=40', top:'-=40' }, 603, function() {;});
           $("#frisc-memorylist-settings").hide("slow");
         } else {
-          $('#frisc-memorylist').animate({ height:'-=140', top:'+=140' }, 603, function() {;});
+          $('#frisc-memorylist').animate({ height:'-=40', top:'+=40' }, 603, function() {;});
           $("#frisc-memorylist-settings").show("slow");
         }
       });
