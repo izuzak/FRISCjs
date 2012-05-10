@@ -258,6 +258,7 @@ lab23 ADD R1, R2, R3\n\
                 //Find the lowest child and it's value
                 var highest = simulator.MEM._memory.length*rowHeight; //highest possible position
                 var highVal = (simulator.MEM._memory.length*rowHeight);
+                base = getBase();
                 $("#"+div).children().each(function(){
                   if (parseInt($(this).css("top").replace("px",""))<highest) {
                     highest = parseInt($(this).css("top").replace("px",""));
@@ -288,6 +289,7 @@ lab23 ADD R1, R2, R3\n\
                 //Find the lowest child and it's value
                 var highest = simulator.MEM._memory.length*rowHeight*-1; //highest possible position
                 var highVal = 0;
+                base = getBase();
                 $("#"+div).children().each(function(){
                   if ((parseInt($(this).css("top").replace("px",""))>highest) && ($(this).html()!=lastDivMessage)) {
                     highest = parseInt($(this).css("top").replace("px",""));
@@ -528,7 +530,7 @@ lab23 ADD R1, R2, R3\n\
       //memorylist search
       $("#skrMemLisSearch").click(function() {
         var searcher = parseInt($("#skrMemLisSearchField").val(), getBase())/4;
-        $('#frisc-memorylist').animate({scrollTop: (18*searcher)}, 1000 ,function() {;});
+        $('#frisc-memorylist').animate({scrollTop: (18*searcher)}, 0 ,function() {;});
       });
 
       //memorylist numbering
