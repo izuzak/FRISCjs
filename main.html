@@ -76,38 +76,24 @@
           </div>
 
           <div class="sidebar ace_editor ace-tm" id="frisc-memorylist-hold" style="width: 450px; height: 495px; display:none;">
-            <div style="width: 448px; height: 30px; display:inline-block;  position:absolute; top:0px; border: 1px solid #dddddd; border-collapse: separate; border-radius: 4px 4px 0px 0px; background-color:#f1f1f1;">
-              <div style='display:inline-block; width:40px;  border-right: 1px solid #000000; padding-left: 4px;'>#</div>
-              <div style='display:inline-block; width:185px; border-right: 1px solid #000000; padding-left: 4px;'>Value</div>
-              <div style='display:inline-block; width:100px;  padding-left: 4px;'>Command</div>
-              <div style="display:inline-block; vertical-align: middle; padding-top: 1px;">
-                    <button class="btn btn-primary"   id="frisc-memorylist-searchtoggle"   data-toggle="button"><i class="icon-search icon-white"></i></button>
-                    <button class="btn"               id="frisc-memorylist-settingstoggle" data-toggle="button"><i class="icon-wrench"></i></button>
-              </div>
-              <div id="frisc-memorylist-search" style="display: none; margin-top: 4px;" class="well form-inline">
+            <div style="width: 448px; height: 30px; display:inline-block;  position:absolute; top:0px; border: 1px solid #dddddd; border-collapse: separate; border-radius: 4px 4px 0px 0px; background-color:#f1f1f1; padding-top:5px;">
+              <div style='display:inline-block; width:40px;  border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>#</div>
+              <div style='display:inline-block; width:185px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Value</div>
+              <div style='display:inline-block; width:100px;  padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Command</div>
+            </div>
+
+            <div id="frisc-memorylist" style="width: 448px; height: 422px; position:absolute; top:31px; overflow: scroll; overflow-x:hidden; display:inline-block; border: 1px solid #dddddd; border-radius: 0px 0px 4px 4px;">
+            </div>
+
+            <div id="frisc-memorylist-search" style="border: 1px solid #dddddd; border-collapse: separate; border-radius: 0px 0px 4px 4px; background-color:#f1f1f1; position:absolute; bottom:0px; width: 448px; height: 35px; padding-top: 6px;">
+              <div style="padding-left: 6px;">
                   <input  type="text" class="input-medium search-query" id="skrMemLisSearchField">
                   <button type="submit" class="btn" id="skrMemLisSearch">Go to</button>
                   <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
-                    <button class="btn"         id="skrBaseRadioDecSea">DEC</button>
-                    <button class="btn active"  id="skrBaseRadioHexSea">HEX</button>
-                  </div>
-              </div>
-              <div id="frisc-memorylist-settings" style="display: none; margin-top: 4px;" class="form-inline">
-                <table class="table table-striped table-bordered table-condensed">
-                  <tr>
-                    <td> Numbering: </td>
-                    <td>
-                      <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
                         <button class="btn"         id="skrBaseRadioDec">DEC</button>
                         <button class="btn active"  id="skrBaseRadioHex">HEX</button>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
+                  </div>
               </div>
-            </div>
-            <div id="frisc-memorylist" style="width: 448px; height: 465px; position:absolute; top:31px; overflow: scroll; overflow-x:hidden; display:inline-block; border: 1px solid #dddddd; border-radius: 0px 0px 4px 4px;">
-            
             </div>
           </div>
 
@@ -249,6 +235,7 @@ lab23 ADD R1, R2, R3\n\
         for (var i=0; i>=0 && i<maxRows*4 && i<simulator.MEM._memory.length; i+=4) {
           decoded = simulator.CPU._decode(simulator.MEM.read(i));
           decoded = decoded ? instructionToString(decoded) : "";
+          if (decoded == "MOVE r0 r0") decoded="";
 
           bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
 
@@ -284,6 +271,7 @@ lab23 ADD R1, R2, R3\n\
                   $(this).css({ top: ''+(highest-rowHeight)+'px' });
                   decoded = simulator.CPU._decode(simulator.MEM.read(highVal));
                   decoded = decoded ? instructionToString(decoded) : "";
+                  if (decoded == "MOVE r0 r0") decoded="";
 
                   bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
                   $(this).css("background-color",''+bgColor );
@@ -313,6 +301,7 @@ lab23 ADD R1, R2, R3\n\
 
                   decoded = simulator.CPU._decode(simulator.MEM.read(highVal));
                   decoded = decoded ? instructionToString(decoded) : "";
+                  if (decoded == "MOVE r0 r0") decoded="";
 
                   bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
                   $(this).css("background-color",''+bgColor );
@@ -338,6 +327,7 @@ lab23 ADD R1, R2, R3\n\
                 base = getBase();
                 decoded = simulator.CPU._decode(simulator.MEM.read(i));
                 decoded = decoded ? instructionToString(decoded) : "";
+                if (decoded == "MOVE r0 r0") decoded="";
 
                 bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
 
@@ -352,6 +342,7 @@ lab23 ADD R1, R2, R3\n\
                 base = getBase();
                 decoded = simulator.CPU._decode(simulator.MEM.read(x));
                 decoded = decoded ? instructionToString(decoded) : "";
+                if (decoded == "MOVE r0 r0") decoded="";
 
                 bgColor = (((x/4)%2)==0) ? "#ffffff" : "#f8f8f8";
 
@@ -534,41 +525,23 @@ lab23 ADD R1, R2, R3\n\
         }
       });
 
-      $("#frisc-memorylist-settingstoggle").click(function() {
-        if ($("#frisc-memorylist-settings").is(":visible")) {
-          $('#frisc-memorylist').animate({ height: '+=40', top:'-=40' }, 603, function() {;});
-          $("#frisc-memorylist-settings").hide("slow");
-        } else {
-          $('#frisc-memorylist').animate({ height:'-=40', top:'+=40' }, 603, function() {;});
-          $("#frisc-memorylist-settings").show("slow");
-        }
-      });
-      $("#frisc-memorylist-searchtoggle").click(function() {
-        if ($("#frisc-memorylist-search").is(":visible")) {
-          $('#frisc-memorylist').animate({ height:'+=80',top:'-=80' }, 603, function() {;});
-          $("#frisc-memorylist-search").hide("slow");
-          
-        } else {
-          $('#frisc-memorylist').animate({ height: '-=80', top:'+=80' }, 603, function() {;});
-          $("#frisc-memorylist-search").show("slow");
-        }
-      });
-
       //memorylist search
       $("#skrMemLisSearch").click(function() {
-        var base = 16;
-        if ($("#skrBaseRadioDecSea").attr('class')=="btn active") base = 10;
-        var searcher = parseInt($("#skrMemLisSearchField").val(), base)/4;
+        var searcher = parseInt($("#skrMemLisSearchField").val(), getBase())/4;
         $('#frisc-memorylist').animate({scrollTop: (18*searcher)}, 1000 ,function() {;});
       });
 
       //memorylist numbering
-      $("#skrBaseRadioDec, #skrBaseRadioHex").click(function() {
-        var base = 16;
-        var baseto = 10
-        if ($("#skrBaseRadioDec").attr('class')=="btn active") { base = 10; baseto = 16; };
+      $("#skrBaseRadioDec").click(function() {
+        if ($("#skrBaseRadioDec").attr('class')=="btn active") return;
         $(".memoryTableNumbering").each(function(){
-          $(this).html(parseInt($(this).html(), base).toString(baseto));
+          $(this).html(parseInt($(this).html(), 16).toString(10));
+        });
+      });
+      $("#skrBaseRadioHex").click(function() {
+        if ($("#skrBaseRadioHex").attr('class')=="btn active") return;
+        $(".memoryTableNumbering").each(function(){
+          $(this).html(parseInt($(this).html(), 10).toString(16));
         });
       });
     </script>
