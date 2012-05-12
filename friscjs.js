@@ -136,18 +136,30 @@ var FRISC = function() {
     /* Write 8-bit byte to a given address */
     writeb: function(addr, val) {
       this._memory[addr] = 0xFF & val;
+      
+      if (typeof this.onMemoryWrite !== 'undefined') {
+        this.onMemoryWrite(addr, val, 1);
+      }
     },
     
     /* Write 16-bit word to a given address */
     writew: function(addr, val) {
       this.writeb(addr, val);
       this.writeb(addr+1, val >> 8);
+      
+      if (typeof this.onMemoryWrite !== 'undefined') {
+        this.onMemoryWrite(addr, val, 2);
+      }
     },
     
     /* Write 32-bit word to a given address */
     write: function(addr, val) {
       this.writew(addr, val);
       this.writew(addr+2, val >> 16);
+
+      if (typeof this.onMemoryWrite !== 'undefined') {
+        this.onMemoryWrite(addr, val, 4);
+      }
     },
     
     /* Reset memory to initial state */
