@@ -17,6 +17,55 @@
     <script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/bootstrap-button.js"></script>
     <script type="text/javascript" src="https://raw.github.com/madrobby/keymaster/master/keymaster.js"></script>
     <script type="text/javascript" src="ace-mode-frisc.js"></script>
+    <style>
+      #cpustate {
+        margin-top: 8px;
+      }
+  
+      .cpu-state-div {
+        font-size: 12pt; 
+        margin-top: 2px; 
+        display: inline-block; 
+        height: 40px; 
+        border: 1px solid rgb(102, 102, 102);
+        width: 160px; 
+        margin-right: 2px;
+      }
+      
+      .cpu-reg-label {
+        width: 54px; 
+      }
+      
+      .cpu-reg-value {
+        width: 105px; 
+      }
+
+      .cpu-sr-label {
+        width:105px; 
+      }
+      
+      .cpu-sr-value {
+        width: 54px; 
+      }
+      
+      .cpu-state-lab { 
+        height: 40px; 
+        border-right: 1px solid rgb(102, 102, 102);
+        background-color: #D4CDCF; 
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+        font-weight: bold;
+      }
+      
+      .cpu-state-val {
+        height: 40px; 
+        background-color: rgba(230, 228, 228, 0.53); 
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
     <div class="container" style="width: 1140px">
@@ -114,13 +163,93 @@
               <input id="frisc-memsize" type="number" min="1" step="1" max="1000" class="input-mini" style="margin-bottom: 0px;" value="256" />
             </div>
             <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
+            <div id="cpustate" style="margin-top: 8px;" >
+              <div id="cpu_r0" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R0 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r1" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R1 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r2" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R2 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r3" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R3 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r4" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R4 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r5" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R5 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r6" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R6 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r7" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> R7 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_pc" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> PC </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_sr" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> SR </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_iif" class="cpu-state-div"> 
+                <div class="cpu-reg-label cpu-state-lab"> IIF </div>
+                <div class="cpu-reg-value cpu-state-val"> 1 </div>
+              </div>
+              <br>
+              <div id="cpu_N" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-N </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_C" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-C </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_V" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-V </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_Z" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-Z </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_EINT0" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-EINT0 </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_EINT1" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-EINT1 </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_EINT2" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-EINT2 </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_GIE" class="cpu-state-div"> 
+                <div class="cpu-sr-label cpu-state-lab"> SR-GIE </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
     <script type="text/javascript">
       key('backspace', function(){ return false; });
 
-      var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight()) - 40 + "px";
+      var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight()) - 281 + "px";
       $("#cpuout").height(height);
       $("#memout").height(height);
 
@@ -412,6 +541,16 @@ lab23 ADD R1, R2, R3\n\
         }
       }
       
+      function updateCpuState() {
+        for (var key in simulator.CPU._r) {
+          $("#cpu_" + key + " .cpu-state-val").text(simulator.CPU._r[key]);
+        }
+        
+        for (var flag in simulator.CPU._f) {
+          $("#cpu_" + flag + " .cpu-state-val").text(simulator.CPU._getFlag(simulator.CPU._f[flag]));
+        }
+      }
+      
       simulator.CPU.onBeforeRun = function() {
         simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Starting (or continuing) simulation!</b></span>");
       };
@@ -423,6 +562,7 @@ lab23 ADD R1, R2, R3\n\
       
       simulator.CPU.onAfterCycle = function() {
         simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
+        updateCpuState();
       };
 
       simulator.CPU.onBeforeExecute = function(instruction) {
@@ -464,6 +604,7 @@ lab23 ADD R1, R2, R3\n\
           $("#frisc-inputdiv").hide("medium");
           $("#frisc-memorylist-hold").show("medium");
           createMemList("frisc-memorylist");
+          updateCpuState();
         }
       });
 
