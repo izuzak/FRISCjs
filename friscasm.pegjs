@@ -475,7 +475,7 @@ reladdr = immaddr
 rinaddr = "(" value:regaddr ")" { return value; }
 
 rinaddroff = "(" reg:register val:((numberWithoutBase) / ("")) ")" {
-      return {type : "regoff", value : reg, offset : val[1] === "" ? 0 : val[1]  };
+      return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
     }
 
 impaddr = regaddr

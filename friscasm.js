@@ -1038,7 +1038,7 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, reg, val) {
-              return {type : "regoff", value : reg, offset : val[1] === "" ? 0 : val[1]  };
+              return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
             })(pos0, result0[1], result0[2]);
         }
         if (result0 === null) {
