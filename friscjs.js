@@ -403,8 +403,8 @@ var FRISC = function() {
         if (typeof cond === "undefined") {
           args = null;
         } else {
-          var isRETI = getBitString(statement, 0, 1) === "1" && getBitString(statement, 1, 2) === "0";
-          var isRETN = getBitString(statement, 0, 1) === "1" && getBitString(statement, 1, 2) === "1";
+          var isRETI = getBitString(statement, 0, 0) === "1" && getBitString(statement, 1, 1) === "0";
+          var isRETN = getBitString(statement, 0, 0) === "1" && getBitString(statement, 1, 1) === "1";
           
           args.push(cond);
           args.push(isRETI);

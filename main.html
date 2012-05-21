@@ -537,7 +537,15 @@ lab23 ADD R1, R2, R3\n\
         if (typeof instruction.args === 'undefined' || instruction.args === null) {
           return instruction.op;
         } else {
-          return instruction.op + " " + instruction.args.join(" ");
+          if (instruction.op === 'RET' && instruction.args[1] === true) {
+            return 'RETI ' + instruction.args[0];
+          } else if (instruction.op === 'RET' && instruction.args[2] === true) {
+            return 'RETN ' + instruction.args[0];
+          } else if (instruction.op === 'RET') {
+            return 'RET ' + instruction.args[0];
+          } else {
+            return instruction.op + " " + instruction.args.join(" ");
+          }
         }
       }
       
