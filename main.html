@@ -16,6 +16,7 @@
     <script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js"></script>
     <script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/bootstrap-button.js"></script>
     <script type="text/javascript" src="https://raw.github.com/madrobby/keymaster/master/keymaster.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/janl/mustache.js/master/mustache.js"></script>
     <script type="text/javascript" src="ace-mode-frisc.js"></script>
     <style>
       #cpustate {
@@ -145,7 +146,7 @@
             </div>
           </div>
 
-          <div class="content" style="margin-left: 460px;">
+          <div class="content" style="margin-left: 460px; height: 500px;">
           <div id="frisc-controls" style="float: left; margin-left: 10px;">
             <div id="frisc-cpu-controls" class="form-inline" style="width: 666px;">
               <button id="frisc-load" type="button" class="btn btn-success"><i class="icon-download-alt icon-white"></i> Load</button>
@@ -244,6 +245,35 @@
             </div>
           </div>
         </div>
+        <div style="margin-bottom: 25px; width: 1140px;">
+          <legend style="margin-bottom: 15px;">IO units</legend>
+          <div class="form-inline" style="margin-bottom: 25px;">
+            <form id="ioUnitFormStatic">
+              <input class="span2" type="text" style="margin-bottom: 0px;" id="ioUnitName" required pattern="[A-Za-z_0-9]{3,}" placeholder="Enter IO unit name…" />
+              <select class="span2" id="ioUnitType" required>
+                <option value="">Select unit type…</option>
+                <option value="generic">Generic IO unit</option>
+                <option value="frisc-ct">FRISC CT</option>
+                <option value="frisc-pio">FRISC PIO</option>
+                <option value="frisc-dma">FRISC DMA</option>
+              </select>
+              <select class="span2" id="ioUnitIntLevel" required>
+                <option value="">Select interrupt…</option>
+                <option value="INT0">INT0 (maskable)</option>
+                <option value="INT1">INT1 (maskable)</option>
+                <option value="INT2">INT2 (maskable)</option>
+                <option value="INT3">INT3 (unmaskable)</option>
+              </select>
+              <label> Memory mapping start addr (HEX): </label>
+              <input type="text" class="span1" id="ioUnitMemmapStart" value="0" required/>
+              <label> Number of 4B locations: </label>
+              <input type="text" class="span1" id="ioUnitMemmapCount" value="0" required/>
+              <button type="submit" class="btn btn-success" id="addIoUnit" value="Search"><i class="icon-plus icon-white"></i> Add</button>
+            </form>
+          </div>
+          <div class="row" id="ioUnits">
+          </div>
+        </div>
       </div>
     </div>
     <script type="text/javascript">
@@ -267,7 +297,6 @@
         document.getElementById('frisc-inputdiv').style.fontSize='10pt';
         document.getElementById('frisc-inputdiv').style.fontFamily='courier new';
         $(".ace_gutter").width("40px");
-        editor.renderer.setHScrollBarAlwaysVisible(false);
         editor.getSession().setValue("; aluop\n\
 lab1 ADD R1, R2, R3\n\
 lab2 ADD r2, 5, r5\n\
@@ -307,6 +336,7 @@ lab20 `END\n\
 lab23 ADD R1, R2, R3\n\
 ; fds fsd';");
         editor.resize();
+        editor.renderer.setHScrollBarAlwaysVisible(false);
         changeState("stopped");
       };
 
@@ -323,12 +353,8 @@ lab23 ADD R1, R2, R3\n\
         $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
       }
 
-      function memLog(text) {
-        $("#memout").html(text);
-      }
-
       function getBase () {
-        if ($("#skrBaseRadioDec").attr('class')=="btn active") return 10;
+        if ($("#skrBaseRadioDec").hasClass("active")) return 10;
         return 16;
       }
 
@@ -489,16 +515,16 @@ lab23 ADD R1, R2, R3\n\
 
       function changeState(st) {
         if (st === "stopped") {
-          enableElements(["#frisc-load", "#frisc-freq", "#frisc-memsize"]);
+          enableElements(["#frisc-load", "#frisc-freq", "#frisc-memsize", ".io-del", "#addIoUnit"]);
           disableElements(["#frisc-execute", "#frisc-next", "#frisc-pause", "#frisc-stop"]);
           _state = st;
         } else if (st ==="loaded") {
           enableElements(["#frisc-execute", "#frisc-next", "#frisc-stop"]);
-          disableElements(["#frisc-load", "#frisc-pause", "#frisc-freq", "#frisc-memsize"]);
+          disableElements(["#frisc-load", "#frisc-pause", "#frisc-freq", "#frisc-memsize", ".io-del", "#addIoUnit"]);
           _state = st;
         } else if (st === "running") {
           enableElements(["#frisc-stop", "#frisc-pause", "#frisc-next"]);
-          disableElements(["frisc-execute", "#frisc-load", "#frisc-freq", "#frisc-memsize"]);
+          disableElements(["frisc-execute", "#frisc-load", "#frisc-freq", "#frisc-memsize", ".io-del", "#addIoUnit"]);
           _state = st;
         }
       }
@@ -580,12 +606,20 @@ lab23 ADD R1, R2, R3\n\
       simulator.CPU.onStop = function() {
         simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-warning'><b>FRISC processor stopped!</b></span>");
         changeState("stopped");
+        onStopInternal();
       };
 
       $("#frisc-load").click(function() {
         if (_state === "stopped") {
           try {
             simulator.CPU.reset();
+            
+            var ioUnits = simulator.IO.getIoUnits();
+
+            for (var i=0; i<ioUnits.length; i++) {
+              simulator.IO.getIoUnit(ioUnits[i]).reset();
+            }
+            
             var source = editor.getSession().getValue();
             if (source.length > 0 && source[source.length-1] !== '\n') {
               source += '\n';
@@ -626,14 +660,22 @@ lab23 ADD R1, R2, R3\n\
       $("#frisc-stop").click(function() {
         if (_state === "running" || _state === "loaded") {
           simulator.CPU.stop();
-          changeState("stopped");
-          //Hide the memory list
-          $("#frisc-inputdiv").show("fast");
-          $("#frisc-memorylist-hold").hide("fast");
-          if ($("#frisc-memorylist-search").is(":visible")) $('#frisc-memorylist-searchtoggle').click();
-          if ($("#frisc-memorylist-settings").is(":visible")) $('#frisc-memorylist-settingstoggle').click();
         }
       });
+      
+      function onStopInternal() {
+        //Hide the memory list
+        $("#frisc-inputdiv").show("fast");
+        $("#frisc-memorylist-hold").hide("fast");
+        
+        if ($("#frisc-memorylist-search").is(":visible")) {
+          $('#frisc-memorylist-searchtoggle').click();
+        }
+        
+        if ($("#frisc-memorylist-settings").is(":visible")) {
+          $('#frisc-memorylist-settingstoggle').click();
+        }
+      }
 
       $("#frisc-next").click(function() {
         if (_state === "running" || _state === "loaded") {
@@ -651,22 +693,11 @@ lab23 ADD R1, R2, R3\n\
       $("#frisc-clear").click(function() {
         $("#cpuout").html("");
       });
-
-      $("#frisc-freqset").click(function() {
-        simulator.CPU._frequency = parseFloat($("#frisc-freq").val());
-      });
-
-      $("#frisc-mem-refresh").click(function() {
-        var lower  = parseInt($("#frisc-mem-lower").val(), getBase());
-        var higher = parseInt($("#frisc-mem-upper").val(), getBase());
-        memLog(getMemState(lower, higher));
-      });
       
       $("#frisc-showhidesettings").click(function() {
         if ($("#frisc-settings").is(":visible")) {
           $('#cpuout').animate({ height: height }, 603, function() {;} );
           $("#frisc-settings").hide("slow");
-          
         } else {
           $('#cpuout').animate({ height: parseInt(height)-$("#frisc-settings").outerHeight(true) }, 603, function() {;} );
           $("#frisc-settings").show("slow");
@@ -692,6 +723,279 @@ lab23 ADD R1, R2, R3\n\
           $(this).html(parseInt($(this).html(), 10).toString(16));
         });
       });
+    </script>
+    <script type="text/javascript">
+      var ioUnitMustacheTemplate = ' \
+        <div id="iounit-{{id}}" class="form-inline" style="-moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; -moz-box-shadow: 0px 0px 4px #000000; -webkit-box-shadow: 0px 0px 4px #000000; box-shadow: 0px 0px 4px #000000; padding: 5px; margin-left: 20px; margin-bottom:20px; width: 550px; float: left;"> \
+          <div class="form-inline" style="margin-bottom: 10px;"> \
+            <button type="button" class="io-del btn btn-danger"><i class="icon-remove-sign icon-white"></i></button> \
+            <label class="btn" style="font-size: 20px; color: black; opacity: 1;" disabled><b> {{name}}</b>, {{summary}} </label>\
+          </div> \
+          {{#intLevel}} \
+          <div class="form-inline" style="margin-bottom: 10px;"> \
+            <label>Interrupt state ({{intLevel}}):</label> \
+            {{#areFieldsEditable}} \
+            <input type="text" class="input-mini io-int" value="0" /> \
+            {{/areFieldsEditable}} \
+            {{^areFieldsEditable}} \
+            <span class="uneditable-input input-mini io-int" value="0">0</span> \
+            {{/areFieldsEditable}} \
+          </div> \
+          {{/intLevel}} \
+          <table class="table table-bordered table-condensed" style="margin-bottom: 5px;"> \
+            <thead> \
+              <tr> \
+                <th> Address HEX </th> \
+                <th style="width: 90px;"> Value HEX </th> \
+                <th style="width: 90px;"> Value DEC </th> \
+                <th style="width: 240px;"> Value BIN </th> \
+              </tr> \
+            </thead> \
+            <tbody> \
+              {{#addresses}} \
+              <tr class="io-loc-{{loc}}"> \
+                <td> <span class="uneditable-input io-loc" style="width: 75px;"> {{lochex}} </span> </td> \
+                {{#areFieldsEditable}} \
+                <td> <input type="text" style="width: 80px;" class="input io-mem-hex" value="{{hex}}" /> </td> \
+                <td> <input type="text" style="width: 80px;" class="input io-mem-dec" value="{{dec}}" /> </td> \
+                <td> <input type="text" style="width: 230px;" class="input io-mem-bin" value="{{bin}}" /> </td> \
+                {{/areFieldsEditable}} \
+                {{^areFieldsEditable}} \
+                <td> <span style="width: 80px;" class="uneditable-input io-mem-hex" value="{{hex}}"> {{hex}} </span> </td> \
+                <td> <span style="width: 80px;" class="uneditable-input io-mem-dec" value="{{dec}}"> {{dec}} </span> </td> \
+                <td> <span style="width: 230px;" class="uneditable-input io-mem-bin" value="{{bin}}"> {{bin}} </span> </td> \
+                {{/areFieldsEditable}} \
+              </tr> \
+              {{/addresses}} \
+            </tbody> \
+          </table> \
+          </div>';
+      $("#ioUnitType").change(function () {
+        $("#ioUnitFormDynamic").html("");
+        $("#frisc-ct-freq").remove();
+        $("#frisc-ct-freq-label").remove();
+        $("#frisc-pio-freq").remove();
+        $("#frisc-pio-freq-label").remove();
+        
+        if ($(this).val() === 'generic') {
+          defineGenericIoUnitTypeForm();
+        } else if ($(this).val() === 'frisc-ct') {
+          defineFriscCtIoUnitTypeForm();
+        } else if ($(this).val() === 'frisc-pio') {
+          defineFriscPioIoUnitTypeForm();
+        } else if ($(this).val() === 'frisc-dma') {
+          defineFriscDmaIoUnitTypeForm();
+        }
+      });
+      
+      function convertIoUnitNameToId(ioUnitName) {
+        return ioUnitName.toLowerCase();
+      }
+      
+      $("#ioUnitFormStatic").submit(function() {
+        var ioUnitName = $("#ioUnitName").val();
+        var ioUnitId = convertIoUnitNameToId(ioUnitName);
+        var intLevel = parseInt($("#ioUnitIntLevel").val()[3]);
+        var memmapStart = parseInt($("#ioUnitMemmapStart").val(), 16);
+        var memmapCount = parseInt($("#ioUnitMemmapCount").val(), 10);
+        
+        var addresses = [];
+        
+        for (var i=0; i<memmapCount; i++) {
+          addresses.push({hex : 0, bin : 0, dec : 0, loc : i*4 + memmapStart, lochex : formatHexNumber((i*4 + memmapStart).toString(16), 8)});
+        }
+        
+        var d = {
+          id : ioUnitId,
+          name : ioUnitName,
+          intLevel : (intLevel !== null) ? "INT" + intLevel : intLevel,
+          addresses : addresses,
+        };
+        
+        if (($("#ioUnitType").val() === 'generic')) {   
+          d.summary = "Generic IO unit";
+          d.areFieldsEditable = true;
+        } else if ($("#ioUnitType").val() === 'frisc-ct') {
+          var frequency = parseInt($("#frisc-ct-freq").val());
+          d.summary = "FRISC-CT unit, " + frequency + "Hz";
+          d.areFieldsEditable = false;
+          d.freq = frequency;
+        } else if ($("#ioUnitType").val() === 'frisc-pio') {
+          var frequency = parseInt($("#frisc-pio-freq").val());
+          d.summary = "FRISC-PIO unit, " + frequency + "Hz";
+          d.areFieldsEditable = false;
+          d.freq = frequency;
+        } else if ($("#ioUnitType").val() === 'frisc-dma') {
+          d.summary = "FRISC-DMA unit";
+          d.areFieldsEditable = false;
+        }
+        
+        try {
+          var ioUnit = null;
+          if (($("#ioUnitType").val() === 'generic')) {
+            ioUnit = simulator.IO.createGenericIoUnit(ioUnitId, { memMapAddrCount : memmapCount, memMapAddrStart : memmapStart, intLevel : intLevel});
+          } else if ($("#ioUnitType").val() === 'frisc-ct') {
+            ioUnit = simulator.IO.createFriscCtIoUnit(ioUnitId, { memMapAddrCount : memmapCount, memMapAddrStart : memmapStart, intLevel : intLevel, frequency : d.freq });
+          } else if ($("#ioUnitType").val() === 'frisc-pio') {
+            ioUnit = simulator.IO.createFriscPioIoUnit(ioUnitId, { memMapAddrCount : memmapCount, memMapAddrStart : memmapStart, intLevel : intLevel, frequency : d.freq });
+          } else if ($("#ioUnitType").val() === 'frisc-dma') {
+            ioUnit = simulator.IO.createFriscDmaIoUnit(ioUnitId, { memMapAddrCount : memmapCount, memMapAddrStart : memmapStart, intLevel : intLevel });
+          }
+        
+          simulator.IO.addIoUnit(ioUnit);
+          
+          var s = Mustache.render(ioUnitMustacheTemplate, d);
+          $("#ioUnits").append(s);
+          
+          $("#iounit-" + ioUnitId + " .io-int").keyup(function(ioUnitId) {
+            return function() {
+              var ioIntVal = $("#iounit-" + ioUnitId + " .io-int").val();
+              if (ioIntVal.length > 0 && parseInt(ioIntVal) !== 0) {
+                simulator.IO.generateInterrupt(ioUnitId);
+              }
+            };
+          }(ioUnitId));
+          
+          for (var i=0; i<memmapCount; i++) {
+            var loc = i*4 + memmapStart;
+            
+            $(".io-loc-" + loc + " .io-mem-hex").keyup(function(ioUnitId, loc) {
+              return function() {
+                updateIoMemory(ioUnitId, loc, "hex");
+              };
+            }(ioUnitId, loc));
+            
+            $(".io-loc-" + loc + " .io-mem-dec").keyup(function(ioUnitId, loc) {
+              return function() {
+                updateIoMemory(ioUnitId, loc, "dec");
+              };
+            }(ioUnitId, loc));
+            
+            $(".io-loc-" + loc + " .io-mem-bin").keyup(function(ioUnitId, loc) {
+              return function() {
+                updateIoMemory(ioUnitId, loc, "bin");
+              };
+            }(ioUnitId, loc));
+          }
+          
+          $("#iounit-" + ioUnitId + " .io-del").click(function() {
+            removeIoUnit(ioUnitId);
+          });
+          
+          ioUnit.onStateChange = function() {
+            refreshIoUnitState(ioUnitId);
+          };
+          
+          $("#ioUnitFormStatic").each(function() { this.reset(); });
+          $("#frisc-ct-freq").remove();
+          $("#frisc-ct-freq-label").remove();
+          $("#frisc-pio-freq").remove();
+          $("#frisc-pio-freq-label").remove();
+        } catch (e) {
+          simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>IO error</b></span> " + e.toString() + "");
+        }
+        
+        return false;
+      });
+      
+      function refreshIoUnitState(ioUnitId) {
+        var ioUnit = simulator.IO.getIoUnit(ioUnitId);
+        
+        for (var i=0; i<ioUnit.memMapAddrCount; i++) {
+          var ioMemoryAddress = i*4 + ioUnit.memMapAddrStart;
+          var val = simulator.MEM.read(ioMemoryAddress);
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").val(val.toString(10));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").text(val.toString(10));
+          updateIoMemory(ioUnitId, ioMemoryAddress, "dec", true);
+        }
+
+        $("#iounit-" + ioUnitId + " .io-int").val(ioUnit.interruptState);
+        $("#iounit-" + ioUnitId + " .io-int").text(ioUnit.interruptState);
+      }
+      
+      function removeIoUnit(ioUnitId) {
+        $("#iounit-" + ioUnitId).remove();
+        simulator.IO.removeIoUnit(ioUnitId);
+      }
+      
+      function formatHexNumber(num) {
+        while (num.length < 8) {
+          num = "0" + num;
+        }
+        
+        return num.toUpperCase();
+      }
+      
+      function formatBinNumber(num) {
+        while (num.length < 32) {
+          num = "0" + num;
+        }
+        
+        return num;
+      }
+      
+      function updateIoMemory(ioUnitId, ioMemoryAddress, valueType, blockPropagate) {
+        var val = $(".io-loc-" + ioMemoryAddress + " .io-mem-" + valueType).val();
+        
+        if (isNaN(parseInt(val))) {
+          val = 0;
+        }
+
+        if (valueType === 'hex') {
+          val = parseInt(val, 16);          
+          posval = val < 0 ? convertBinaryToInt(convertIntToBinary(val, 32), 0) : val;
+          
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").val(val.toString(10));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").text(val.toString(10));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "bin").val(formatBinNumber(posval.toString(2)));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "bin").text(formatBinNumber(posval.toString(2)));
+        } else if (valueType === 'dec') {
+          val = parseInt(val, 10);
+          posval = val < 0 ? convertBinaryToInt(convertIntToBinary(val, 32), 0) : val;
+          
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").val(formatHexNumber(posval.toString(16)));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").text(formatHexNumber(posval.toString(16)));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "bin").val(formatBinNumber(posval.toString(2)));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "bin").text(formatBinNumber(posval.toString(2)));
+        } else if (valueType === 'bin') {
+          val = parseInt(val, 2);
+          posval = val < 0 ? convertBinaryToInt(convertIntToBinary(val, 32), 0) : val;
+                    
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").val(formatHexNumber(posval.toString(16)));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").text(formatHexNumber(posval.toString(16)));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").val(val.toString(10));
+          $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").text(val.toString(10));
+        }
+        
+        if (typeof blockPropagate === 'undefined' || !(blockPropagate)) {
+          var onc = simulator.IO.getIoUnit(ioUnitId).onStateChange;
+          delete simulator.IO.getIoUnit(ioUnitId).onStateChange;
+          simulator.MEM.write(ioMemoryAddress, val);
+          simulator.IO.getIoUnit(ioUnitId).onStateChange = onc;
+        }
+      }
+
+      function defineGenericIoUnitTypeForm() {
+        $("#ioUnitMemmapCount").val(0);
+        $("#ioUnitMemmapCount").attr("disabled", false);
+      }
+      
+      function defineFriscCtIoUnitTypeForm() {
+        $("#addIoUnit").before('<label id="frisc-ct-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-ct-freq" value="1000"/>');
+        $("#ioUnitMemmapCount").val(4);
+        $("#ioUnitMemmapCount").attr("disabled", true);
+      }
+      
+      function defineFriscPioIoUnitTypeForm() {
+        $("#addIoUnit").before('<label id="frisc-pio-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-pio-freq" value="1000"/>');
+        $("#ioUnitMemmapCount").val(4);
+        $("#ioUnitMemmapCount").attr("disabled", true);
+      }
+      
+      function defineFriscDmaIoUnitTypeForm() {
+        $("#ioUnitMemmapCount").val(6);
+        $("#ioUnitMemmapCount").attr("disabled", true);
+      }
     </script>
     <script type="text/javascript">
       var _gaq = _gaq || [];
