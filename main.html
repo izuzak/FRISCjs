@@ -162,6 +162,11 @@
               <input id="frisc-freq" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="1000" />
               <label for="frisc-memsize" style="margin-bottom: 0px;">MEM size (KB):</label>
               <input id="frisc-memsize" type="number" min="1" step="1" max="1000" class="input-mini" style="margin-bottom: 0px;" value="256" />
+              <label style="margin-bottom: 0px;">Register values:</label>
+              <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
+                <button class="btn" id="regBaseRadioDec">DEC</button>
+                <button class="btn active" id="regBaseRadioHex">HEX</button>
+              </div>
             </div>
             <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
             <div id="cpustate" style="margin-top: 8px;" >
@@ -523,8 +528,8 @@ lab23 ADD R1, R2, R3\n\
           disableElements(["#frisc-load", "#frisc-pause", "#frisc-freq", "#frisc-memsize", ".io-del", "#addIoUnit"]);
           _state = st;
         } else if (st === "running") {
-          enableElements(["#frisc-stop", "#frisc-pause", "#frisc-next"]);
-          disableElements(["frisc-execute", "#frisc-load", "#frisc-freq", "#frisc-memsize", ".io-del", "#addIoUnit"]);
+          enableElements(["#frisc-stop", "#frisc-pause"]);
+          disableElements(["#frisc-execute", "#frisc-load", "#frisc-next", "#frisc-freq", "#frisc-memsize", ".io-del", "#addIoUnit"]);
           _state = st;
         }
       }
@@ -541,14 +546,30 @@ lab23 ADD R1, R2, R3\n\
         }
       }
 
+      function getRegisterValue(key) {
+        var base = $("#regBaseRadioDec").hasClass("active") ? 10 : 16;
+        
+        if (base === 10) {
+          return simulator.CPU._r[key];
+        } else {
+          return formatHexNumber(convertBinaryToInt(convertIntToBinary(simulator.CPU._r[key], 32), 0).toString(16));
+        }
+      }
+      
+      $("#regBaseRadioDec, #regBaseRadioHex").click(function() {
+        setTimeout( function() {
+          updateCpuState();
+        }, 0);
+      });
+
       function cpuStateToString() {
         var retVal = "";
         
         for (var key in simulator.CPU._r) {
           if (key !== 'sr') {
-            retVal += key + ": " + simulator.CPU._r[key].toString() + " ";
+            retVal += key + ": " + getRegisterValue(key).toString() + " ";
           } else {
-            retVal += key + ": " + simulator.CPU._r[key].toString() + " ( ";
+            retVal += key + ": " + getRegisterValue(key).toString() + " ( ";
             for (var flag in simulator.CPU._f) {
               retVal += flag + ": " + simulator.CPU._getFlag(simulator.CPU._f[flag]) + " ";
             }
@@ -577,13 +598,15 @@ lab23 ADD R1, R2, R3\n\
       
       function updateCpuState() {
         for (var key in simulator.CPU._r) {
-          $("#cpu_" + key + " .cpu-state-val").text(simulator.CPU._r[key]);
+          $("#cpu_" + key + " .cpu-state-val").text(getRegisterValue(key));
         }
         
         for (var flag in simulator.CPU._f) {
           $("#cpu_" + flag + " .cpu-state-val").text(simulator.CPU._getFlag(simulator.CPU._f[flag]));
         }
       }
+      
+      updateCpuState();
       
       simulator.CPU.onBeforeRun = function() {
         simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Starting (or continuing) simulation!</b></span>");
@@ -723,8 +746,7 @@ lab23 ADD R1, R2, R3\n\
           $(this).html(parseInt($(this).html(), 10).toString(16));
         });
       });
-    </script>
-    <script type="text/javascript">
+
       var ioUnitMustacheTemplate = ' \
         <div id="iounit-{{id}}" class="form-inline" style="-moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; -moz-box-shadow: 0px 0px 4px #000000; -webkit-box-shadow: 0px 0px 4px #000000; box-shadow: 0px 0px 4px #000000; padding: 5px; margin-left: 20px; margin-bottom:20px; width: 550px; float: left;"> \
           <div class="form-inline" style="margin-bottom: 10px;"> \
