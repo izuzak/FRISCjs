@@ -609,25 +609,25 @@ lab23 ADD R1, R2, R3\n\
       updateCpuState();
       
       simulator.CPU.onBeforeRun = function() {
-        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Starting (or continuing) simulation!</b></span>");
+        simulatorLog("<span class='label label-success'><b>Starting (or continuing) simulation!</b></span>");
       };
       
       simulator.CPU.onBeforeCycle = function() {
-        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>New CPU cycle starting!</b></span>");
-        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
+        simulatorLog("<span class='label label-success'><b>New CPU cycle starting!</b></span>");
+        simulatorLog("<span class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
       };
       
       simulator.CPU.onAfterCycle = function() {
-        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
+        simulatorLog("<span class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
         updateCpuState();
       };
 
       simulator.CPU.onBeforeExecute = function(instruction) {
-        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-info'>Executing FRISC instruction:</span>" + " " + instructionToString(instruction), "10px");
+        simulatorLog("<span class='label label-info'>Executing FRISC instruction:</span>" + " " + instructionToString(instruction), "10px");
       };
       
       simulator.CPU.onStop = function() {
-        simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-warning'><b>FRISC processor stopped!</b></span>");
+        simulatorLog("<span class='label label-warning'><b>FRISC processor stopped!</b></span>");
         changeState("stopped");
         onStopInternal();
       };
@@ -649,7 +649,7 @@ lab23 ADD R1, R2, R3\n\
             }
             var result = frisc_asm.parse(source);
           } catch (e) {
-            simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
+            simulatorLog("<span class='label label-important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
             return;
           }
 
@@ -658,11 +658,11 @@ lab23 ADD R1, R2, R3\n\
             simulator.MEM._size = parseInt($("#frisc-memsize").val()) * 1024;
             simulator.MEM.loadBinaryString(result.mem);
           } catch (e) {
-            simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>Loading error</b></span>" + " -- " + e.toString() + "");
+            simulatorLog("<span class='label label-important'><b>Loading error</b></span>" + " -- " + e.toString() + "");
             return
           }
 
-          simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-success'><b>Input program parsed successfully.</b></span>");
+          simulatorLog("<span class='label label-success'><b>Input program parsed successfully.</b></span>");
           changeState("loaded");
 
           //Show the memory list
@@ -914,7 +914,7 @@ lab23 ADD R1, R2, R3\n\
           $("#frisc-pio-freq").remove();
           $("#frisc-pio-freq-label").remove();
         } catch (e) {
-          simulatorLog("<span style='padding: 2px 4px 1px'; class='label label-important'><b>IO error</b></span> " + e.toString() + "");
+          simulatorLog("<span class='label label-important'><b>IO error</b></span> " + e.toString() + "");
         }
         
         return false;
