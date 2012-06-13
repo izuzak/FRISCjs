@@ -161,13 +161,14 @@ var frisc_asm = (function(){
               }
             }
         
-            function replaceLabel(element) {
+            function replaceLabel(element, baseValueForDiff) {
               if (element.type === "label") {
                 var labelValue = labels[element.value];
         
                 if (typeof labelValue !== "undefined") {
                   element.type = "num";
-                  element.value = labelValue;
+                  element.value = (typeof baseValueForDiff === 'undefined') ?
+                                  labelValue : (labelValue - baseValueForDiff);
                 } else {
                   unknownlabels.push(element.value);
                   element.value = null;
@@ -180,7 +181,11 @@ var frisc_asm = (function(){
               if (instrs[i].op in aluops || instrs[i].op in cmpops || instrs[i].op in moveops) {
                 replaceLabel(instrs[i].alusrc2);
               } else if (instrs[i].op in jmpops) {
-                replaceLabel(instrs[i].addr);
+                if (instrs[i].op === "JR") {
+                  replaceLabel(instrs[i].addr, instrs[i].curloc);
+                } else {
+                  replaceLabel(instrs[i].addr);
+                }
               } else if (instrs[i].op in memops) {
                 replaceLabel(instrs[i].mem);
               } else if (instrs[i].op in dwhbops) {
@@ -3547,6 +3552,7 @@ var frisc_asm = (function(){
   
   return result;
 })();
+
 
 if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
   module.exports = frisc_asm;
