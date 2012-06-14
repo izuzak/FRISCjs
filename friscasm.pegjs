@@ -607,12 +607,10 @@ whitespace
 
 register
   = [rR] regnum:([0-7]) {
-    if (typeof regnum === 'undefined') {
-      return 7; // SP == R7
-    } else {
-      return parseInt(regnum, 10);
-    }
-  } / [sS][pP]
+    return parseInt(regnum, 10);
+  } / [sS][pP] {
+    return 7; // SP == R7
+  }
 
 number
   = b:(("%" base " "+) / "") p:([+-])? first:[0-9] rest:([0-9a-hA-H]*) {

@@ -2840,11 +2840,7 @@ var frisc_asm = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, regnum) {
-            if (typeof regnum === 'undefined') {
-              return 7; // SP == R7
-            } else {
-              return parseInt(regnum, 10);
-            }
+            return parseInt(regnum, 10);
           })(pos0, result0[1]);
         }
         if (result0 === null) {
@@ -2852,6 +2848,7 @@ var frisc_asm = (function(){
         }
         if (result0 === null) {
           pos0 = pos;
+          pos1 = pos;
           if (/^[sS]/.test(input.charAt(pos))) {
             result0 = input.charAt(pos);
             pos++;
@@ -2875,10 +2872,18 @@ var frisc_asm = (function(){
               result0 = [result0, result1];
             } else {
               result0 = null;
-              pos = pos0;
+              pos = pos1;
             }
           } else {
             result0 = null;
+            pos = pos1;
+          }
+          if (result0 !== null) {
+            result0 = (function(offset) {
+              return 7; // SP == R7
+            })(pos0);
+          }
+          if (result0 === null) {
             pos = pos0;
           }
         }
@@ -3552,7 +3557,6 @@ var frisc_asm = (function(){
   
   return result;
 })();
-
 
 if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
   module.exports = frisc_asm;
