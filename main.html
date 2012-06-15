@@ -66,6 +66,18 @@
         vertical-align: middle;
         text-align: center;
       }
+      
+      .evenLineMemoryView {
+        background-color : #ffffff;
+      }
+      
+      .oddLineMemoryView {
+        background-color : #f8f8f8;
+      }
+      
+      .currentCpuLine {
+        background-color : orange;
+      }
     </style>
   </head>
   <body>
@@ -378,6 +390,12 @@ lab23 ADD R1, R2, R3\n\
         return memStateString;
       }
       
+      function refreshMemoryViewCurrentLine() {
+        $(".currentCpuLine").removeClass("currentCpuLine");
+        var currentCpuLocation = formatHexNumber(simulator.CPU._r.pc.toString(16));
+        $("input[addr=" + currentCpuLocation + "]").parent().parent().addClass("currentCpuLine");
+      }
+      
       var breakpoints = [];
       
       function createMemoryRow(i) {
@@ -388,8 +406,8 @@ lab23 ADD R1, R2, R3\n\
         var valHex = formatHexNumber(convertBinaryToInt(convertIntToBinary(simulator.MEM.read(i), 32), 0).toString(16));
         var valDec = simulator.MEM.read(i).toString(10);
         var decoded = simulator.CPU._decode(simulator.MEM.read(i));
-        decoded = decoded ? instructionToString(decoded) : "         ";
-        decoded = (decoded === "MOVE r0 r0") ? "        " : decoded;
+        decoded = decoded ? instructionToString(decoded) : "";
+        decoded = (decoded === "MOVE r0 r0") ? "" : decoded;
         
         lines.push("<div style='display:inline-block; padding-left: 4px; width:70px; border-right: 1px solid #dfdfdf;' class='memoryTableNumbering'>"+addr+"</div>");
         lines.push("<div style='display:inline-block; padding-left: 4px; width:70px; border-right: 1px solid #dfdfdf;' class='memoryTableValue'>"+valHex+"</div>");
@@ -414,13 +432,13 @@ lab23 ADD R1, R2, R3\n\
 
         var base = getBase();
         var decoded = "";
-        var bgColor = "#ffffff";
+        var bgColor = "";
         $("#"+div).html("");
         
         for (var i=0; i>=0 && i<maxRows*4 && i<simulator.MEM._memory.length; i+=4) {
-          bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
+          bgColor = (((i/4)%2)==0) ? "evenLineMemoryView" : "oddLineMemoryView";
 
-          $("#"+div).html($("#"+div).html()+"<div style='height:"+rowHeight+"px; width:100%; background-color:"+bgColor+"; position:absolute; top:"+((i/4)*rowHeight)+"px; border: 1px solid #dfdfdf;'>"+ createMemoryRow(i) + "</div>");
+          $("#"+div).html($("#"+div).html()+"<div class='" + bgColor + "' style='height:"+rowHeight+"px; width:100%; position:absolute; top:"+((i/4)*rowHeight)+"px; border: 1px solid #dfdfdf;'>"+ createMemoryRow(i) + "</div>");
         }
 
         $("#"+div).html($("#"+div).html()+"<div style='height:"+rowHeight+"px; background-color:#f1f1f1; position:relative; top:"+((simulator.MEM._memory.length/4)*rowHeight)+"px; border-radius: 0px 0px 4px 4px;'>"+lastDivMessage+"</div>");
@@ -435,6 +453,7 @@ lab23 ADD R1, R2, R3\n\
         }
         
         $(".breakpointCheckbox").click(handleBreakpointSet);
+        refreshMemoryViewCurrentLine();
         
         var prevScrollPos = 0;
         $("#"+div).scroll(function(){
@@ -456,8 +475,8 @@ lab23 ADD R1, R2, R3\n\
                 highVal = highVal - 4;
                 if (highVal>=0) {
                   $(this).css({ top: ''+(highest-rowHeight)+'px' });
-                  bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
-                  $(this).css("background-color",''+bgColor );
+                  bgColor = (((highVal/4)%2)==0) ? "evenLineMemoryView" : "oddLineMemoryView";
+                  $(this).removeClass("evenLineMemoryView").removeClass("oddLineMemoryView").addClass(bgColor);
                   $(this).html(createMemoryRow(highVal));
                 }
               }
@@ -477,8 +496,8 @@ lab23 ADD R1, R2, R3\n\
                 highVal = highVal + 4;
                 if (highVal<simulator.MEM._memory.length) { 
                   $(this).css({ top: ''+(highest+rowHeight)+'px' });
-                  bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
-                  $(this).css("background-color",''+bgColor );
+                  bgColor = (((highVal/4)%2)==0) ? "evenLineMemoryView" : "oddLineMemoryView";
+                  $(this).removeClass("evenLineMemoryView").removeClass("oddLineMemoryView").addClass(bgColor);
                   $(this).html(createMemoryRow(highVal));
                 }
               }
@@ -495,14 +514,12 @@ lab23 ADD R1, R2, R3\n\
             var x = i; //visual bug fix
             $("#"+div).children().each(function(){
               if (($(this).html()!=lastDivMessage) && (i<simulator.MEM._memory.length) && (i>=0)) {
-                bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
                 $(this).css({ top: ''+((i/4)*rowHeight)+'px' });
                 $(this).html(createMemoryRow(i));
                 
                 i += 4;
               } else if (($(this).html()!=lastDivMessage) && (i>=simulator.MEM._memory.length) && (i>=0) && (x>=0)) { //visual bug fix
                 //fixes minor glitching when the user drags the scroller to the bottom of the memory view;
-                bgColor = (((x/4)%2)==0) ? "#ffffff" : "#f8f8f8";
                 $(this).css({ top: ''+((x/4)*rowHeight)+'px' });
                 $(this).html(createMemoryRow(x));
                 i += 4;
@@ -513,6 +530,7 @@ lab23 ADD R1, R2, R3\n\
           
           $('.breakpointCheckbox').off('click');
           $(".breakpointCheckbox").click(handleBreakpointSet);
+          refreshMemoryViewCurrentLine();
         });
       }
 
@@ -612,7 +630,7 @@ lab23 ADD R1, R2, R3\n\
       
       var instructionsExecutedAfterBreak = true;
       
-      simulator.CPU.onBeforeCycle = function() {
+      simulator.CPU.onBeforeCycle = function() {        
         if (_state === "running") {
           if (breakpoints.indexOf(simulator.CPU._r.pc) >= 0 && instructionsExecutedAfterBreak) {
             simulator.CPU.pause();
@@ -629,8 +647,9 @@ lab23 ADD R1, R2, R3\n\
       };
       
       simulator.CPU.onAfterCycle = function() {
+        refreshMemoryViewCurrentLine();
         simulatorLog("<span class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
-        updateCpuState();       
+        updateCpuState();
       };
 
       simulator.CPU.onBeforeExecute = function(instruction) {
@@ -647,6 +666,7 @@ lab23 ADD R1, R2, R3\n\
         if (_state === "stopped") {
           try {
             simulator.CPU.reset();
+            breakpoints = [];
             
             var ioUnits = simulator.IO.getIoUnits();
 

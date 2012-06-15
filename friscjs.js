@@ -890,11 +890,11 @@ var FRISC = function() {
         this._i[decodedInstruction.op].apply(this, decodedInstruction.args);
         this._r.pc += 4;
         
+        this.acceptInterrupt();
+        
         if (typeof this.onAfterCycle !== 'undefined') {
           this.onAfterCycle();
         }
-        
-        this.acceptInterrupt();
       } else {
         this.stop();
 
