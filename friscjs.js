@@ -873,7 +873,10 @@ var FRISC = function() {
   
     performCycle: function() {
       if (typeof this.onBeforeCycle !== 'undefined') {
-        this.onBeforeCycle();
+        var val = this.onBeforeCycle();
+        if (typeof val !== 'undefined' && val === false) {
+          return;
+        }
       }
 
       var instruction = MEM.read(this._r.pc);

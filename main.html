@@ -125,10 +125,12 @@
           </div>
 
           <div class="sidebar ace_editor ace-tm" id="frisc-memorylist-hold" style="width: 450px; height: 495px; display:none;">
-            <div style="width: 448px; height: 30px; display:inline-block;  position:absolute; top:0px; border: 1px solid #dddddd; border-collapse: separate; border-radius: 4px 4px 0px 0px; background-color:#f1f1f1; padding-top:5px;">
-              <div style='display:inline-block; width:40px;  border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>#</div>
-              <div style='display:inline-block; width:185px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Value</div>
-              <div style='display:inline-block; width:100px;  padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Command</div>
+            <div style="width: 448px; height: 30px; display:inline-block; top:0px; border: 1px solid #dddddd; border-collapse: separate; border-radius: 4px 4px 0px 0px; background-color:#f1f1f1; padding-top:5px;">
+              <div style='display:table-cell; width:70px;  border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Location</div>
+              <div style='display:table-cell; width:70px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Value HEX</div>
+              <div style='display:table-cell; width:85px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Value DEC</div>
+              <div style='display:table-cell; width:150px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Instruction</div>
+              <div style='display:table-cell; width:30px; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Break</div>
             </div>
 
             <div id="frisc-memorylist" style="width: 448px; height: 422px; position:absolute; top:31px; overflow: scroll; overflow-x:hidden; display:inline-block; border: 1px solid #dddddd; border-radius: 0px 0px 4px 4px;">
@@ -375,6 +377,30 @@ lab23 ADD R1, R2, R3\n\
 
         return memStateString;
       }
+      
+      var breakpoints = [];
+      
+      function createMemoryRow(i) {
+        var lines = [];
+        
+        var checked = breakpoints.indexOf(i) >= 0 ? " checked" : "";
+        var addr = formatHexNumber(i.toString(16));
+        var valHex = formatHexNumber(convertBinaryToInt(convertIntToBinary(simulator.MEM.read(i), 32), 0).toString(16));
+        var valDec = simulator.MEM.read(i).toString(10);
+        var decoded = simulator.CPU._decode(simulator.MEM.read(i));
+        decoded = decoded ? instructionToString(decoded) : "         ";
+        decoded = (decoded === "MOVE r0 r0") ? "        " : decoded;
+        
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:70px; border-right: 1px solid #dfdfdf;' class='memoryTableNumbering'>"+addr+"</div>");
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:70px; border-right: 1px solid #dfdfdf;' class='memoryTableValue'>"+valHex+"</div>");
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:85px; border-right: 1px solid #dfdfdf;' class='memoryTableValue'>"+valDec+"</div>");
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:150px;' >"+decoded+"</div>");
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:30px; text-align: center; border-left: 1px solid #dfdfdf;'>");
+        lines.push("  <input type='checkbox' addr='" + addr + "' class='breakpointCheckbox'" + checked + ">");
+        lines.push("</div>");
+      
+        return lines.join("");
+      }
 
       function createMemList(div) {
         var rowHeight = 18;
@@ -392,20 +418,23 @@ lab23 ADD R1, R2, R3\n\
         $("#"+div).html("");
         
         for (var i=0; i>=0 && i<maxRows*4 && i<simulator.MEM._memory.length; i+=4) {
-          decoded = simulator.CPU._decode(simulator.MEM.read(i));
-          decoded = decoded ? instructionToString(decoded) : "";
-          if (decoded == "MOVE r0 r0") decoded="";
-
           bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
 
-          $("#"+div).html($("#"+div).html()+"<div style='height:"+rowHeight+"px; width:100%; background-color:"+bgColor+"; position:absolute; top:"+((i/4)*rowHeight)+"px; border: 1px solid #dfdfdf;'>"+
-                                              "<div style='display:inline-block; width:10%; border-right: 1px solid #dfdfdf;' class='memoryTableNumbering'>"+i.toString(base)+"</div>"+
-                                              "<div style='display:inline-block; width:44%; border-right: 1px solid #dfdfdf;' class='memoryTableValue'>"+simulator.MEM.read(i).toString()+"</div>"+
-                                              "<div style='display:inline-block; width:44%;'>"+decoded+"</div>"+
-                                            "</div>");
+          $("#"+div).html($("#"+div).html()+"<div style='height:"+rowHeight+"px; width:100%; background-color:"+bgColor+"; position:absolute; top:"+((i/4)*rowHeight)+"px; border: 1px solid #dfdfdf;'>"+ createMemoryRow(i) + "</div>");
         }
 
         $("#"+div).html($("#"+div).html()+"<div style='height:"+rowHeight+"px; background-color:#f1f1f1; position:relative; top:"+((simulator.MEM._memory.length/4)*rowHeight)+"px; border-radius: 0px 0px 4px 4px;'>"+lastDivMessage+"</div>");
+        
+        function handleBreakpointSet() {
+	        var addr = parseInt($(this).attr('addr'), 16);
+          if ($(this).is(":checked")) {
+            breakpoints.push(addr);
+          } else {
+            breakpoints.splice(breakpoints.indexOf(addr), 1);
+          }
+        }
+        
+        $(".breakpointCheckbox").click(handleBreakpointSet);
         
         var prevScrollPos = 0;
         $("#"+div).scroll(function(){
@@ -425,19 +454,11 @@ lab23 ADD R1, R2, R3\n\
                 });
 
                 highVal = highVal - 4;
-                if (highVal>=0) { 
-                  base = getBase();
+                if (highVal>=0) {
                   $(this).css({ top: ''+(highest-rowHeight)+'px' });
-                  decoded = simulator.CPU._decode(simulator.MEM.read(highVal));
-                  decoded = decoded ? instructionToString(decoded) : "";
-                  if (decoded == "MOVE r0 r0") decoded="";
-
                   bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
                   $(this).css("background-color",''+bgColor );
-
-                  $(this).html(""+"<div style='display:inline-block; width:10%; border-right: 1px solid #dfdfdf;' class='memoryTableNumbering'>"+highVal.toString(base)+"</div>"+
-                                  "<div style='display:inline-block; width:44%; border-right: 1px solid #dfdfdf;'>"+simulator.MEM.read(highVal).toString()+"</div>"+
-                                  "<div style='display:inline-block; width:44%;'>"+decoded+"</div>");
+                  $(this).html(createMemoryRow(highVal));
                 }
               }
             });
@@ -455,19 +476,10 @@ lab23 ADD R1, R2, R3\n\
                 });
                 highVal = highVal + 4;
                 if (highVal<simulator.MEM._memory.length) { 
-                  base = getBase();
                   $(this).css({ top: ''+(highest+rowHeight)+'px' });
-
-                  decoded = simulator.CPU._decode(simulator.MEM.read(highVal));
-                  decoded = decoded ? instructionToString(decoded) : "";
-                  if (decoded == "MOVE r0 r0") decoded="";
-
                   bgColor = (((highVal/4)%2)==0) ? "#ffffff" : "#f8f8f8";
                   $(this).css("background-color",''+bgColor );
-
-                  $(this).html(""+"<div style='display:inline-block; width:10%; border-right: 1px solid #dfdfdf;' class='memoryTableNumbering'>"+highVal.toString(base)+"</div>"+
-                                  "<div style='display:inline-block; width:44%; border-right: 1px solid #dfdfdf;'>"+simulator.MEM.read(highVal).toString()+"</div>"+
-                                  "<div style='display:inline-block; width:44%;'>"+decoded+"</div>");
+                  $(this).html(createMemoryRow(highVal));
                 }
               }
             });
@@ -483,38 +495,24 @@ lab23 ADD R1, R2, R3\n\
             var x = i; //visual bug fix
             $("#"+div).children().each(function(){
               if (($(this).html()!=lastDivMessage) && (i<simulator.MEM._memory.length) && (i>=0)) {
-                base = getBase();
-                decoded = simulator.CPU._decode(simulator.MEM.read(i));
-                decoded = decoded ? instructionToString(decoded) : "";
-                if (decoded == "MOVE r0 r0") decoded="";
-
                 bgColor = (((i/4)%2)==0) ? "#ffffff" : "#f8f8f8";
-
                 $(this).css({ top: ''+((i/4)*rowHeight)+'px' });
-
-                $(this).html( "<div style='display:inline-block; width:10%; border-right: 1px solid #dfdfdf;' class='memoryTableNumbering'>"+i.toString(base)+"</div>"+
-                              "<div style='display:inline-block; width:44%; border-right: 1px solid #dfdfdf;'>"+simulator.MEM.read(i).toString()+"</div>"+
-                              "<div style='display:inline-block; width:44%;'>"+decoded+"</div>");
+                $(this).html(createMemoryRow(i));
+                
                 i += 4;
               } else if (($(this).html()!=lastDivMessage) && (i>=simulator.MEM._memory.length) && (i>=0) && (x>=0)) { //visual bug fix
                 //fixes minor glitching when the user drags the scroller to the bottom of the memory view;
-                base = getBase();
-                decoded = simulator.CPU._decode(simulator.MEM.read(x));
-                decoded = decoded ? instructionToString(decoded) : "";
-                if (decoded == "MOVE r0 r0") decoded="";
-
                 bgColor = (((x/4)%2)==0) ? "#ffffff" : "#f8f8f8";
-
                 $(this).css({ top: ''+((x/4)*rowHeight)+'px' });
-
-                $(this).html( "<div style='display:inline-block; width:10%; ' class='memoryTableNumbering'>"+x.toString(base)+"</div>"+
-                              "<div style='display:inline-block; width:45%; '>"+simulator.MEM.read(x).toString()+"</div>"+
-                              "<div style='display:inline-block; width:45%; '>"+decoded+"</div>");
+                $(this).html(createMemoryRow(x));
                 i += 4;
                 x -= 4;
               };
             });
           };
+          
+          $('.breakpointCheckbox').off('click');
+          $(".breakpointCheckbox").click(handleBreakpointSet);
         });
       }
 
@@ -612,14 +610,27 @@ lab23 ADD R1, R2, R3\n\
         simulatorLog("<span class='label label-success'><b>Starting (or continuing) simulation!</b></span>");
       };
       
+      var instructionsExecutedAfterBreak = true;
+      
       simulator.CPU.onBeforeCycle = function() {
+        if (_state === "running") {
+          if (breakpoints.indexOf(simulator.CPU._r.pc) >= 0 && instructionsExecutedAfterBreak) {
+            simulator.CPU.pause();
+            changeState("loaded");
+            simulatorLog("<span class='label label-warning'><b>FRISC processor paused on breakpoint at location " + formatHexNumber(simulator.CPU._r.pc.toString(16)) + "!</b></span>");
+            instructionsExecutedAfterBreak = false;
+            return false;
+          }
+        }
+        
+        instructionsExecutedAfterBreak = true;
         simulatorLog("<span class='label label-success'><b>New CPU cycle starting!</b></span>");
         simulatorLog("<span class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
       };
       
       simulator.CPU.onAfterCycle = function() {
         simulatorLog("<span class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
-        updateCpuState();
+        updateCpuState();       
       };
 
       simulator.CPU.onBeforeExecute = function(instruction) {
@@ -731,20 +742,6 @@ lab23 ADD R1, R2, R3\n\
       $("#skrMemLisSearch").click(function() {
         var searcher = parseInt($("#skrMemLisSearchField").val(), getBase())/4;
         $('#frisc-memorylist').animate({scrollTop: (18*searcher)}, 1000 ,function() {;});
-      });
-
-      //memorylist numbering
-      $("#skrBaseRadioDec").click(function() {
-        if ($("#skrBaseRadioDec").attr('class')=="btn active") return;
-        $(".memoryTableNumbering").each(function(){
-          $(this).html(parseInt($(this).html(), 16).toString(10));
-        });
-      });
-      $("#skrBaseRadioHex").click(function() {
-        if ($("#skrBaseRadioHex").attr('class')=="btn active") return;
-        $(".memoryTableNumbering").each(function(){
-          $(this).html(parseInt($(this).html(), 10).toString(16));
-        });
       });
 
       var ioUnitMustacheTemplate = ' \
