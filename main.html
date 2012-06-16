@@ -78,6 +78,10 @@
       .currentCpuLine {
         background-color : orange;
       }
+      
+      .memoryChangeLine {
+        background-color : lightblue;
+      }
     </style>
   </head>
   <body>
@@ -410,9 +414,9 @@ lab23 ADD R1, R2, R3\n\
         decoded = (decoded === "MOVE r0 r0") ? "" : decoded;
         
         lines.push("<div style='display:inline-block; padding-left: 4px; width:70px; border-right: 1px solid #dfdfdf;' class='memoryTableNumbering'>"+addr+"</div>");
-        lines.push("<div style='display:inline-block; padding-left: 4px; width:70px; border-right: 1px solid #dfdfdf;' class='memoryTableValue'>"+valHex+"</div>");
-        lines.push("<div style='display:inline-block; padding-left: 4px; width:85px; border-right: 1px solid #dfdfdf;' class='memoryTableValue'>"+valDec+"</div>");
-        lines.push("<div style='display:inline-block; padding-left: 4px; width:150px;' >"+decoded+"</div>");
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:70px; border-right: 1px solid #dfdfdf;' class='memoryTableValueHex'>"+valHex+"</div>");
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:85px; border-right: 1px solid #dfdfdf;' class='memoryTableValueDec'>"+valDec+"</div>");
+        lines.push("<div style='display:inline-block; padding-left: 4px; width:150px;' class='memoryTableValueIns'>"+decoded+"</div>");
         lines.push("<div style='display:inline-block; padding-left: 4px; width:30px; text-align: center; border-left: 1px solid #dfdfdf;'>");
         lines.push("  <input type='checkbox' addr='" + addr + "' class='breakpointCheckbox'" + checked + ">");
         lines.push("</div>");
@@ -660,6 +664,23 @@ lab23 ADD R1, R2, R3\n\
         simulatorLog("<span class='label label-warning'><b>FRISC processor stopped!</b></span>");
         changeState("stopped");
         onStopInternal();
+      };
+      
+      simulator.MEM.onMemoryWrite = function(addr) {
+        addr &= ~(0x03);
+        var val = simulator.MEM.read(addr);
+        addr = formatHexNumber(convertBinaryToInt(convertIntToBinary(addr, 32), 0).toString(16));
+        var line = $("input[addr=" + addr + "]").parent().parent();
+        var decoded = simulator.CPU._decode(val);
+        decoded = decoded ? instructionToString(decoded) : "";
+        decoded = (decoded === "MOVE r0 r0") ? "" : decoded;
+        line.children(".memoryTableValueHex").html(formatHexNumber(convertBinaryToInt(convertIntToBinary(val, 32), 0).toString(16)));
+        line.children(".memoryTableValueDec").html(val.toString());
+        line.children(".memoryTableValueIns").html(decoded);
+        line.addClass("memoryChangeLine");
+        setTimeout(function() {
+          line.removeClass("memoryChangeLine");
+        }, 500);
       };
 
       $("#frisc-load").click(function() {
