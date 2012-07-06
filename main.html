@@ -88,11 +88,70 @@
     <div class="container" style="width: 1140px">
       <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
       <ul class="nav nav-tabs">
-        <li class="active"><a href="#frisc-sim" data-toggle="tab">Simulator</a></li>
+        <li class="active"><a id="frisc-sim-link" href="#frisc-sim" data-toggle="tab">Simulator</a></li>
+        <li><a href="#frisc-saveload" data-toggle="tab">Load/Save</a></li>
         <li><a href="#frisc-usage" data-toggle="tab">Usage instructions</a></li>
         <li><a href="#frisc-about" data-toggle="tab">About</a></li>
       </ul>
       <div class="tab-content" style="margin-bottom: 20px;">
+        <div id="frisc-saveload" class="container tab-pane" style="width: auto">
+          <div class="well">
+            <h3> Load/save and import/export FRISC configurations </h3>
+
+            <p>
+              This page enables you to save the current configuration of the simulator locally (under a specific name) so that you may load it next time you use FRISCjs.
+              Currently, a configuration consists of the FRISC assembly program defined in the editor, the CPU speed, memory size and the set of defined I/O units.
+              In the future, the configuration might be extended to include defined breakpoints, CPU state, etc.
+              Furthermore, this page enables you to export configurations in text format so that they can be shared (e.g. via e-mail) and saved externally (e.g. as a GitHub gist), and import previously exported configurations.
+              In order to save/load and import/export, the simulator must be in a stopped state.
+            </p>
+
+            <h4> Save current configuration locally </h4>
+
+            <p>
+              <form class="form-search">
+                <label class="control-label" for="frisc-cfg-save-name">Configuration name:</label>
+                <input type="text" id="frisc-cfg-save-name" class="input-medium search-query">
+                <button id="frisc-cfg-save" type="button" class="btn btn-success"><i class="icon-file icon-white"></i> Save</button>
+                <span id="frisc-cfg-save-help" class="help-inline"></span>
+              </form>
+            </p>
+
+            <h4> Load or delete existing configuration </h4>
+
+            <p>
+              <form class="form-search">
+                <label class="control-label" for="frisc-cfg-select">Select configuration:</label>
+                <select id="frisc-cfg-select" class="input-medium">
+                </select>
+                <button id="frisc-cfg-load" type="button" class="btn btn-success"><i class="icon-download-alt icon-white"></i> Load</button>
+                <button id="frisc-cfg-delete" type="button" class="btn btn-danger"><i class="icon-remove-sign icon-white"></i> Delete</button>
+                <span id="frisc-cfg-load-help" class="help-inline"></span>
+              </form>
+            </p>
+
+            <h4> Export current configuration to text </h4>
+            
+            <p>
+              <form class="form-search">
+                <textarea class="input-xxlarge" id="frisc-cfg-export-text" rows="4"></textarea>
+                <button id="frisc-cfg-export" type="button" class="btn btn-success"><i class="icon-file icon-white"></i> Export</button>
+                <span id="frisc-cfg-export-help" class="help-inline"></span>
+              </form>
+            </p>
+           
+            <h4> Import configuration from text as current configuration </h4>
+
+            <p>
+              <form class="form-search">
+                <textarea class="input-xxlarge" id="frisc-cfg-import-text" rows="4"></textarea>
+                <button id="frisc-cfg-import" type="button" class="btn btn-success"><i class="icon-download-alt icon-white"></i> Import</button>
+                <span id="frisc-cfg-import-help" class="help-inline"></span>
+              </form>
+            </p>
+
+          </div>
+        </div>
         <div id="frisc-usage" class="container tab-pane" style="width: auto;">
           <div class="well">
             <h3> Usage instructions </h3>
@@ -300,6 +359,230 @@
       </div>
     </div>
     <script type="text/javascript">
+      var CFGNAMES = "__friscConfigurationNames";
+      var isLocalStorageAvailable = 'localStorage' in window && window['localStorage'] !== null;
+
+      function appendOption(selectSelector, optionValue, optionText) {
+        var option = document.createElement('option');
+        option.setAttribute('value', optionValue);
+        option.appendChild(document.createTextNode(optionText));
+        $(selectSelector)[0].appendChild(option);
+      }
+
+      function getCfgNames() {
+        var res = localStorage.getItem(CFGNAMES);
+
+        if (typeof res === "undefined" || res === null) {
+          localStorage.setItem(CFGNAMES, JSON.stringify([]));
+          res = [];
+        } else {
+          res = JSON.parse(res);
+        }
+
+        return res;
+      }
+
+      function saveCfg(name, cfg) {
+        localStorage.setItem(name, JSON.stringify(cfg));
+        var cfgNames = getCfgNames();
+
+        if (cfgNames.indexOf(name) < 0) {
+          cfgNames.push(name);
+        }
+
+        localStorage.setItem(CFGNAMES, JSON.stringify(cfgNames));
+        refreshCfgsSelect();
+      }
+
+      function deleteCfg(name) {
+        var cfgNames = getCfgNames();
+
+        if (cfgNames.indexOf(name) >= 0) {
+          cfgNames.splice(cfgNames.indexOf(name), 1);
+          localStorage.removeItem(name);
+          localStorage.setItem(CFGNAMES, JSON.stringify(cfgNames));
+        }
+
+        refreshCfgsSelect();
+      }
+
+      function getCfg(name) {
+        return JSON.parse(localStorage.getItem(name));
+      }
+
+      function refreshCfgsSelect() {
+        $("#frisc-cfg-select option").each(function() {
+          if ($(this).val() === "" || $(this).is("optgroup")) {
+          } else {
+            $(this).remove();
+          }
+        });
+
+        var cfgNames = getCfgNames();
+
+        for (var i=0; i<cfgNames.length; i++) {
+          appendOption("#frisc-cfg-select", cfgNames[i], cfgNames[i]);
+        }
+      }
+
+      function extractCurrentCfg() {
+        var cfg = {};
+
+        cfg.program = editor.getSession().getValue();
+        cfg.cpuFreq = $("#frisc-freq").val();
+        cfg.memSize = $("#frisc-memsize").val();
+        cfg.ioUnits = [];
+        
+        var ioUnits = simulator.IO.getIoUnits();
+
+        for (var i=0; i<ioUnits.length; i++) {
+          cfg.ioUnits.push(simulator.IO.getIoUnit(ioUnits[i]).spec);
+        }
+
+        return cfg;
+      }
+      
+      function loadCfg(cfg) {
+        editor.getSession().setValue(cfg.program);
+        
+        $("#frisc-freq").val(cfg.cpuFreq);
+        $("#frisc-memsize").val(cfg.memSize);
+                
+        $(".io-del").click();
+        
+        for (var i=0; i<cfg.ioUnits.length; i++) {
+          $("#ioUnitName").val(cfg.ioUnits[i].ioUnitName);
+          $("#ioUnitType").val(cfg.ioUnits[i].ioUnitType);
+          $("#ioUnitIntLevel").val(cfg.ioUnits[i].intLevel);
+          $("#ioUnitMemmapStart").val(cfg.ioUnits[i].memmapStart);
+          $("#ioUnitMemmapCount").val(cfg.ioUnits[i].memmapCount);
+          $("#frisc-ct-freq").val(cfg.ioUnits[i].ioUnitFreq);
+          
+          $("#ioUnitType").change();
+          $("#ioUnitFormStatic").submit();
+        }
+      }
+      
+      $("#frisc-cfg-save").click(function() {
+        if (isLocalStorageAvailable === false) {
+          $("#frisc-cfg-save-help").text("The required localStorage API is not available in your browser.");
+          return;
+        } else {
+          $("#frisc-cfg-save-help").text("");
+        }
+
+        if (_state !== "stopped") {
+          $("#frisc-cfg-save-help").text("The simulator must be stopped in order to save/load/delete configurations.");
+          return;
+        } else {
+          $("#frisc-cfg-save-help").text("");
+        }
+        
+        var name = $("#frisc-cfg-save-name").val();
+        
+        if (name === "" || name.indexOf(" ") >=0) {
+          $("#frisc-cfg-save-help").text("The configuration name must be defined and must not contain whitespace characters.");
+          return;
+        } else {
+          $("#frisc-cfg-save-help").text("");
+        }
+
+        var cfg = extractCurrentCfg();
+        
+        saveCfg(name, cfg);
+      });
+      
+      $("#frisc-cfg-load").click(function() {
+        if (isLocalStorageAvailable === false) {
+          $("#frisc-cfg-load-help").text("The required localStorage API is not available in your browser.");
+          return;
+        } else {
+          $("#frisc-cfg-load-help").text("");
+        }
+
+        if (_state !== "stopped") {
+          $("#frisc-cfg-load-help").text("The simulator must be stopped in order to save/load/delete configurations.");
+          return;
+        } else {
+          $("#frisc-cfg-load-help").text("");
+        }
+        
+        var name = $("#frisc-cfg-select").val();
+
+        if (name === null || name.indexOf(" ") >=0) {
+          $("#frisc-cfg-load-help").text("You must select a configuration.");
+          return;
+        } else {
+          $("#frisc-cfg-load-help").text("");
+        }
+
+        var cfg = getCfg(name);
+        loadCfg(cfg);
+      });
+      
+      $("#frisc-cfg-delete").click(function() {
+        if (isLocalStorageAvailable === false) {
+          $("#frisc-cfg-load-help").text("The required localStorage API is not available in your browser.");
+          return;
+        } else {
+          $("#frisc-cfg-load-help").text("");
+        }
+
+        if (_state !== "stopped") {
+          $("#frisc-cfg-load-help").text("The simulator must be stopped in order to save/load/delete configurations.");
+          return;
+        } else {
+          $("#frisc-cfg-load-help").text("");
+        }
+        
+        var name = $("#frisc-cfg-select").val();
+
+        if (name === null || name.indexOf(" ") >=0) {
+          $("#frisc-cfg-load-help").text("You must select a configuration.");
+          return;
+        } else {
+          $("#frisc-cfg-load-help").text("");
+        }
+
+        deleteCfg(name);
+      });
+      
+      $("#frisc-cfg-export").click(function() {
+        if (_state !== "stopped") {
+          $("#frisc-cfg-export-help").text("The simulator must be stopped in order to import/export configurations.");
+          return;
+        } else {
+          $("#frisc-cfg-export-help").text("");
+        }
+        
+        var cfg = extractCurrentCfg();
+        
+        $("#frisc-cfg-export-text").text(JSON.stringify(cfg, null, 2));
+      });
+      
+      $("#frisc-cfg-import").click(function() {
+        if (_state !== "stopped") {
+          $("#frisc-cfg-import-help").text("The simulator must be stopped in order to import/export configurations.");
+          return;
+        } else {
+          $("#frisc-cfg-import-help").text("");
+        }
+
+        try {
+          var cfg = JSON.parse($("#frisc-cfg-import-text").val());
+          loadCfg(cfg);
+        } catch (e) {
+          $("#frisc-cfg-import-help").text("There was an error in parsing your configuration. " + e.toString());
+          return;
+        }
+      });
+      
+      refreshCfgsSelect();
+      
+      $("#frisc-sim-link").click(function() {
+        editor.resize(true);
+      });
+
       key('backspace', function(){ return false; });
 
       var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight()) - 281 + "px";
@@ -871,7 +1154,7 @@ lab23 ADD R1, R2, R3\n\
           intLevel : (intLevel !== null) ? "INT" + intLevel : intLevel,
           addresses : addresses,
         };
-        
+
         if (($("#ioUnitType").val() === 'generic')) {   
           d.summary = "Generic IO unit";
           d.areFieldsEditable = true;
@@ -903,6 +1186,15 @@ lab23 ADD R1, R2, R3\n\
           }
         
           simulator.IO.addIoUnit(ioUnit);
+
+          ioUnit.spec = {
+            ioUnitName : $("#ioUnitName").val(),
+            intLevel : $("#ioUnitIntLevel").val(),
+            memmapStart : $("#ioUnitMemmapStart").val(),
+            memmapCount : $("#ioUnitMemmapCount").val(),
+            ioUnitType : $("#ioUnitType").val(),
+            ioUnitFreq : $("#frisc-ct-freq").val()
+          };
           
           var s = Mustache.render(ioUnitMustacheTemplate, d);
           $("#ioUnits").append(s);
