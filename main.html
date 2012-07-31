@@ -222,10 +222,6 @@
                 <form class="form-search">
                   <input type="text" class="input-medium search-query" id="skrMemLisSearchField">
                   <button type="submit" class="btn" id="skrMemLisSearch">Go to</button>
-                  <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
-                    <button class="btn" id="skrBaseRadioDec">DEC</button>
-                    <button class="btn active" id="skrBaseRadioHex">HEX</button>
-                  </div>
                 </form>
               </div>
             </div>
@@ -244,9 +240,9 @@
             </div>
             <div id="frisc-settings" style="display: none; margin-top: 15px;" class="form-inline">
               <label for="frisc-freq" style="margin-bottom: 0px;">CPU frequency (Hz):</label>
-              <input id="frisc-freq" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="1000" />
+              <input id="frisc-freq" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="1000">
               <label for="frisc-memsize" style="margin-bottom: 0px;">MEM size (KB):</label>
-              <input id="frisc-memsize" type="number" min="1" step="1" max="1000" class="input-mini" style="margin-bottom: 0px;" value="256" />
+              <input id="frisc-memsize" type="number" min="1" step="1" max="1000" class="input-mini" style="margin-bottom: 0px;" value="256">
               <label style="margin-bottom: 0px;">Register values:</label>
               <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
                 <button class="btn" id="regBaseRadioDec">DEC</button>
@@ -339,7 +335,7 @@
           <legend style="margin-bottom: 15px;">IO units</legend>
           <div class="form-inline" style="margin-bottom: 25px;">
             <form id="ioUnitFormStatic">
-              <input class="span2" type="text" style="margin-bottom: 0px;" id="ioUnitName" required pattern="[A-Za-z_0-9]{3,}" placeholder="Enter IO unit name…" />
+              <input class="span2" type="text" style="margin-bottom: 0px;" id="ioUnitName" required pattern="[A-Za-z_0-9]{3,}" placeholder="Enter IO unit name…">
               <select class="span2" id="ioUnitType" required>
                 <option value="">Select unit type…</option>
                 <option value="generic">Generic IO unit</option>
@@ -355,9 +351,9 @@
                 <option value="INT3">INT3 (unmaskable)</option>
               </select>
               <label> Memory mapping start addr (HEX): </label>
-              <input type="text" class="span1" id="ioUnitMemmapStart" value="0" required/>
+              <input type="text" class="span1" id="ioUnitMemmapStart" value="0" required>
               <label> Number of 4B locations: </label>
-              <input type="text" class="span1" id="ioUnitMemmapCount" value="0" required/>
+              <input type="text" class="span1" id="ioUnitMemmapCount" value="0" required>
               <button type="submit" class="btn btn-success" id="addIoUnit" value="Search"><i class="icon-plus icon-white"></i> Add</button>
             </form>
           </div>
@@ -666,24 +662,6 @@ lab23 ADD R1, R2, R3\n\
         $("#cpuout").append("<div style='font-size: 9pt; margin: 1px; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</div>");
         $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
       }
-
-      function getBase () {
-        if ($("#skrBaseRadioDec").hasClass("active")) return 10;
-        return 16;
-      }
-
-      function getMemState(lower, upper) {
-        var memStateString = ""; 
-        var base = getBase();
-        
-        for (var i=lower; i>=0 && i<simulator.MEM._memory.length && i<upper; i+=4) {
-          var decoded = simulator.CPU._decode(simulator.MEM.read(i));
-          decoded = decoded ? " - " + instructionToString(decoded) : "";
-          memStateString += i.toString(base)+ ": " + simulator.MEM.read(i).toString() + " - " + convertIntToBinary(simulator.MEM.read(i), 32) + decoded + "</br>";
-        }
-
-        return memStateString;
-      }
       
       function refreshMemoryViewCurrentLine() {
         $(".currentCpuLine").removeClass("currentCpuLine");
@@ -725,7 +703,7 @@ lab23 ADD R1, R2, R3\n\
         maxRows = maxRows ? maxRows : 100;
         if(Math.floor(maxRows/2)*2 == maxRows) maxRows++;
 
-        var base = getBase();
+        var base = 16;
         var decoded = "";
         var bgColor = "";
         $("#"+div).html("");
@@ -1072,8 +1050,10 @@ lab23 ADD R1, R2, R3\n\
 
       //memorylist search
       $("#skrMemLisSearch").click(function() {
-        var searcher = parseInt($("#skrMemLisSearchField").val(), getBase())/4;
+        var searcher = parseInt($("#skrMemLisSearchField").val(), 16)/4;
         $('#frisc-memorylist').animate({scrollTop: (18*searcher)}, 1000 ,function() {;});
+        
+        return false;
       });
 
       var ioUnitMustacheTemplate = ' \
@@ -1086,7 +1066,7 @@ lab23 ADD R1, R2, R3\n\
           <div class="form-inline" style="margin-bottom: 10px;"> \
             <label>Interrupt state ({{intLevel}}):</label> \
             {{#areFieldsEditable}} \
-            <input type="text" class="input-mini io-int" value="0" /> \
+            <input type="text" class="input-mini io-int" value="0"> \
             {{/areFieldsEditable}} \
             {{^areFieldsEditable}} \
             <span class="uneditable-input input-mini io-int" value="0">0</span> \
@@ -1107,9 +1087,9 @@ lab23 ADD R1, R2, R3\n\
               <tr class="io-loc-{{loc}}"> \
                 <td> <span class="uneditable-input io-loc" style="width: 75px;"> {{lochex}} </span> </td> \
                 {{#areFieldsEditable}} \
-                <td> <input type="text" style="width: 80px;" class="input io-mem-hex" value="{{hex}}" /> </td> \
-                <td> <input type="text" style="width: 80px;" class="input io-mem-dec" value="{{dec}}" /> </td> \
-                <td> <input type="text" style="width: 230px;" class="input io-mem-bin" value="{{bin}}" /> </td> \
+                <td> <input type="text" style="width: 80px;" class="input io-mem-hex" value="{{hex}}"> </td> \
+                <td> <input type="text" style="width: 80px;" class="input io-mem-dec" value="{{dec}}"> </td> \
+                <td> <input type="text" style="width: 230px;" class="input io-mem-bin" value="{{bin}}"> </td> \
                 {{/areFieldsEditable}} \
                 {{^areFieldsEditable}} \
                 <td> <span style="width: 80px;" class="uneditable-input io-mem-hex" value="{{hex}}"> {{hex}} </span> </td> \
@@ -1341,13 +1321,13 @@ lab23 ADD R1, R2, R3\n\
       }
       
       function defineFriscCtIoUnitTypeForm() {
-        $("#addIoUnit").before('<label id="frisc-ct-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-ct-freq" value="1000"/>');
+        $("#addIoUnit").before('<label id="frisc-ct-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-ct-freq" value="1000">');
         $("#ioUnitMemmapCount").val(4);
         $("#ioUnitMemmapCount").attr("disabled", true);
       }
       
       function defineFriscPioIoUnitTypeForm() {
-        $("#addIoUnit").before('<label id="frisc-pio-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-pio-freq" value="1000"/>');
+        $("#addIoUnit").before('<label id="frisc-pio-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-pio-freq" value="1000">');
         $("#ioUnitMemmapCount").val(4);
         $("#ioUnitMemmapCount").attr("disabled", true);
       }
