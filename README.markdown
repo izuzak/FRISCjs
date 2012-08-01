@@ -26,6 +26,7 @@ FRISCjs is built with many open-source projects:
  * [jQuery](http://jquery.com) - used for the Web application version of the simulator.
  * [Bootstrap](http://twitter.github.com/bootstrap) - used for the Web application version of the simulator.
  * [Ace](http://ace.ajax.org/) - used as the editor for the Web application version of the simulator.
+ * [Mustache](https://github.com/janl/mustache.js/) - used for client-side templates. 
  * [Keymaster](https://github.com/madrobby/keymaster) - used for reconfiguring/disabling keyboard shortcuts. 
 
 ## License
