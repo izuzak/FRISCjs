@@ -9,7 +9,7 @@ This project was inspited by the [GameBoy emulator in JavaScript](http://imranna
 The FRISCjs simulator has two parts: a [FRISC assembler](https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](https://github.com/izuzak/FRISCjs/blob/master/friscjs.js) which executes machine code.
 
 Furthermore, there are two user interfaces to the simulator: a [Web application graphical interface](https://github.com/izuzak/FRISCjs/blob/master/main.html) and a [NodeJS command-line interface](https://github.com/izuzak/FRISCjs/blob/master/main.js). 
-The Web application interface is available [here](https://izuzak.github.com/FRISCjs/main.html).
+The Web application interface is available [here](https://izuzak.github.com/FRISCjs/main.html) and supports many cool features like breakpoints and step-by-step execution.
 
 ## FRISCjs API
 
