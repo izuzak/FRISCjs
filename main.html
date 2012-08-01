@@ -97,6 +97,7 @@
         <li class="active"><a id="frisc-sim-link" href="#frisc-sim" data-toggle="tab">Simulator</a></li>
         <li><a href="#frisc-saveload" data-toggle="tab">Load/Save</a></li>
         <li><a href="#frisc-usage" data-toggle="tab">Usage instructions</a></li>
+        <li><a href="#frisc-examples" data-toggle="tab">Examples</a></li>
         <li><a href="#frisc-about" data-toggle="tab">About</a></li>
       </ul>
       <div class="tab-content" style="margin-bottom: 20px;">
@@ -191,6 +192,19 @@
               <li> After adding all desired IO units, load the program into memory as described above. As the program executes, the state of the memory mapped locations and the interrupt state will <b>automatically refresh</b>. </li>
               <li> The state of the memory mapped locations for all IO units is <b>automatically reset</b> when the CPU is stopped, as described above. </li>
             </ol>
+          </div>
+        </div>
+        <div id="frisc-examples" class="container tab-pane" style="margin-bottom: 15px; width: auto;">
+          <div class="well">
+            <h3> Examples </h3>
+            <p> This page contains examples for using FRISCjs. Each example is given as a brief description and a link to a configuration which can be loaded using the Load/Save tab. Just copy/paste the configuration into the import box and click <b>"Import"</b>. </p>
+            
+            <h4> FRISC CT example </h4>
+            <p> This example uses a FRISC CT IO unit for simple counting - an in-memory counter is incremented for every 400 periods of the FRISC CT unit. The configuration contains a FRISC CT unit configured at 1000Hz. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_ct.json">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_ct.frisc">Input program only in a more readable format</a> </li>
+            </ul>
           </div>
         </div>
         <div id="frisc-about" class="container tab-pane" style="margin-bottom: 15px; width: auto;">

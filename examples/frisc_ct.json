@@ -1,0 +1,15 @@
+{
+  "program": "; FRISC CT io unit example\n; ========================\n;\n; A FRISC CT unit is mapped to 4 word-length\n; locations starting from 0xFFFF0000 and is\n; attached to INT0.\n; \n; The program counts 400 periods of the\n; FRISC CT unit and after every 400 periods\n; a in-memory counter is incremented.\n\nCTLR `EQU 0FFFF0000\nCTCR `EQU 0FFFF0004\nCTIACK `EQU 0FFFF0008\nCTIEND `EQU 0FFFF000C\n\n; Initialize stack pointer to 0x10000\n\n `ORG 0\n MOVE 10000, R7\n JP MAIN\n \n; Initialize interrupt vector\n; Interrupt handler will be on 0x1000\n\n `ORG 8\n DW 1000\n\n; Main program loop\n\nMAIN \n\n; Initialize FRISC CT unit\n\n; Count 400 times \n\n MOVE %D 400, R0\n STORE R0, (CTLR) \n\n; Enable interrupts and start counting\n \n MOVE %B 11, R0\n STORE R0, (CTCR)\n\n; Enable interrupts in CPU status register\n\n MOVE %B 10010000, SR\n \n; Simulate work with an infinite loop\n\nLOOP \n JP LOOP\n\n; Interrupt handler\n\n `ORG 1000\n\n; Store context \n \n PUSH R0\n MOVE SR, R0\n PUSH R0\n\n; Set interrupt acknowledge\n\n STORE R0, (CTIACK)\n\n; Increase counter\n\n LOAD R0, (COUNTER)\n ADD R0, 1, R0\n STORE R0, (COUNTER)\n\n; Restore context\n \n POP R0\n MOVE R0, SR\n POP R0 \n\n; Signal end of interrupt handling to IO unit\n \n STORE R0, (CTIEND)\n RETI \n\n; Counter state\n\nCOUNTER DW 0",
+  "cpuFreq": "1000",
+  "memSize": "256",
+  "ioUnits": [
+    {
+      "ioUnitName": "CT1",
+      "intLevel": "INT0",
+      "memmapStart": "0FFFF0000",
+      "memmapCount": "4",
+      "ioUnitType": "frisc-ct",
+      "ioUnitFreq": "1000"
+    }
+  ]
+}
