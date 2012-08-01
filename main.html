@@ -164,7 +164,7 @@
             <ol>
               <li> Enter your FRISC assembler program into the textbox on the left. </li>
               <li> Press the <b>"Settings"</b> button to define the CPU speed (in Hz, default is 1000Hz, min is 1Hz) and the memory size (in KB, default is 256KB, min is 1KB, max is 1000KB). These options can't be changed after the program is loaded. Also, select the base for displaying register status (decimal or hexadecimal, default is hex). This option can be changed even while the loaded program is being executed. </li>
-              <li> Press the <b>"Load"</b> button to parse and assemble the program, and then load it into memory. In case of parsing errors, the error message, line and column numbers will be logged to the log output screen.</li>
+              <li> Press the <b>"Load"</b> button to parse and assemble the program, and then load it into memory. In case of parsing errors, the error message, line and column numbers will be logged to the log output screen. </li>
               <li> After the program loads into memory, the program editor is replaced with a <b>location-by-location view of the complete memory</b>. For each location, the location address, its value in hex and dec base, and value interpreted as a FRISC instruction are shown. Furthermore, the memory view provides several advanced features:
                 <ul>
                   <li> <b>search</b> - the search-box below the memory view provides a fast way to jump to any location.</li>
@@ -176,6 +176,20 @@
               <li> Press the <b>"Run one"</b> button to force the CPU to execute only the next instruction (step-by-step execution).</li>
               <li> Press the <b>"Stop"</b> button to stop the CPU completely, unload the program from memory and return to defining the program in the editor. </li>
               <li> Press the <b>"Clear log"</b> button to clear the log output screen. </li>
+            </ol>
+            <h3> IO units instructions </h3>
+            <ol>
+              <li> IO units must be defined <b>before loading a FRISC program</b> into memory. </li>
+              <li> Define a <b>unique name</b> to identify an IO unit. </li>
+              <li> Select the <b>IO unit type</b>. FRISCjs supports 4 IO unit types: Generic IO, FRISC CT, FRISC PIO and FRISC DMA. The <b>Generic IO unit</b> is a unit with no pre-defined behavior or number of memory mapped locations, and enables users to manually set the unit state at runtime. The <b>FRISC CT</b>, <b>FRISC PIO</b> and <b>FRISC DMA</b> units all have pre-defined behavior, parameters and number of memory mapped locations, and their state cannot be set manually during runtime. Multiple units of same type can be added (e.g. two FRISC CT units at the same time). </li>
+              <li> Select the <b>interrupt level</b> for the unit. Multiple units may be connected to the same interrupt, except for INT3 which is unmaskable. </li>
+              <li> Define the start of the <b>memory mapping</b> for the unit as a HEX base memory location. Writing to memory locations mapped to an IO unit will result in sending data to the IO unit, not the memory module. Similarly, reading from a memory mapped location will result in receiving data from the IO unit, not the memory module. </li>
+              <li> Define the <b>number of memory mapped 4-byte locations</b>. This number is pre-defined for standard FRISC IO units, and is configurable for Generic IO units. </li>
+              <li> Define the required parameters for some units, e.g. the frequency for FRISC CT and PIO units. </li>
+              <li> Click <b>"Add"</b> to create and display the unit. In case of errors, the error message will be logged to the log output screen. Each unit is displayed with its name, parameters, interrupt state and memory mapped locations. For each location, the address of the location and its value in decimal, hexadecimal and binary bases are shown. The interrupt state and memory mapped location values can be changed manually through the user interface for Generic IO unit types. </li>
+              <li> Each unit can be removed by clicking the <b>"X"</b> button in the upper left corner, but only while the CPU is stopped. </li>
+              <li> After adding all desired IO units, load the program into memory as described above. As the program executes, the state of the memory mapped locations and the interrupt state will <b>automatically refresh</b>. </li>
+              <li> The state of the memory mapped locations for all IO units is <b>automatically reset</b> when the CPU is stopped, as described above. </li>
             </ol>
           </div>
         </div>
