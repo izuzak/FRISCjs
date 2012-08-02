@@ -965,6 +965,13 @@ lab23 ADD R1, R2, R3\n\
       
       simulator.CPU.onStop = function() {
         simulatorLog("<span class='label label-warning'><b>FRISC processor stopped!</b></span>");
+        
+        var ioUnits = simulator.IO.getIoUnits();
+
+        for (var i=0; i<ioUnits.length; i++) {
+          simulator.IO.getIoUnit(ioUnits[i]).reset();
+        }
+        
         changeState("stopped");
         onStopInternal();
       };
@@ -991,12 +998,6 @@ lab23 ADD R1, R2, R3\n\
           try {
             simulator.CPU.reset();
             breakpoints = [];
-            
-            var ioUnits = simulator.IO.getIoUnits();
-
-            for (var i=0; i<ioUnits.length; i++) {
-              simulator.IO.getIoUnit(ioUnits[i]).reset();
-            }
             
             var source = editor.getSession().getValue();
             if (source.length > 0 && source[source.length-1] !== '\n') {
