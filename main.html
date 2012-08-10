@@ -1336,7 +1336,11 @@ lab23 ADD R1, R2, R3\n\
       function updateIoMemory(ioUnitId, ioMemoryAddress, valueType, blockPropagate) {
         var val = $(".io-loc-" + ioMemoryAddress + " .io-mem-" + valueType).val();
         
-        if (isNaN(parseInt(val))) {
+        if (valueType === 'hex' && isNaN(parseInt(val, 16))) {
+          val = 0;
+        } else if (valueType === 'dec' && isNaN(parseInt(val, 10))) {
+          val = 0;
+        } else if (valueType === 'bin' && isNaN(parseInt(val, 2))) {
           val = 0;
         }
 
