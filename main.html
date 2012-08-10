@@ -199,11 +199,39 @@
             <h3> Examples </h3>
             <p> This page contains examples for using FRISCjs. Each example is given as a brief description and a link to a configuration which can be loaded using the Load/Save tab. Just copy/paste the configuration into the import box and click <b>"Import"</b>. </p>
             
+            <h4> Simple addition example </h4>
+            <p> This most basic example adds values from registers R0 and R1 and stores the result into R2. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/add_numbers.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/add_numbers.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+            
+            <h4> All instructions example </h4>
+            <p> This example doesn't do anything useful, but contains every FRISC instruction. Useful for testing and debugging. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/all_instructions.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/all_instructions.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+            
             <h4> FRISC CT example </h4>
             <p> This example uses a FRISC CT IO unit for simple counting - an in-memory counter is incremented for every 400 periods of the FRISC CT unit. The configuration contains a FRISC CT unit configured at 1000Hz. </p>
             <ul>
               <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_ct.json" target="_blank">Configuration</a> </li>
               <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_ct.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+            
+            <h4> FRISC PIO example </h4>
+            <p> This example uses a FRISC PIO IO unit for reading 40 data items. The configuration contains a FRISC PIO unit configured at 1000Hz. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_pio.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_pio.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+            
+            <h4> FRISC DMA example </h4>
+            <p> This example uses a FRISC DMA IO unit for transferring 1000 4-byte words from an IO unit mapped on 0xFFFF3330 to memory starting from location 0x4000, using halting transfer mode. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_dma.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_dma.frisc" target="_blank">Input program only in a more readable format</a> </li>
             </ul>
           </div>
         </div>
