@@ -1120,7 +1120,7 @@ lab23 ADD R1, R2, R3\n\
       });
 
       var ioUnitMustacheTemplate = ' \
-        <div id="iounit-{{id}}" class="form-inline" style="-moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; -moz-box-shadow: 0px 0px 4px #000000; -webkit-box-shadow: 0px 0px 4px #000000; box-shadow: 0px 0px 4px #000000; padding: 5px; margin-left: 20px; margin-bottom:20px; width: 550px; float: left;"> \
+        <div id="iounit-{{id}}" class="form-inline" style="-moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; -moz-box-shadow: 0px 0px 4px #000000; -webkit-box-shadow: 0px 0px 4px #000000; box-shadow: 0px 0px 4px #000000; padding: 5px; margin-left: 22px; margin-bottom:20px; width: 547px; float: left;"> \
           <div class="form-inline" style="margin-bottom: 10px;"> \
             <button type="button" class="io-del btn btn-danger"><i class="icon-remove-sign icon-white"></i></button> \
             <label class="btn" style="font-size: 20px; color: black; opacity: 1;" disabled><b> {{name}}</b>, {{summary}} </label>\
@@ -1140,7 +1140,7 @@ lab23 ADD R1, R2, R3\n\
             <thead> \
               <tr> \
                 <th> Address HEX </th> \
-                <th style="width: 90px;"> Value HEX </th> \
+                <th style="width: 87px;"> Value HEX </th> \
                 <th style="width: 90px;"> Value DEC </th> \
                 <th style="width: 240px;"> Value BIN </th> \
               </tr> \
@@ -1150,12 +1150,12 @@ lab23 ADD R1, R2, R3\n\
               <tr class="io-loc-{{loc}}"> \
                 <td> <span class="uneditable-input io-loc" style="width: 75px;"> {{lochex}} </span> </td> \
                 {{#areFieldsEditable}} \
-                <td> <input type="text" style="width: 80px;" class="input io-mem-hex" value="{{hex}}"> </td> \
+                <td> <input type="text" style="width: 77px;" class="input io-mem-hex" value="{{hex}}"> </td> \
                 <td> <input type="text" style="width: 80px;" class="input io-mem-dec" value="{{dec}}"> </td> \
                 <td> <input type="text" style="width: 230px;" class="input io-mem-bin" value="{{bin}}"> </td> \
                 {{/areFieldsEditable}} \
                 {{^areFieldsEditable}} \
-                <td> <span style="width: 80px;" class="uneditable-input io-mem-hex" value="{{hex}}"> {{hex}} </span> </td> \
+                <td> <span style="width: 77px;" class="uneditable-input io-mem-hex" value="{{hex}}"> {{hex}} </span> </td> \
                 <td> <span style="width: 80px;" class="uneditable-input io-mem-dec" value="{{dec}}"> {{dec}} </span> </td> \
                 <td> <span style="width: 230px;" class="uneditable-input io-mem-bin" value="{{bin}}"> {{bin}} </span> </td> \
                 {{/areFieldsEditable}} \
