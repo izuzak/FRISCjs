@@ -515,12 +515,12 @@
         for (var i=0; i<cfg.ioUnits.length; i++) {
           $("#ioUnitName").val(cfg.ioUnits[i].ioUnitName);
           $("#ioUnitType").val(cfg.ioUnits[i].ioUnitType);
+          $("#ioUnitType").change();
           $("#ioUnitIntLevel").val(cfg.ioUnits[i].intLevel);
           $("#ioUnitMemmapStart").val(cfg.ioUnits[i].memmapStart);
           $("#ioUnitMemmapCount").val(cfg.ioUnits[i].memmapCount);
-          $("#frisc-ct-freq").val(cfg.ioUnits[i].ioUnitFreq);
+          $("#frisc-io-freq").val(cfg.ioUnits[i].ioUnitFreq);
           
-          $("#ioUnitType").change();
           $("#ioUnitFormStatic").submit();
         }
       }
@@ -1166,10 +1166,8 @@ lab23 ADD R1, R2, R3\n\
           </div>';
       $("#ioUnitType").change(function () {
         $("#ioUnitFormDynamic").html("");
-        $("#frisc-ct-freq").remove();
-        $("#frisc-ct-freq-label").remove();
-        $("#frisc-pio-freq").remove();
-        $("#frisc-pio-freq-label").remove();
+        $("#frisc-io-freq").remove();
+        $("#frisc-io-freq-label").remove();
         
         if ($(this).val() === 'generic') {
           defineGenericIoUnitTypeForm();
@@ -1210,12 +1208,12 @@ lab23 ADD R1, R2, R3\n\
           d.summary = "Generic IO unit";
           d.areFieldsEditable = true;
         } else if ($("#ioUnitType").val() === 'frisc-ct') {
-          var frequency = parseInt($("#frisc-ct-freq").val());
+          var frequency = parseInt($("#frisc-io-freq").val());
           d.summary = "FRISC-CT unit, " + frequency + "Hz";
           d.areFieldsEditable = false;
           d.freq = frequency;
         } else if ($("#ioUnitType").val() === 'frisc-pio') {
-          var frequency = parseInt($("#frisc-pio-freq").val());
+          var frequency = parseInt($("#frisc-io-freq").val());
           d.summary = "FRISC-PIO unit, " + frequency + "Hz";
           d.areFieldsEditable = false;
           d.freq = frequency;
@@ -1244,7 +1242,7 @@ lab23 ADD R1, R2, R3\n\
             memmapStart : $("#ioUnitMemmapStart").val(),
             memmapCount : $("#ioUnitMemmapCount").val(),
             ioUnitType : $("#ioUnitType").val(),
-            ioUnitFreq : $("#frisc-ct-freq").val()
+            ioUnitFreq : $("#frisc-io-freq").val()
           };
           
           var s = Mustache.render(ioUnitMustacheTemplate, d);
@@ -1290,10 +1288,8 @@ lab23 ADD R1, R2, R3\n\
           };
           
           $("#ioUnitFormStatic").each(function() { this.reset(); });
-          $("#frisc-ct-freq").remove();
-          $("#frisc-ct-freq-label").remove();
-          $("#frisc-pio-freq").remove();
-          $("#frisc-pio-freq-label").remove();
+          $("#frisc-io-freq").remove();
+          $("#frisc-io-freq-label").remove();
         } catch (e) {
           simulatorLog("<span class='label label-important'><b>IO error</b></span> " + e.toString() + "");
         }
@@ -1384,13 +1380,13 @@ lab23 ADD R1, R2, R3\n\
       }
       
       function defineFriscCtIoUnitTypeForm() {
-        $("#addIoUnit").before('<label id="frisc-ct-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-ct-freq" value="1000">');
+        $("#addIoUnit").before('<label id="frisc-io-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-io-freq" value="1000">');
         $("#ioUnitMemmapCount").val(4);
         $("#ioUnitMemmapCount").attr("disabled", true);
       }
       
       function defineFriscPioIoUnitTypeForm() {
-        $("#addIoUnit").before('<label id="frisc-pio-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-pio-freq" value="1000">');
+        $("#addIoUnit").before('<label id="frisc-io-freq-label"> Frequency (Hz): </label>\n<input class="span1" type="text" style="margin-right: 4px;" id="frisc-io-freq" value="1000">');
         $("#ioUnitMemmapCount").val(4);
         $("#ioUnitMemmapCount").attr("disabled", true);
       }
