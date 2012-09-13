@@ -25,7 +25,7 @@
   
       .cpu-state-div {
         font-size: 12pt; 
-        margin-top: 5px; 
+        margin-top: 0px; 
         display: inline-block; 
         height: 40px; 
         border: 1px solid rgb(102, 102, 102);
@@ -88,10 +88,22 @@
         top: -1px;
         padding: 2px 4px 2px;
       }
+      
+      .btn, body, label, select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
+        font-size: 13px;
+      }
+      
+      .label, .badge {
+        font-size: 11px;
+      }
+      
+      input[type="radio"], input[type="checkbox"] {
+        margin: 0px;
+      }
     </style>
   </head>
   <body>
-    <div class="container" style="width: 1140px">
+    <div class="container" style="width: 1170px">
       <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
       <ul class="nav nav-tabs">
         <li class="active"><a id="frisc-sim-link" href="#frisc-sim" data-toggle="tab">Simulator</a></li>
@@ -100,7 +112,7 @@
         <li><a href="#frisc-examples" data-toggle="tab">Examples</a></li>
         <li><a href="#frisc-about" data-toggle="tab">About</a></li>
       </ul>
-      <div class="tab-content" style="margin-bottom: 20px;">
+      <div class="tab-content" style="margin-bottom: 0px;">
         <div id="frisc-saveload" class="container tab-pane" style="width: auto">
           <div class="well">
             <h3> Load/save and import/export FRISC configurations </h3>
@@ -263,7 +275,7 @@
           <div id="frisc-inputdiv" class="sidebar" style="width: 450px; height: 450px;">
           </div>
 
-          <div class="sidebar ace_editor ace-tm" id="frisc-memorylist-hold" style="width: 450px; height: 445px; display:none;">
+          <div class="sidebar ace_editor ace-tm" id="frisc-memorylist-hold" style="width: 450px; height: 450px; display:none;">
             <div style="width: 448px; height: 30px; display:inline-block; top:0px; border: 1px solid #dddddd; border-collapse: separate; border-radius: 4px 4px 0px 0px; background-color:#f1f1f1; padding-top:5px;">
               <div style='display:table-cell; width:70px;  border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Location</div>
               <div style='display:table-cell; width:70px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Value HEX</div>
@@ -272,7 +284,7 @@
               <div style='display:table-cell; width:30px; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Break</div>
             </div>
 
-            <div id="frisc-memorylist" style="width: 448px; height: 370px; position:absolute; top:31px; overflow: scroll; overflow-x:hidden; display:inline-block; border: 1px solid #dddddd; border-radius: 0px 0px 4px 4px;">
+            <div id="frisc-memorylist" style="width: 448px; height: 375px; position:absolute; top:31px; overflow: scroll; overflow-x:hidden; display:inline-block; border: 1px solid #dddddd; border-radius: 0px 0px 4px 4px;">
             </div>
 
             <div id="frisc-memorylist-search" style="border: 1px solid #dddddd; border-collapse: separate; border-radius: 0px 0px 4px 4px; background-color:#f1f1f1; position:absolute; bottom:0px; width: 448px; height: 35px; padding-top: 6px;">
@@ -307,7 +319,7 @@
                 <button class="btn active" id="regBaseRadioHex">HEX</button>
               </div>
             </div>
-            <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 15px; color: black;"></div>
+            <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 10px; color: black; height: 145px;"></div>
             <div id="cpustate" style="margin-top: 8px;" >
               <div id="cpu_r0" class="cpu-state-div"> 
                 <div class="cpu-reg-label cpu-state-lab"> R0 </div>
@@ -389,7 +401,7 @@
             </div>
           </div>
         </div>
-        <div style="margin-bottom: 15px; width: 1140px;">
+        <div style="margin-bottom: 5px; width: 1170px;">
           <legend style="margin-bottom: 15px;">IO units</legend>
           <div class="form-inline" style="margin-bottom: 25px;">
             <form id="ioUnitFormStatic">
@@ -651,10 +663,6 @@
 
       key('backspace', function(){ return false; });
 
-      var height = ($("#frisc-inputdiv").innerHeight() - $("#frisc-cpu-controls").innerHeight()) - 281 + "px";
-      $("#cpuout").height(height);
-      $("#memout").height(height);
-
       var _state = "stopped";
 
       // create FRISC
@@ -721,7 +729,7 @@ lab23 ADD R1, R2, R3\n\
           marginLeft = "0px";
         }
         
-        $("#cpuout").append("<div style='font-size: 9pt; margin: 1px; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</div>");
+        $("#cpuout").append("<div style='font-size: 9pt; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</div>");
         $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
       }
       
@@ -1103,10 +1111,10 @@ lab23 ADD R1, R2, R3\n\
       
       $("#frisc-showhidesettings").click(function() {
         if ($("#frisc-settings").is(":visible")) {
-          $('#cpuout').animate({ height: height }, 603, function() {;} );
+          $('#cpuout').animate({ height: 145 }, 603, function() {;} );
           $("#frisc-settings").hide("slow");
         } else {
-          $('#cpuout').animate({ height: parseInt(height)-$("#frisc-settings").outerHeight(true) }, 603, function() {;} );
+          $('#cpuout').animate({ height: 100 }, 603, function() {;} );
           $("#frisc-settings").show("slow");
         }
       });
@@ -1120,7 +1128,7 @@ lab23 ADD R1, R2, R3\n\
       });
 
       var ioUnitMustacheTemplate = ' \
-        <div id="iounit-{{id}}" class="form-inline" style="-moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; -moz-box-shadow: 0px 0px 4px #000000; -webkit-box-shadow: 0px 0px 4px #000000; box-shadow: 0px 0px 4px #000000; padding: 5px; margin-left: 22px; margin-bottom:20px; width: 547px; float: left;"> \
+        <div id="iounit-{{id}}" class="form-inline" style="-moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px; -moz-box-shadow: 0px 0px 4px #000000; -webkit-box-shadow: 0px 0px 4px #000000; box-shadow: 0px 0px 4px #000000; padding: 5px; margin-left: 22px; margin-bottom:20px; width: 562px; float: left;"> \
           <div class="form-inline" style="margin-bottom: 10px;"> \
             <button type="button" class="io-del btn btn-danger"><i class="icon-remove-sign icon-white"></i></button> \
             <label class="btn" style="font-size: 20px; color: black; opacity: 1;" disabled><b> {{name}}</b>, {{summary}} </label>\
