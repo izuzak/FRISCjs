@@ -17,7 +17,7 @@ The API of the core FRISCjs components is described [here](https://github.com/iz
 ## Similar projects
 
 This project was inspired by the [GameBoy emulator in JavaScript](http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-The-CPU) and [jsLinux](http://bellard.org/jslinux/tech.html) projects.
-There are many other processor simulators in JavaScript, such as the [visual transistor-level simulation of the 6502 CPU](http://www.visual6502.org/JSSim/expert.html), [6502 compatible assembler and emulator](http://www.6502asm.com/) and this [other 6502 CPU simulator](http://skilldrick.github.com/easy6502/).
+There are many other processor simulators in JavaScript, such as the [GameBoy Color emulator](https://github.com/grantgalitz/GameBoy-Online), [visual transistor-level simulation of the 6502 CPU](http://www.visual6502.org/JSSim/expert.html), [6502 compatible assembler and emulator](http://www.6502asm.com/) and this [other 6502 CPU simulator](http://skilldrick.github.com/easy6502/).
 
 ## Credits
 
