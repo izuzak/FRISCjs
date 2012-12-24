@@ -1,0 +1,44 @@
+; FRISC DMA io unit example
+; =========================
+;
+; A FRISC DMA unit is mapped to 6 word-length
+; locations starting from 0xFFFF0000 and is
+; connected to INT0. However, the unit is not
+; working in interrupt mode.
+; 
+; The program transfers 1000 4-byte words from
+; an IO unit mapped on 0xFFFF3330 to memory
+; starting from location 0x4000, using halting
+; transfer mode.
+
+DMA_SRC `EQU 0FFFF0000
+DMA_DEST `EQU 0FFFF0004
+DMA_SIZE `EQU 0FFFF0008
+DMA_CTRL `EQU 0FFFF000C
+DMA_START `EQU 0FFFF0010
+DMA_ACK `EQU 0FFFF0014
+
+; Initialize stack pointer to 0x10000
+
+ MOVE 10000, SP
+
+; initialize DMA unit
+; destin=mem, source=VJ, halt, no INT
+
+ MOVE 0FFFF3330, R0
+ STORE R0, (DMA_SRC)
+ MOVE 4000, R0
+ STORE R0, (DMA_DEST)
+ MOVE %D 1000, R0
+ STORE R0, (DMA_SIZE)
+ MOVE %B 0100, R0 
+ STORE R0, (DMA_CTRL)
+
+; start DMA transfer
+
+ STORE R0, (DMA_START)
+
+; acknowledge DMA transfer end and halt CPU
+
+ STORE R0, (DMA_ACK) ; brisanje statusa DMA
+ HALT

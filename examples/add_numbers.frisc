@@ -1,0 +1,15 @@
+; Simple addition example
+; =======================
+;
+; This is the most basic example
+; of adding two numbers in registers
+; R0 and R1 and storing the result
+; in R2.
+;
+; If this example doesn't work,
+; something is definitely wrong.
+
+ MOVE 1, R0
+ MOVE 2, R1
+ ADD R0, R1, R2
+ HALT

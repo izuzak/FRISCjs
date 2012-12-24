@@ -1,0 +1,6 @@
+{
+  "program": "; Simple addition example\n; =======================\n;\n; This is the most basic example\n; of adding two numbers in registers\n; R0 and R1 and storing the result\n; in R2.\n;\n; If this example doesn't work,\n; something is definitely wrong.\n\n MOVE 1, R0\n MOVE 2, R1\n ADD R0, R1, R2\n HALT",
+  "cpuFreq": "1000",
+  "memSize": "256",
+  "ioUnits": []
+}

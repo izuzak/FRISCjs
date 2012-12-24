@@ -1,0 +1,6 @@
+{
+  "program": "; All instructions example\n; ========================\n;\n; This example doesn't do anything useful, \n; but contains every FRISC instruction. \n; Useful for testing and debugging.\n\n; aluop\nlab1 ADD R1, R2, R3\nlab2 ADD r2, 5, r5\n ADD r5, lab1, r2\n; cmpop\n CMP R1, R2\nlab5 CMP R1, 5\nlab6 CMP r4, lab5\n; moveop\nlab7 MOVE R4, R5\nlab8 MOVE R5, SR\nlab9 MOVE SR, r5\n MOVE lab5, r4\nlab11 MOVE lab6, sr\n; uprop\n JP lab2\n JP_N 54\nlab12 JP_UGE (r1)\nlab13 RETI_M\n; memop\nlab14 STORE r1, (r2)\n STORE r4, (r3+23)\n STORE r4, (lab14)\nlab15 STORE r5, (200)\nlab16 POP r3\n; asmop\nlab17 `ORG 234\n `DW 1,2,3,4,5\n `DW 54\nlab18 `EQU 300\nlab19 `DS 12\nlab21 `BASE H\nlab22 DW 54\n DH 34\n DB 12\nlab20 `END\nlab23 ADD R1, R2, R3\n; fds fsd';",
+  "cpuFreq": "1000",
+  "memSize": "256",
+  "ioUnits": []
+}

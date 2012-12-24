@@ -276,7 +276,6 @@
 
 instructions_main
   = ins:instructions {
-
     var instrs = [];
     var machinecode = [];
     var unknownlabels = [];
@@ -287,13 +286,14 @@ instructions_main
       }
     }
 
-    function replaceLabel(element) {
+    function replaceLabel(element, baseValueForDiff) {
       if (element.type === "label") {
         var labelValue = labels[element.value];
 
         if (typeof labelValue !== "undefined") {
           element.type = "num";
-          element.value = labelValue;
+          element.value = (typeof baseValueForDiff === 'undefined') ?
+                          labelValue : (labelValue - baseValueForDiff);
         } else {
           unknownlabels.push(element.value);
           element.value = null;
@@ -306,7 +306,11 @@ instructions_main
       if (instrs[i].op in aluops || instrs[i].op in cmpops || instrs[i].op in moveops) {
         replaceLabel(instrs[i].alusrc2);
       } else if (instrs[i].op in jmpops) {
-        replaceLabel(instrs[i].addr);
+        if (instrs[i].op === "JR") {
+          replaceLabel(instrs[i].addr, instrs[i].curloc);
+        } else {
+          replaceLabel(instrs[i].addr);
+        }
       } else if (instrs[i].op in memops) {
         replaceLabel(instrs[i].mem);
       } else if (instrs[i].op in dwhbops) {
@@ -353,7 +357,7 @@ instructions_main
       if (typeof machinecode[opCount].curloc === "undefined") {
         opCount++;
       } else {
-        if (machinecode[opCount].curloc !== memCount) {
+        if (machinecode[opCount].curloc > memCount) {
           memCount = writeToMemory("00000000", memCount, mem);
         } else {
           if (typeof machinecode[opCount].machineCode === "string") {
@@ -372,7 +376,7 @@ instructions_main
   }
 
 instructions
-  = ins:(instruction_or_end &{linecounter++; return true;})+ !(.+) {
+  = ins:(instruction_or_end &{ linecounter++; return true;})+ !(.+) {
       return ins;
     }
 
@@ -381,7 +385,7 @@ newline
 
 instruction_or_end
   = i:instruction_end { var ins = i; ins.line = linecounter-1; return {}} /
-    i:instruction [\n] { var ins = i; ins.line = linecounter; return ins;}
+    i:instruction newline { var ins = i; ins.line = linecounter; return ins;}
 
 instruction_end
   = l:labelPart? whitespace+ o:endop c:commentPart? (newline .*)? {
@@ -390,7 +394,7 @@ instruction_end
 
 instruction
   = l:labelPart? o:operationPart? c:commentPart? {
-    if (o === null) {
+    if (o === null || o === "") {
       if (l !== null && l !== "") {
         addLabel(l, curloc);
       }
@@ -414,6 +418,13 @@ instruction
     if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
       curloc += 4;
     } else if (o.op in orgops) {
+      if (o.value < curloc) {
+        var err = new Error("ORG op must not point to previous addresses.");
+        err.line = linecounter;
+        err.column = 1;
+        throw err;
+      }
+
       curloc = o.value;
     } else if (o.op in dwops) {
       curloc += o.values.length;
@@ -469,7 +480,7 @@ reladdr = immaddr
 rinaddr = "(" value:regaddr ")" { return value; }
 
 rinaddroff = "(" reg:register val:((numberWithoutBase) / ("")) ")" {
-      return {type : "regoff", value : reg, offset : val[1] === "" ? 0 : val[1]  };
+      return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
     }
 
 impaddr = regaddr
@@ -595,8 +606,10 @@ whitespace
   = " " / "\t"
 
 register
-  = [rR]regnum:[0-7] {
+  = [rR] regnum:([0-7]) {
     return parseInt(regnum, 10);
+  } / [sS][pP] {
+    return 7; // SP == R7
   }
 
 number

@@ -1,0 +1,87 @@
+; FRISC CT io unit example
+; ========================
+;
+; A FRISC CT unit is mapped to 4 word-length
+; locations starting from 0xFFFF0000 and is
+; attached to INT0.
+; 
+; The program counts 400 periods of the
+; FRISC CT unit and after every 400 periods
+; a in-memory counter is incremented.
+
+CTLR `EQU 0FFFF0000
+CTCR `EQU 0FFFF0004
+CTIACK `EQU 0FFFF0008
+CTIEND `EQU 0FFFF000C
+
+; Initialize stack pointer to 0x10000
+
+ `ORG 0
+ MOVE 10000, R7
+ JP MAIN
+ 
+; Initialize interrupt vector
+; Interrupt handler will be on 0x1000
+
+ `ORG 8
+ DW 1000
+
+; Main program loop
+
+MAIN 
+
+; Initialize FRISC CT unit
+
+; Count 400 times 
+
+ MOVE %D 400, R0
+ STORE R0, (CTLR) 
+
+; Enable interrupts and start counting
+ 
+ MOVE %B 11, R0
+ STORE R0, (CTCR)
+
+; Enable interrupts in CPU status register
+
+ MOVE %B 10010000, SR
+ 
+; Simulate work with an infinite loop
+
+LOOP 
+ JP LOOP
+
+; Interrupt handler
+
+ `ORG 1000
+
+; Store context 
+ 
+ PUSH R0
+ MOVE SR, R0
+ PUSH R0
+
+; Set interrupt acknowledge
+
+ STORE R0, (CTIACK)
+
+; Increase counter
+
+ LOAD R0, (COUNTER)
+ ADD R0, 1, R0
+ STORE R0, (COUNTER)
+
+; Restore context
+ 
+ POP R0
+ MOVE R0, SR
+ POP R0 
+
+; Signal end of interrupt handling to IO unit
+ 
+ STORE R0, (CTIEND)
+ RETI 
+
+; Counter state
+
+COUNTER DW 0
