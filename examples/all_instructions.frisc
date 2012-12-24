@@ -1,3 +1,10 @@
+; All instructions example
+; ========================
+;
+; This example doesn't do anything useful, 
+; but contains every FRISC instruction. 
+; Useful for testing and debugging.
+
 ; aluop
 lab1 ADD R1, R2, R3
 lab2 ADD r2, 5, r5

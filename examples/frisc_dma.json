@@ -1,0 +1,14 @@
+{
+  "program": "; FRISC DMA io unit example\n; =========================\n;\n; A FRISC DMA unit is mapped to 6 word-length\n; locations starting from 0xFFFF0000 and is\n; connected to INT0. However, the unit is not\n; working in interrupt mode.\n; \n; The program transfers 1000 4-byte words from\n; an IO unit mapped on 0xFFFF3330 to memory\n; starting from location 0x4000, using halting\n; transfer mode.\n\nDMA_SRC `EQU 0FFFF0000\nDMA_DEST `EQU 0FFFF0004\nDMA_SIZE `EQU 0FFFF0008\nDMA_CTRL `EQU 0FFFF000C\nDMA_START `EQU 0FFFF0010\nDMA_ACK `EQU 0FFFF0014\n\n; Initialize stack pointer to 0x10000\n\n MOVE 10000, SP\n\n; initialize DMA unit\n; destin=mem, source=VJ, halt, no INT\n\n MOVE 0FFFF3330, R0\n STORE R0, (DMA_SRC)\n MOVE 4000, R0\n STORE R0, (DMA_DEST)\n MOVE %D 1000, R0\n STORE R0, (DMA_SIZE)\n MOVE %B 0100, R0 \n STORE R0, (DMA_CTRL)\n\n; start DMA transfer\n\n STORE R0, (DMA_START)\n\n; acknowledge DMA transfer end and halt CPU\n\n STORE R0, (DMA_ACK) ; brisanje statusa DMA\n HALT",
+  "cpuFreq": "1000",
+  "memSize": "256",
+  "ioUnits": [
+    {
+      "ioUnitName": "dma1",
+      "intLevel": "INT0",
+      "memmapStart": "0FFFF0000",
+      "memmapCount": "6",
+      "ioUnitType": "frisc-dma"
+    }
+  ]
+}

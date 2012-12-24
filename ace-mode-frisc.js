@@ -55,10 +55,13 @@ define('ace/mode/frisc', function(require, exports, module) {
           regex : "^[a-zA-Z][0-9a-zA-Z_]*"
         }, {
           token : "frisc_register",
-          regex : "\\b[Rr][0-7]\\b"
+          regex : "\\s?\\b[Rr][0-7]\\b"
         }, {
           token : "frisc_register",
-          regex : "\\b[Ss][Rr]\\b"
+          regex : "\\s?\\b[sS][pP]\\b"
+        }, {
+          token : "frisc_register",
+          regex : "\\s?\\b[Ss][Rr]\\b"
         }, {
           token : "frisc_lparen",
           regex : "[(]"

@@ -1,0 +1,55 @@
+; FRISC PIO io unit example
+; =========================
+;
+; A FRISC PIO unit is mapped to 4 word-length
+; locations starting from 0xFFFF0000 and is
+; attached to INT0. However, the unit is not
+; working in interrupt mode.
+; 
+; The program reads data 40 times from the PIO
+; unit and stops the processor once done.
+
+PIOC `EQU 0FFFF0000
+PIOD `EQU 0FFFF0004
+PIOACK `EQU 0FFFF0008
+PIOEND `EQU 0FFFF000C
+
+; initialize PIO unit
+; 0=mode IN ; 0=NOT INT ; 1=ICR
+
+ `ORG 0 
+
+ MOVE %B 001, R0
+ STORE R0, (PIOC)
+
+; initialize variables for storing data
+; and data counter
+
+ MOVE DATA, R1
+ MOVE 40, R4
+
+; wait until PIO unit is ready
+
+WAIT
+ LOAD R0, (PIOC)
+ AND R0, 1, R0
+ JP_Z WAIT
+
+; acknowledge ready status and read data
+
+ STORE R0, (PIOACK)
+ LOAD R0, (PIOD)
+ STOREB R0, (R1) 
+ 
+; signal end of data transfer and check
+; if more data should be read
+ 
+ STORE R0, (PIOEND)
+ ADD R1, 1, R1
+ SUB R4, 1, R4
+ JP_NZ WAIT
+ HALT 
+
+; data space
+
+DATA `DS 40

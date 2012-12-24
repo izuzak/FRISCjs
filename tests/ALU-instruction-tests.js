@@ -525,7 +525,7 @@ var tests = [
     simulator.MEM.write(8, util.convertBinaryToInt("01010101111100001111000001010101"));
     R.r2 = 4;
 
-    I.LOAD("r2", 4, "r1");
+    I.LOAD("r1", "r2", 4);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("01010101111100001111000001010101"));
   }),
@@ -533,24 +533,24 @@ var tests = [
     simulator.MEM.write(8, util.convertBinaryToInt("01010101111100001111000001010101"));
     R.r2 = 8;
 
-    I.LOAD("r2", 0, "r1");
+    I.LOAD("r1", "r2", 0);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("01010101111100001111000001010101"));
   }),
   new T.Test("LOAD instruction off", function() {
     simulator.MEM.write(8, util.convertBinaryToInt("01010101111100001111000001010101"));
 
-    I.LOAD(0, 8, "r1");
+    I.LOAD("r1", 0, 8);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("01010101111100001111000001010101"));
   }),
   new T.Test("LOAD instruction from wrongly aligned address", function() {
     simulator.MEM.write(8, util.convertBinaryToInt("01010101111100001111000001010101"));
 
-    I.LOAD(0, 6, "r1");
+    I.LOAD("r1", 0, 6);
     T.assertEquals(R.r1, 0);
 
-    I.LOAD(0, 10, "r1");
+    I.LOAD("r1", 0, 10);
     T.assertEquals(R.r1, util.convertBinaryToInt("01010101111100001111000001010101"));
   }),
 
@@ -558,7 +558,7 @@ var tests = [
     simulator.MEM.writew(8, util.convertBinaryToInt("0101010111110000"));
     R.r2 = 4;
 
-    I.LOADH("r2", 4, "r1");
+    I.LOADH("r1", "r2", 4);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("0101010111110000"));
   }),
@@ -566,24 +566,24 @@ var tests = [
     simulator.MEM.writew(8, util.convertBinaryToInt("0101010111110000"));
     R.r2 = 8;
 
-    I.LOADH("r2", 0, "r1");
+    I.LOADH("r1", "r2", 0);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("0101010111110000"));
   }),
   new T.Test("LOADH instruction off", function() {
     simulator.MEM.writew(8, util.convertBinaryToInt("0101010111110000"));
 
-    I.LOADH(0, 8, "r1");
+    I.LOADH("r1", 0, 8);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("0101010111110000"));
   }),
   new T.Test("LOADH instruction from wrongly aligned address", function() {
     simulator.MEM.writew(8, util.convertBinaryToInt("0101010111110000"));
 
-    I.LOADH(0, 7, "r1");
+    I.LOADH("r1", 0, 7);
     T.assertEquals(R.r1, 0);
 
-    I.LOADH(0, 9, "r1");
+    I.LOADH("r1", 0, 9);
     T.assertEquals(R.r1, util.convertBinaryToInt("0101010111110000"));
   }),
 
@@ -591,7 +591,7 @@ var tests = [
     simulator.MEM.writeb(7, util.convertBinaryToInt("01010101"));
     R.r2 = 3;
 
-    I.LOADB("r2", 4, "r1");
+    I.LOADB("r1", "r2", 4);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("01010101"));
   }),
@@ -599,14 +599,14 @@ var tests = [
     simulator.MEM.writeb(7, util.convertBinaryToInt("01010101"));
     R.r2 = 7;
 
-    I.LOADB("r2", 0, "r1");
+    I.LOADB("r1", "r2", 0);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("01010101"));
   }),
   new T.Test("LOADB instruction off", function() {
     simulator.MEM.writew(7, util.convertBinaryToInt("01010101"));
 
-    I.LOADB(0, 7, "r1");
+    I.LOADB("r1", 0, 7);
 
     T.assertEquals(R.r1, util.convertBinaryToInt("01010101"));
   }),
@@ -614,83 +614,83 @@ var tests = [
   new T.Test("STORE instruction reg+off", function() {
     R.r2 = 4;
     R.r1 = util.convertBinaryToInt("01010101111100001111000001010101");
-    I.STORE("r2", 4, "r1");
+    I.STORE("r1", "r2", 4);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101111100001111000001010101"));
   }),
   new T.Test("STORE instruction reg", function() {
     R.r2 = 8;
     R.r1 = util.convertBinaryToInt("01010101111100001111000001010101");
-    I.STORE("r2", 0, "r1");
+    I.STORE("r1", "r2", 0);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101111100001111000001010101"));
   }),
   new T.Test("STORE instruction off", function() {
     R.r1 = util.convertBinaryToInt("01010101111100001111000001010101");
 
-    I.STORE(0, 8, "r1");
+    I.STORE("r1", 0, 8);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101111100001111000001010101"))
   }),
   new T.Test("STORE instruction from wrongly aligned address", function() {
     R.r1 = util.convertBinaryToInt("01010101111100001111000001010101");
 
-    I.STORE(0, 6, "r1");
+    I.STORE("r1", 0, 6);
     T.assertEquals(simulator.MEM.read(8), 0);
 
-    I.STORE(0, 10, "r1");
+    I.STORE("r1", 0, 10);
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101111100001111000001010101"));
   }),
 
   new T.Test("STOREH instruction reg+off", function() {
     R.r2 = 4;
     R.r1 = util.convertBinaryToInt("0101010111110000");
-    I.STOREH("r2", 4, "r1");
+    I.STOREH("r1", "r2", 4);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("0101010111110000"));
   }),
   new T.Test("STOREH instruction reg", function() {
     R.r2 = 8;
     R.r1 = util.convertBinaryToInt("0101010111110000");
-    I.STOREH("r2", 0, "r1");
+    I.STOREH("r1", "r2", 0);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("0101010111110000"));
   }),
   new T.Test("STOREH instruction off", function() {
     R.r1 = util.convertBinaryToInt("0101010111110000");
 
-    I.STOREH(0, 8, "r1");
+    I.STOREH("r1", 0, 8);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("0101010111110000"))
   }),
   new T.Test("STOREH instruction from wrongly aligned address", function() {
     R.r1 = util.convertBinaryToInt("0101010111110000");
 
-    I.STOREH(0, 7, "r1");
+    I.STOREH("r1", 0, 7);
     T.assertEquals(simulator.MEM.read(8), 0);
 
-    I.STOREH(0, 9, "r1");
+    I.STOREH("r1", 0, 9);
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("0101010111110000"));
   }),
 
   new T.Test("STOREB instruction reg+off", function() {
     R.r2 = 4;
     R.r1 = util.convertBinaryToInt("01010101");
-    I.STOREB("r2", 4, "r1");
+    I.STOREB("r1", "r2", 4);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101"));
   }),
   new T.Test("STOREB instruction reg", function() {
     R.r2 = 8;
     R.r1 = util.convertBinaryToInt("01010101");
-    I.STOREB("r2", 0, "r1");
+    I.STOREB("r1", "r2", 0);
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101"));
   }),
   new T.Test("STOREB instruction off", function() {
     R.r1 = util.convertBinaryToInt("01010101");
 
-    I.STOREB(0, 8, "r1");
+    I.STOREB("r1", 0, 8 );
 
     T.assertEquals(simulator.MEM.read(8), util.convertBinaryToInt("01010101"))
   }),

@@ -136,25 +136,25 @@ var tests = [
     decoded = simulator.CPU._decode(instruction);
 
     T.assertEquals(decoded.op, "RET");
-    T.assertValueArrayEquals(decoded.args, ["_N/M", false, false]);
+    T.assertValueArrayEquals(decoded.args, ["_N/M", true, false]);
 
     instruction = "10111100101000000000000000000000";
     decoded = simulator.CPU._decode(instruction);
 
     T.assertEquals(decoded.op, "STORE");
-    T.assertValueArrayEquals(decoded.args, ["r2", 0, "r1"]);
+    T.assertValueArrayEquals(decoded.args, ["r1", "r2", 0]);
 
     instruction = "10111110001100000000000000100011";
     decoded = simulator.CPU._decode(instruction);
 
     T.assertEquals(decoded.op, "STORE");
-    T.assertValueArrayEquals(decoded.args, ["r3", 35, "r4"]);
+    T.assertValueArrayEquals(decoded.args, ["r4", "r3", 35]);
 
     instruction = "10111010000000000000000000111100";
     decoded = simulator.CPU._decode(instruction);
 
     T.assertEquals(decoded.op, "STORE");
-    T.assertValueArrayEquals(decoded.args, [0, 60, "r4"]);
+    T.assertValueArrayEquals(decoded.args, ["r4", 0, 60]);
 
     instruction = "10000001100000000000000000000000";
     decoded = simulator.CPU._decode(instruction);

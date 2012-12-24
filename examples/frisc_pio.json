@@ -1,0 +1,15 @@
+{
+  "program": "; FRISC PIO io unit example\n; =========================\n;\n; A FRISC PIO unit is mapped to 4 word-length\n; locations starting from 0xFFFF0000 and is\n; attached to INT0. However, the unit is not\n; working in interrupt mode\n; \n; The program reads data 40 times from the PIO\n; unit and stops the processor once done.\n\nPIOC `EQU 0FFFF0000\nPIOD `EQU 0FFFF0004\nPIOACK `EQU 0FFFF0008\nPIOEND `EQU 0FFFF000C\n\n; initialize PIO unit\n; 0=mode IN ; 0=NOT INT ; 1=ICR\n\n `ORG 0 \n\n MOVE %B 001, R0\n STORE R0, (PIOC)\n\n; initialize variables for storing data\n; and data counter\n\n MOVE DATA, R1\n MOVE 40, R4\n\n; wait until PIO unit is ready\n\nWAIT\n LOAD R0, (PIOC)\n AND R0, 1, R0\n JP_Z WAIT\n\n; acknowledge ready status and read data\n\n STORE R0, (PIOACK)\n LOAD R0, (PIOD)\n STOREB R0, (R1) \n \n; signal end of data transfer and check\n; if more data should be read\n \n STORE R0, (PIOEND)\n ADD R1, 1, R1\n SUB R4, 1, R4\n JP_NZ WAIT\n HALT \n\n; data space\n\nDATA `DS 40",
+  "cpuFreq": "1000",
+  "memSize": "256",
+  "ioUnits": [
+    {
+      "ioUnitName": "pio1",
+      "intLevel": "INT0",
+      "memmapStart": "0FFFF0000",
+      "memmapCount": "4",
+      "ioUnitType": "frisc-pio",
+      "ioUnitFreq": "1000"
+    }
+  ]
+}
