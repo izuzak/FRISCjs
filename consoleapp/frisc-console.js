@@ -1,7 +1,7 @@
 var fs = require("fs");
 var path = require("path");
-var parser = require("./friscasm.js");
-var sim = require("./friscjs.js").FRISC;
+var parser = require("./../lib/friscasm.js");
+var sim = require("./../lib/friscjs.js").FRISC;
 
 var argv = process.argv;
 var isVerboseMode = argv.indexOf("-v") > -1;
@@ -94,7 +94,7 @@ if (argv.length > 2) {
 
   console.error("");
   console.error("*********************************************************");
-  console.error("Reading program from file: " + filename); 
+  console.error("Reading program from file: " + filename);
   console.error("*********************************************************");
   console.error("");
 
@@ -114,7 +114,7 @@ if (argv.length > 2) {
   console.error("Press CTRL+D to stop reading and execute program.");
   console.error("*********************************************************");
   console.error("");
-  
+
   var program = "";
   process.stdin.resume();
   process.stdin.setEncoding('utf8');
@@ -122,7 +122,7 @@ if (argv.length > 2) {
   process.stdin.on('data', function (chunk) {
     program += chunk;
   });
-  
+
   process.stdin.on('end', function () {
     runProgram(program);
   });
@@ -130,7 +130,7 @@ if (argv.length > 2) {
 
 function cpuStateToString(simulator) {
   var retVal = "";
-  
+
   for (var key in simulator.CPU._r) {
     if (key !== 'sr') {
       retVal += key + ": " + simulator.CPU._r[key].toString() + " ";
@@ -171,7 +171,7 @@ function runProgram(frisc_asmsource) {
 
   try {
     var result = parser.parse(frisc_asmsource.toString());
-  } catch (e) { 
+  } catch (e) {
     console.error("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
     return;
   }
@@ -187,7 +187,7 @@ function runProgram(frisc_asmsource) {
     console.error("*********************************************************");
     console.error("");
   };
-  
+
   simulator.CPU.onBeforeCycle = function() {
     debug("");
     debug("*********************************************************");
@@ -200,11 +200,11 @@ function runProgram(frisc_asmsource) {
   simulator.CPU.onAfterCycle = function() {
     debug("## CPU state: " + cpuStateToString(simulator));
   };
-  
+
   simulator.CPU.onBeforeExecute = function(instruction) {
     debug("## Executing FRISC instruction: " + instructionToString(instruction));
   };
-  
+
   simulator.CPU.onStop = function() {
     console.error("");
     console.error("*********************************************************");
@@ -213,13 +213,13 @@ function runProgram(frisc_asmsource) {
     console.error("");
     console.log(simulator.CPU._r.r6);
   };
-  
+
   try {
     simulator.MEM.loadBinaryString(result.mem);
   } catch (e) {
     console.error("Loading error -- " + e.toString());
     return;
   }
-  
+
   simulator.CPU.run();
-} 
+}

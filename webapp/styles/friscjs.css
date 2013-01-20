@@ -1,0 +1,81 @@
+#cpustate {
+  margin-top: 8px;
+}
+
+.cpu-state-div {
+  font-size: 12pt;
+  margin-top: 0px;
+  display: inline-block;
+  height: 40px;
+  border: 1px solid rgb(102, 102, 102);
+  width: 160px;
+  margin-right: 2px;
+}
+
+.cpu-reg-label {
+  width: 54px;
+}
+
+.cpu-reg-value {
+  width: 105px;
+}
+
+.cpu-sr-label {
+  width:105px;
+}
+
+.cpu-sr-value {
+  width: 54px;
+}
+
+.cpu-state-lab {
+  height: 40px;
+  border-right: 1px solid rgb(102, 102, 102);
+  background-color: #D4CDCF;
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  font-weight: bold;
+}
+
+.cpu-state-val {
+  height: 40px;
+  background-color: rgba(230, 228, 228, 0.53);
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.evenLineMemoryView {
+  background-color : #ffffff;
+}
+
+.oddLineMemoryView {
+  background-color : #f8f8f8;
+}
+
+.currentCpuLine {
+  background-color : orange;
+}
+
+.memoryChangeLine {
+  background-color : lightblue;
+}
+
+.label {
+  position: relative;
+  top: -1px;
+  padding: 2px 4px 2px;
+}
+
+.btn, body, label, select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
+  font-size: 13px;
+}
+
+.label, .badge {
+  font-size: 11px;
+}
+
+input[type="radio"], input[type="checkbox"] {
+  margin: 0px;
+}
