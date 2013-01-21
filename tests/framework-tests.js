@@ -40,7 +40,7 @@ var tests = [
   }),
   new T.Test("throwing", function() {
     T.assertThrows(function() { throw "test"; });
-  }),
+  })
 ];
 
 module.exports.stats = T.runTests(tests);

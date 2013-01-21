@@ -231,7 +231,7 @@ key('backspace', function(){ return false; });
 var _state = "stopped";
 
 // create FRISC
-var simulator = new FRISC();
+var simulator = new friscjs.simulator();
 simulator.CPU._frequency = parseFloat($("#frisc-freq").val());
 
 window.onload = function() {
@@ -311,7 +311,7 @@ function createMemoryRow(i) {
 
   var checked = breakpoints.indexOf(i) >= 0 ? " checked" : "";
   var addr = formatHexNumber(i.toString(16));
-  var valHex = formatHexNumber(convertBinaryToInt(convertIntToBinary(simulator.MEM.read(i), 32), 0).toString(16));
+  var valHex = formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(simulator.MEM.read(i), 32), 0).toString(16));
   var valDec = simulator.MEM.read(i).toString(10);
   var decoded = simulator.CPU._decode(simulator.MEM.read(i));
   decoded = decoded ? instructionToString(decoded) : "";
@@ -476,7 +476,7 @@ function getRegisterValue(key) {
   if (base === 10) {
     return simulator.CPU._r[key];
   } else {
-    return formatHexNumber(convertBinaryToInt(convertIntToBinary(simulator.CPU._r[key], 32), 0).toString(16));
+    return formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(simulator.CPU._r[key], 32), 0).toString(16));
   }
 }
 
@@ -580,12 +580,12 @@ simulator.CPU.onStop = function() {
 simulator.MEM.onMemoryWrite = function(addr) {
   addr &= ~(0x03);
   var val = simulator.MEM.read(addr);
-  addr = formatHexNumber(convertBinaryToInt(convertIntToBinary(addr, 32), 0).toString(16));
+  addr = formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(addr, 32), 0).toString(16));
   var line = $("input[addr=" + addr + "]").parent().parent();
   var decoded = simulator.CPU._decode(val);
   decoded = decoded ? instructionToString(decoded) : "";
   decoded = (decoded === "MOVE r0 r0") ? "" : decoded;
-  line.children(".memoryTableValueHex").html(formatHexNumber(convertBinaryToInt(convertIntToBinary(val, 32), 0).toString(16)));
+  line.children(".memoryTableValueHex").html(formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(val, 32), 0).toString(16)));
   line.children(".memoryTableValueDec").html(val.toString());
   line.children(".memoryTableValueIns").html(decoded);
   line.addClass("memoryChangeLine");
@@ -919,7 +919,7 @@ function updateIoMemory(ioUnitId, ioMemoryAddress, valueType, blockPropagate) {
 
   if (valueType === 'hex') {
     val = parseInt(val, 16);
-    posval = val < 0 ? convertBinaryToInt(convertIntToBinary(val, 32), 0) : val;
+    posval = val < 0 ? friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(val, 32), 0) : val;
 
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").val(val.toString(10));
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "dec").text(val.toString(10));
@@ -927,7 +927,7 @@ function updateIoMemory(ioUnitId, ioMemoryAddress, valueType, blockPropagate) {
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "bin").text(formatBinNumber(posval.toString(2)));
   } else if (valueType === 'dec') {
     val = parseInt(val, 10);
-    posval = val < 0 ? convertBinaryToInt(convertIntToBinary(val, 32), 0) : val;
+    posval = val < 0 ? friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(val, 32), 0) : val;
 
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").val(formatHexNumber(posval.toString(16)));
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").text(formatHexNumber(posval.toString(16)));
@@ -935,7 +935,7 @@ function updateIoMemory(ioUnitId, ioMemoryAddress, valueType, blockPropagate) {
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "bin").text(formatBinNumber(posval.toString(2)));
   } else if (valueType === 'bin') {
     val = parseInt(val, 2);
-    posval = val < 0 ? convertBinaryToInt(convertIntToBinary(val, 32), 0) : val;
+    posval = val < 0 ? friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(val, 32), 0) : val;
 
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").val(formatHexNumber(posval.toString(16)));
     $(".io-loc-" + ioMemoryAddress + " .io-mem-" + "hex").text(formatHexNumber(posval.toString(16)));

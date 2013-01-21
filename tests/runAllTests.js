@@ -45,7 +45,7 @@ fs.readdir(".", function(err, files) {
         join.emitter.emit(EVENT_FILE_PROCESSED);
         return;
       }
-      
+
       fs.stat(filename, function(err, stats) {
         if (err !== null) {
           errs.push(err);

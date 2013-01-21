@@ -1,7 +1,7 @@
 var fs = require("fs");
 var path = require("path");
-var parser = require("./../lib/friscasm.js");
-var sim = require("./../lib/friscjs.js").FRISC;
+var asm = require("./../lib/index.js").assembler;
+var sim = require("./../lib/index.js").simulator;
 
 var argv = process.argv;
 var isVerboseMode = argv.indexOf("-v") > -1;
@@ -170,7 +170,7 @@ function runProgram(frisc_asmsource) {
   console.error("");
 
   try {
-    var result = parser.parse(frisc_asmsource.toString());
+    var result = asm.parse(frisc_asmsource.toString());
   } catch (e) {
     console.error("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
     return;

@@ -1,8 +1,8 @@
 console.log("Running " + __filename + "...");
 
 var T = require("./node-test-framework.js");
-var FRISC = require("../friscjs.js").FRISC;
-var util = require("../friscjs.js").util;
+var FRISC = require("./../lib/index.js").simulator;
+var util = require("./../lib/index.js").util;
 
 // global test state
 var simulator;
@@ -11,7 +11,7 @@ var I, R, F;
 // Asserts flags as specified by 'o'
 // - o is either a string specifying all the flag values
 // in CVZN order (e.g. "0001") or an object with flag-value pairs
-// where the key is a one-char string ("C", "V", "Z" or "N") and 
+// where the key is a one-char string ("C", "V", "Z" or "N") and
 // the value is the expected flag value (e.g. {C:0, V:1}).
 function assertFlags(o) {
   var flag;
@@ -57,7 +57,7 @@ var tests = [
 
     T.assertEquals(R.r2, (1<<31));
     // javascript doesn't have unsigned ints so (1<<31) is a negative number
-    T.assertEquals(R.r2, -2147483648); 
+    T.assertEquals(R.r2, -2147483648);
     T.assertEquals(util.convertIntToBinary(R.r2, 32), "10000000000000000000000000000000");
     // this is how you get the unsigned value from the representation
     T.assertEquals(util.convertBinaryToInt(util.convertIntToBinary(R.r2, 32)), 2147483648);
@@ -77,7 +77,7 @@ var tests = [
     I.ADD("r0", "r1", "r2");
 
     // result is still 3 as above, but now the interpretation is wrap-around instead of mod 2^32
-    T.assertEquals(R.r2, 3); 
+    T.assertEquals(R.r2, 3);
     assertFlags({V:1});
 
     R.r0 = (1<<30);
@@ -89,7 +89,7 @@ var tests = [
     R.r0 = 1;
     R.r1 = -1;
     I.ADD("r0", "r1", "r2");
-    
+
     T.assertEquals(R.r2, 0);
     assertFlags({Z:1});
   }),
@@ -97,7 +97,7 @@ var tests = [
     R.r0 = 123;
     R.r1 = -321;
     I.ADD("r0", "r1", "r2");
-    
+
     assertFlags({N:1});
   }),
   new T.Test("ADD unaffected by carry", function() {
@@ -214,24 +214,24 @@ var tests = [
   new T.Test("AND instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = util.convertBinaryToInt("10000101010100010111110111010111");
-    
+
     I.AND("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000001010000000000000000000011");
-    assertFlags("0000"); 
+    assertFlags("0000");
   }),
   new T.Test("AND instruction with num", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-        
+
     I.AND("r1", util.convertBinaryToInt("10000101010100010111110111010111"), "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000001010000000000000000000011");
-    assertFlags("0000"); 
+    assertFlags("0000");
   }),
   new T.Test("OR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = util.convertBinaryToInt("10000101010100010111110111010111");
-    
+
     I.OR("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "11001101110100010111110111010111");
@@ -248,7 +248,7 @@ var tests = [
   new T.Test("XOR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = util.convertBinaryToInt("10000101010100010111110111010111");
-    
+
     I.XOR("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "11001100100100010111110111010100");
@@ -265,7 +265,7 @@ var tests = [
   new T.Test("SHL instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = 5;
-    
+
     I.SHL("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001100000");
@@ -273,7 +273,7 @@ var tests = [
   }),
   new T.Test("SHL instruction with num", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHL("r1", 5, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001100000");
@@ -281,7 +281,7 @@ var tests = [
   }),
   new T.Test("SHL instruction with 0", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHL("r1", 0, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -289,7 +289,7 @@ var tests = [
   }),
   new T.Test("SHL instruction with 32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHL("r1", 32, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -297,7 +297,7 @@ var tests = [
   }),
   new T.Test("SHL instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHL("r1", 35, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001110000000000000000000011000");
@@ -306,7 +306,7 @@ var tests = [
   new T.Test("SHR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = 5;
-    
+
     I.SHR("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
@@ -314,7 +314,7 @@ var tests = [
   }),
   new T.Test("SHR instruction with num", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHR("r1", 5, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
@@ -322,7 +322,7 @@ var tests = [
   }),
   new T.Test("SHR instruction with 0", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHR("r1", 0, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -330,7 +330,7 @@ var tests = [
   }),
   new T.Test("SHR instruction with 32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHR("r1", 32, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -338,7 +338,7 @@ var tests = [
   }),
   new T.Test("SHR instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.SHR("r1", 35, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00001001001110000000000000000000");
@@ -347,7 +347,7 @@ var tests = [
   new T.Test("ASHR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = 5;
-    
+
     I.ASHR("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
@@ -355,7 +355,7 @@ var tests = [
   }),
   new T.Test("ASHR instruction with num", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ASHR("r1", 5, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00000010010011100000000000000000");
@@ -363,7 +363,7 @@ var tests = [
   }),
   new T.Test("ASHR instruction with 0", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ASHR("r1", 0, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -371,7 +371,7 @@ var tests = [
   }),
   new T.Test("ASHR instruction with 32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ASHR("r1", 32, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -379,7 +379,7 @@ var tests = [
   }),
   new T.Test("ASHR instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ASHR("r1", 35, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00001001001110000000000000000000");
@@ -387,7 +387,7 @@ var tests = [
   }),
   new T.Test("ASHR instruction with 1 sign bit and >32", function() {
     R.r1 = util.convertBinaryToInt("11001001110000000000000000000011");
-    
+
     I.ASHR("r1", 35, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "11111001001110000000000000000000");
@@ -396,7 +396,7 @@ var tests = [
   new T.Test("ROTL instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = 5;
-    
+
     I.ROTL("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001101001");
@@ -404,7 +404,7 @@ var tests = [
   }),
   new T.Test("ROTL instruction with num", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ROTL("r1", 5, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00111000000000000000000001101001");
@@ -412,7 +412,7 @@ var tests = [
   }),
   new T.Test("ROTL instruction with 0", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ROTL("r1", 0, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -420,7 +420,7 @@ var tests = [
   }),
   new T.Test("ROTL instruction with 32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ROTL("r1", 32, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -428,7 +428,7 @@ var tests = [
   }),
   new T.Test("ROTL instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-        
+
     I.ROTL("r1", 35, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001110000000000000000000011010");
@@ -437,7 +437,7 @@ var tests = [
   new T.Test("ROTR instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
     R.r2 = 5;
-    
+
     I.ROTR("r1", "r2", "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00011010010011100000000000000000");
@@ -445,7 +445,7 @@ var tests = [
   }),
   new T.Test("ROTR instruction with num", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ROTR("r1", 5, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "00011010010011100000000000000000");
@@ -453,7 +453,7 @@ var tests = [
   }),
   new T.Test("ROTR instruction with 0", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ROTR("r1", 0, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -461,7 +461,7 @@ var tests = [
   }),
   new T.Test("ROTR instruction with 32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-    
+
     I.ROTR("r1", 32, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01001001110000000000000000000011");
@@ -469,7 +469,7 @@ var tests = [
   }),
   new T.Test("ROTR instruction with >32", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");
-        
+
     I.ROTR("r1", 35, "r3");
 
     T.assertEquals(util.convertIntToBinary(R.r3, 32), "01101001001110000000000000000000");
@@ -481,7 +481,7 @@ var tests = [
 
     I.MOVE("r1", "r2");
 
-    T.assertEquals(R.r2, 2);  
+    T.assertEquals(R.r2, 2);
   }),
   new T.Test("MOVE instruction num->reg", function() {
     R.r2 = 5;
@@ -496,21 +496,21 @@ var tests = [
 
     I.MOVE("r1", "sr");
 
-    T.assertEquals(R.sr, 2);  
+    T.assertEquals(R.sr, 2);
   }),
   new T.Test("MOVE instruction num->sr", function() {
     R.sr = 5;
 
     I.MOVE(2, "sr");
 
-    T.assertEquals(R.sr, 2);  
+    T.assertEquals(R.sr, 2);
   }),
   new T.Test("MOVE instruction num->sr >8 bits", function() {
     R.sr = 5;
 
     I.MOVE(util.convertBinaryToInt("01100100100"), "sr");
 
-    T.assertEquals(R.sr, util.convertBinaryToInt("00000100100"));  
+    T.assertEquals(R.sr, util.convertBinaryToInt("00000100100"));
   }),
   new T.Test("MOVE instruction sr->reg", function() {
     R.sr = 2;
@@ -518,7 +518,7 @@ var tests = [
 
     I.MOVE("sr", "r1");
 
-    T.assertEquals(R.sr, 2);  
+    T.assertEquals(R.sr, 2);
   }),
 
   new T.Test("LOAD instruction reg+off", function() {
@@ -697,14 +697,14 @@ var tests = [
 
   new T.Test("JP instruction with cond=true", function() {
     R.pc = 8;
-    
+
     I.JP("_NN/P", 16);
 
     T.assertEquals(R.pc, 12);
   }),
   new T.Test("JP instruction with cond=false", function() {
     R.pc = 8;
-    
+
     I.JP("_N/M", 16);
 
     T.assertEquals(R.pc, 8);
@@ -712,14 +712,14 @@ var tests = [
   new T.Test("JP instruction with register", function() {
     R.pc = 8;
     R.r1 = 16;
-    
+
     I.JP("", "r1");
 
     T.assertEquals(R.pc, 12);
   }),
   new T.Test("JP instruction with wrongly aligned address", function() {
     R.pc = 8;
-    
+
     I.JP("", 18);
 
     T.assertEquals(R.pc, 12);
@@ -727,21 +727,21 @@ var tests = [
 
   new T.Test("JR instruction with cond=true", function() {
     R.pc = 8;
-    
+
     I.JR("_NN/P", 8);
 
     T.assertEquals(R.pc, 12);
   }),
   new T.Test("JR instruction with cond=false", function() {
     R.pc = 8;
-    
+
     I.JR("_N/M", 8);
 
     T.assertEquals(R.pc, 8);
   }),
   new T.Test("JR instruction with wrongly aligned address", function() {
     R.pc = 8;
-    
+
     I.JR("", 10);
 
     T.assertEquals(R.pc, 12);
@@ -750,7 +750,7 @@ var tests = [
   new T.Test("CALL instruction with cond=true", function() {
     R.pc = 8;
     R.r7 = 128;
-    
+
     I.CALL("_NN/P", 16);
 
     T.assertEquals(R.pc, 12);
@@ -760,7 +760,7 @@ var tests = [
   new T.Test("CALL instruction with cond=false", function() {
     R.pc = 8;
     R.r7 = 128;
-    
+
     I.CALL("_N/M", 16);
 
     T.assertEquals(R.pc, 8);
@@ -770,7 +770,7 @@ var tests = [
   new T.Test("CALL instruction with wrongly aligned address", function() {
     R.pc = 8;
     R.r7 = 128;
-    
+
     I.CALL("", 18);
 
     T.assertEquals(R.pc, 12);
@@ -781,7 +781,7 @@ var tests = [
     R.pc = 8;
     R.r7 = 128;
     R.r1 = 16;
-    
+
     I.CALL("_N/M", "r1");
 
     T.assertEquals(R.pc, 8);
@@ -793,7 +793,7 @@ var tests = [
     R.pc = 12;
     R.r7 = 124;
     simulator.MEM.write(124, 8);
-    
+
     I.RET("_NN/P", false, false);
 
     T.assertEquals(R.pc, 8);
@@ -806,7 +806,7 @@ var tests = [
     R.pc = 12;
     R.r7 = 124;
     simulator.MEM.write(124, 8);
-    
+
     I.RET("_N/M", false, false);
 
     T.assertEquals(R.pc, 12);
@@ -819,7 +819,7 @@ var tests = [
     R.pc = 12;
     R.r7 = 124;
     simulator.MEM.write(124, 8);
-    
+
     I.RET("", true, false);
 
     T.assertEquals(R.pc, 8);
@@ -833,7 +833,7 @@ var tests = [
     R.r7 = 124;
     R.sr = 0;
     simulator.MEM.write(124, 8);
-    
+
     I.RET("", false, true);
 
     T.assertEquals(R.pc, 8);
@@ -849,7 +849,7 @@ var tests = [
     simulator.CPU.onStop = function() {
       onStop = true;
     };
-    
+
     I.HALT("_NN/P");
 
     T.assertEquals(onStop, true);
@@ -860,7 +860,7 @@ var tests = [
     simulator.CPU.onStop = function() {
       onStop = true;
     };
-    
+
     I.HALT("_N/M");
 
     T.assertEquals(onStop, false);

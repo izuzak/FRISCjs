@@ -4,25 +4,26 @@ module.exports = function(grunt) {
         friscasm : {
             grammar: "src/friscasm.pegjs",
             exportVar: "frisc_asm",
-            outputFile: "lib/friscasm.js"
+            outputFile: "src/friscasm.js"
         }
     },
 
     concat: {
         friscasm : {
-            src: ['lib/friscasm.js',
+            src: ['src/friscasm.js',
                   'src/friscasm.export.js'],
-            dest: 'lib/friscasm.js'
+            dest: 'src/friscasm.js'
         },
         browser : {
-            src: ['lib/friscasm.js',
-                  'lib/friscjs.js'],
+            src: ['src/friscasm.js',
+                  'src/friscsim.js',
+                  'lib/index.js'],
             dest: 'lib/friscjs-browser.js'
         }
     },
 
     lint: {
-      all: ['src/src/friscasm.export.js', 'lib/friscjs.js', 'consoleapp/frisc-console.js', 'webapp/scripts/*']
+      all: ['src/friscasm.export.js', 'src/friscsim.js', 'consoleapp/frisc-console.js', 'webapp/scripts/*']
     },
 
     min: {
