@@ -49,7 +49,6 @@ and then run the app with node to see the instructions:
 
 ## Development
 
-0. Install grunt: `npm install -g grunt`
 1. Fork and/or clone repo: `git clone https://github.com/izuzak/FRISCjs.git`
 2. Change dir to noam: `cd FRISCjs`
 3. Install dependencies: `npm install`

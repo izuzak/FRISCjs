@@ -35,6 +35,8 @@
   "dependencies" : {
   },
   "devDependencies": {
+    "pegjs" : ">=0.7.0",
+    "grunt" : "~0.3.14"
   },
   "bundleDependencies": [],
   "licenses": [
