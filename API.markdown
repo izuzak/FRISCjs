@@ -6,19 +6,32 @@ FRISCjs user interfaces (the [browser Web app](https://github.com/izuzak/FRISCjs
 This document describes the API of these two libraries: the FRISC assembler and the FRISC simulator.
 Using this API, other user interfaces may be built for any platform supporting JavaScript.
 
+## Installation
+
+In node, install using npm:
+
+    npm install friscjs
+
+and then access the assembler and simulator:
+
+    var friscjs = require("friscjs");
+    var asm = friscjs.assembler;
+    var sim = friscjs.simulator;
+
+In a browser, link to the browser script that contains both the assembler and simulator:
+
+    <script src="lib/friscjs-browser.js"></script>
+
+and then access the assembler and simulator:
+
+    var asm = friscjs.assembler;
+    var sim = friscjs.simulator;
+
 ## FRISC assembler
 
-The assembler is implemented in the friscasm.js library and can be included in a browser Web app like so:
+The assembler used for assembling FRISC source code using the ``parse()`` method:
 
-``<script type="text/javascript" src="friscasm.js"></script>``
-
-and in a NodeJS app like so:
-
-``var frisc_asm = require("friscasm.js");``
-
-The library exposes a single object frisc_asm which is used for assembling using the ``frisc_asm.parse()`` method:
-
-``var result = frisc_asm.parse(frisc_code_string);``
+``var result = asm.parse(frisc_code_string);``
 
 where ``frisc_code_string`` is a single string containing FRISC code.
 E.g.:
@@ -26,7 +39,7 @@ E.g.:
     lab1 ADD R1, R2, R3
     lab2 ADD r2, 5, r5
 
-The result of invoking ``frisc_asm.parse()`` is a ``result`` object containing two properties: ``result.mem`` and ``result.ast``.
+The result of invoking ``parse()`` is a ``result`` object containing two properties: ``result.mem`` and ``result.ast``.
 
 ``result.ast`` is the parser AST output and should be used for debugging purposes only.
 It is an array of parse objects, one for each instruction in the source code.
@@ -56,29 +69,21 @@ E.g.:
 
 ``[ '00000000', '00000000', '00000000', '00100000', '00000101', '00000000', '00000000', '00100100' ]``
 
-In case of parsing errors, the ``frisc_asm.parse()`` method will throw an exception which contains ``line`` and ``column`` properties which denote the line and column at which the parsing error occured:
+In case of parsing errors, the ``parse()`` method will throw an exception which contains ``line`` and ``column`` properties which denote the line and column at which the parsing error occured:
 
     try {
-      var result = frisc_asm.parse(frisc_code_string);
-    } catch (e) { 
+      var result = asm.parse(frisc_code_string);
+    } catch (e) {
       console.log("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
     }
 
 ## FRISC simulator
 
-The simulator is implemented in the friscjs.js library and can be included in a browser Web app like so:
+The simulator is a constructor for instantiating FRISCjs simulator objects:
 
-``<script type="text/javascript" src="friscjs.js"></script>``
+``var simulator = new sim();``
 
-and in a NodeJS app like so:
-
-``var friscjs = require("friscjs.js");``
-
-After including the library, a FRISCjs simulator object should be instantiated with:
-
-``var simulator = new friscjs();``
-
-The ``simulator`` object exposes two FRISC components: FRISC memory (FRISC.MEM) and FRISC cpu (FRISC.CPU).
+A simulator instance object exposes two FRISC components: FRISC memory (`simulator.MEM`) and FRISC cpu (`simulator.MEM`).
 
 ### FRISC memory component
 
@@ -96,7 +101,7 @@ The FRISC memory component exposes the following data properties and functions:
 
 * ``MEM.writeb(addr, val)``, ``MEM.writeb(addr, val)``, ``MEM.write(addr, val)`` - helper functions for writing a 1B, 2B or 4B integer value val to locations starting from addr.
 
-### FRISC cpu component 
+### FRISC cpu component
 
 The FRISC cpu component exposes the following data properties and functions:
 
@@ -109,7 +114,7 @@ The FRISC cpu component exposes the following data properties and functions:
 * ``CPU.performCycle()`` - executes one FRISC instruction pointed to by the program counter
 * ``CPU.reset()`` - resets the state of the cpu, setting register values to 0 and iif to 1
 * ``CPU._decode(instruction)`` - decodes a FRISC instruction (passed as an integer) and returns the instruction's operation name and parameters
-    
+
 The FRISC cpu component also invokes the following event handlers, if they are specified:
 
 * ``CPU.onStop()`` - invoked after the ``CPU.stop()`` method was called

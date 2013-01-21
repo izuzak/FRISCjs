@@ -5,14 +5,59 @@ FRISCjs is a [FRISC processor](http://www.fer.hr/rasip/knjige/frisc) simulator w
 
 <img src="https://raw.github.com/izuzak/FRISCjs/master/friscjs-screenshot.png" />
 
-The FRISCjs simulator has two parts: a [FRISC assembler](https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](https://github.com/izuzak/FRISCjs/blob/master/friscjs.js) which executes machine code.
+The FRISCjs simulator has two parts: a [FRISC assembler](https://github.com/izuzak/FRISCjs/blob/master/src/friscasm.peg) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](https://github.com/izuzak/FRISCjs/blob/master/src/friscsim.js) which executes machine code.
 
-Furthermore, there are two user interfaces to the simulator: a [Web application graphical interface](https://github.com/izuzak/FRISCjs/blob/master/main.html) and a [NodeJS command-line interface](https://github.com/izuzak/FRISCjs/blob/master/main.js). 
-The Web application interface is available [here](https://izuzak.github.com/FRISCjs/main.html) and supports many cool features like breakpoints and step-by-step execution.
+Furthermore, there are two user interfaces to the simulator: a [Web application graphical interface](https://github.com/izuzak/FRISCjs/blob/master/webapp/index.html) and a [NodeJS command-line interface](https://github.com/izuzak/FRISCjs/blob/master/consoleapp/frisc-console.js).
+The Web application interface is available [here](https://izuzak.github.com/FRISCjs/webapp/) and supports many cool features like breakpoints and step-by-step execution.
 
-## FRISCjs API
+## Usage
 
-The API of the core FRISCjs components is described [here](https://github.com/izuzak/FRISCjs/blob/master/API.markdown).
+### Using the assembler and simulator libraries
+
+In node, install using npm:
+
+    > npm install friscjs
+
+and then access the assembler and simulator:
+
+    var friscjs = require("friscjs");
+    var asm = friscjs.assembler;
+    var sim = friscjs.simulator;
+
+In a browser, link to the browser script that contains both the assembler and simulator:
+
+    <script src="lib/friscjs-browser.js"></script>
+
+and then access the assembler and simulator:
+
+    var asm = friscjs.assembler;
+    var sim = friscjs.simulator;
+
+After installing the libraries, check out the [FRISCjs API docs](https://github.com/izuzak/FRISCjs/blob/master/API.markdown) for instructions on using them.
+
+### Using the simulator console and Web applications
+
+To use the Web-based simulator, launch the `webapp/index.html` page in a browser or access the on-line version at [https://izuzak.github.com/FRISCjs/webapp/](https://izuzak.github.com/FRISCjs/webapp/).
+
+To use the console-based simulator application, clone the FRISCjs repo:
+
+    > git clone https://github.com/izuzak/noam.git
+
+and then run the app with node to see the instructions:
+
+    > node ./consoleapp/frisc-console.js
+
+## Development
+
+0. Install grunt: `npm install -g grunt`
+1. Fork and/or clone repo: `git clone https://github.com/izuzak/FRISCjs.git`
+2. Change dir to noam: `cd FRISCjs`
+3. Install dependencies: `npm install`
+4. Make changes to noam sources (`./src`), tests (`./tests`) or apps (`./webapp/*` and `./consoleapp/*`)
+5. Build using grunt: `grunt` (on linux), `grunt.cmd` (on windows)
+6. Fix issues reported by grunt and then repeat 5)
+7. Commit, push and make a pull request, or send a git patch by e-mail
+8. E-mail me if you have questions (e-mail address is below)
 
 ## Similar projects
 
@@ -23,15 +68,15 @@ There are many other processor simulators in JavaScript, such as the [GameBoy Co
 
 FRISCjs was developed by [Ivan Zuzak](http://ivanzuzak.info). Contributors: [Ivan Budiselic](https://github.com/ibudiselic), [Stanko Krtalic](https://github.com/Stankec).
 
-FRISCjs is built with many open-source projects: 
+FRISCjs is built with many open-source projects:
 
- * [PegJS](https://github.com/dmajda/pegjs) - used for generating the FRISC assembly code parser. 
+ * [PegJS](https://github.com/dmajda/pegjs) - used for generating the FRISC assembly code parser.
  * [NodeJS](https://github.com/joyent/node) - used for the command-line version of the simulator.
  * [jQuery](http://jquery.com) - used for the Web application version of the simulator.
  * [Bootstrap](http://twitter.github.com/bootstrap) - used for the Web application version of the simulator.
  * [Ace](http://ace.ajax.org/) - used as the editor for the Web application version of the simulator.
- * [Mustache](https://github.com/janl/mustache.js/) - used for client-side templates. 
- * [Keymaster](https://github.com/madrobby/keymaster) - used for reconfiguring/disabling keyboard shortcuts. 
+ * [Mustache](https://github.com/janl/mustache.js/) - used for client-side templates.
+ * [Keymaster](https://github.com/madrobby/keymaster) - used for reconfiguring/disabling keyboard shortcuts.
 
 ## License
 
