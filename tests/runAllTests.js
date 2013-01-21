@@ -31,7 +31,7 @@ function endsWith(s, what) {
   return s.length>=what.length && (what.length==0 || s.substring(s.length-what.length)===what);
 }
 
-fs.readdir(".", function(err, files) {
+fs.readdir(__dirname, function(err, files) {
   var stats;
 
   if (err !== null) {
@@ -46,15 +46,15 @@ fs.readdir(".", function(err, files) {
         return;
       }
 
-      fs.stat(filename, function(err, stats) {
+      fs.stat(__dirname + "\\" +filename, function(err, stats) {
         if (err !== null) {
           errs.push(err);
         } else {
           if (stats.isFile()) {
-            stats = require("./" + filename).stats;
+            stats = require(__dirname + "\\" + filename).stats;
             total += stats.total;
             succ += stats.succ;
-            require("./" + filename).stats;
+            require(__dirname + "\\" + filename).stats;
           }
         }
 

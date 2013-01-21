@@ -55,9 +55,10 @@ and then run the app with node to see the instructions:
 3. Install dependencies: `npm install`
 4. Make changes to noam sources (`./src`), tests (`./tests`) or apps (`./webapp/*` and `./consoleapp/*`)
 5. Build using grunt: `grunt` (on linux), `grunt.cmd` (on windows)
-6. Fix issues reported by grunt and then repeat 5)
-7. Commit, push and make a pull request, or send a git patch by e-mail
-8. E-mail me if you have questions (e-mail address is below)
+6. Run tests: `npm test`
+7. Fix issues reported by grunt and tests, and then repeat 5)
+8. Commit, push and make a pull request, or send a git patch by e-mail
+9. E-mail me if you have questions (e-mail address is below)
 
 ## Similar projects
 
