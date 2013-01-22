@@ -144,7 +144,7 @@ var FRISC = function() {
       if (ioUnit === null) {
         var v1 = (0xFF & this._memory[addr+0]) << 0;
         var v2 = (0xFF & this._memory[addr+1]) << 8;
-        return v1 + v2
+        return v1 + v2;
       } else {
         return 0xFFFF & ioUnit.readw(addr);
       }
@@ -556,7 +556,7 @@ var FRISC = function() {
           dest);
       // invert the carry bit so that C=1 indicates unsigned underflow
       // which makes it consistent with SBC
-      this._setFlag(this._f.C, 1 - this._getFlag(this._f.C))
+      this._setFlag(this._f.C, 1 - this._getFlag(this._f.C));
     },
 
     _i: {
@@ -1209,7 +1209,7 @@ var FRISC = function() {
           if (ioUnit.isInputMode === 1) {
             if (ioUnit.transferMode === 0) {
               if (ioUnit.shouldEndBeSignaled === 0) {
-                ioUnit.dr = 0xFF & parseInt(Math.random()*256);
+                ioUnit.dr = 0xFF & parseInt(Math.random()*256, 10);
                 ioUnit.readyStatus = 1;
 
                 if (ioUnit.shouldInterrupt === 1) {
@@ -1220,7 +1220,7 @@ var FRISC = function() {
               }
             } else {
               if (ioUnit.shouldEndBeSignaled === 0) {
-                ioUnit.dr = 0xFF & parseInt(Math.random()*256);
+                ioUnit.dr = 0xFF & parseInt(Math.random()*256, 10);
 
                 var v = (ioUnit.activeBit === 0) ? (0xFF & ~dr) : dr;
 

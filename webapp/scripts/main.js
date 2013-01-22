@@ -1,5 +1,5 @@
 var CFGNAMES = "__friscConfigurationNames";
-var isLocalStorageAvailable = 'localStorage' in window && window['localStorage'] !== null;
+var isLocalStorageAvailable = 'localStorage' in window && window.localStorage !== null;
 
 function appendOption(selectSelector, optionValue, optionText) {
   var option = document.createElement('option');
@@ -330,7 +330,7 @@ function createMemoryRow(i) {
 
 function createMemList(div) {
   var rowHeight = 18;
-  var lastDivMessage="Back to top?"
+  var lastDivMessage = "Back to top?";
   var ofF = 1.4;
 
   //Don't edit this
@@ -344,7 +344,7 @@ function createMemList(div) {
   $("#"+div).html("");
 
   for (var i=0; i>=0 && i<maxRows*4 && i<simulator.MEM._memory.length; i+=4) {
-    bgColor = (((i/4)%2)==0) ? "evenLineMemoryView" : "oddLineMemoryView";
+    bgColor = (((i/4)%2) === 0) ? "evenLineMemoryView" : "oddLineMemoryView";
 
     $("#"+div).html($("#"+div).html()+"<div class='" + bgColor + "' style='height:"+rowHeight+"px; width:100%; position:absolute; top:"+((i/4)*rowHeight)+"px; border: 1px solid #dfdfdf;'>"+ createMemoryRow(i) + "</div>");
   }
@@ -374,16 +374,16 @@ function createMemList(div) {
           var highest = simulator.MEM._memory.length*rowHeight; //highest possible position
           var highVal = (simulator.MEM._memory.length*rowHeight);
           $("#"+div).children().each(function(){
-            if (parseInt($(this).css("top").replace("px",""))<highest) {
-              highest = parseInt($(this).css("top").replace("px",""));
-              highVal = parseInt($(this).children().html(),base);
+            if (parseInt($(this).css("top").replace("px",""), 10) < highest) {
+              highest = parseInt($(this).css("top").replace("px",""), 10);
+              highVal = parseInt($(this).children().html(), base);
             }
           });
 
           highVal = highVal - 4;
           if (highVal>=0) {
             $(this).css({ top: ''+(highest-rowHeight)+'px' });
-            bgColor = (((highVal/4)%2)==0) ? "evenLineMemoryView" : "oddLineMemoryView";
+            bgColor = (((highVal/4)%2) === 0) ? "evenLineMemoryView" : "oddLineMemoryView";
             $(this).removeClass("evenLineMemoryView").removeClass("oddLineMemoryView").addClass(bgColor);
             $(this).html(createMemoryRow(highVal));
           }
@@ -396,27 +396,27 @@ function createMemList(div) {
           var highest = simulator.MEM._memory.length*rowHeight*-1; //highest possible position
           var highVal = 0;
           $("#"+div).children().each(function(){
-            if ((parseInt($(this).css("top").replace("px",""))>highest) && ($(this).html()!=lastDivMessage)) {
-              highest = parseInt($(this).css("top").replace("px",""));
-              highVal = parseInt($(this).children().html(),base);
+            if ((parseInt($(this).css("top").replace("px",""), 10) > highest) && ($(this).html()!=lastDivMessage)) {
+              highest = parseInt($(this).css("top").replace("px",""), 10);
+              highVal = parseInt($(this).children().html(), base);
             }
           });
           highVal = highVal + 4;
           if (highVal<simulator.MEM._memory.length) {
             $(this).css({ top: ''+(highest+rowHeight)+'px' });
-            bgColor = (((highVal/4)%2)==0) ? "evenLineMemoryView" : "oddLineMemoryView";
+            bgColor = (((highVal/4)%2) === 0) ? "evenLineMemoryView" : "oddLineMemoryView";
             $(this).removeClass("evenLineMemoryView").removeClass("oddLineMemoryView").addClass(bgColor);
             $(this).html(createMemoryRow(highVal));
           }
         }
       });
-    };
+    }
 
     prevScrollPos = $("#"+div).scrollTop();
 
     //Check if the user scrolled too fast
     var invisibleCounter = 0;
-    $("#"+div).children().each(function() { if ( (($(this).position().top>$("#"+div).height()) || ($(this).position().top<0)) && ($(this).html()!=lastDivMessage)) { invisibleCounter++; }; });
+    $("#"+div).children().each(function() { if ( (($(this).position().top>$("#"+div).height()) || ($(this).position().top<0)) && ($(this).html()!=lastDivMessage)) { invisibleCounter++; } });
     if (invisibleCounter >= maxRows)  { //If all rows are invisible
       var i = Math.floor((prevScrollPos / rowHeight)) * 4;
       var x = i; //visual bug fix
@@ -432,9 +432,9 @@ function createMemList(div) {
           $(this).html(createMemoryRow(x));
           i += 4;
           x -= 4;
-        };
+        }
       });
-    };
+    }
 
     $('.breakpointCheckbox').off('click');
     $(".breakpointCheckbox").click(handleBreakpointSet);
@@ -596,6 +596,8 @@ simulator.MEM.onMemoryWrite = function(addr) {
 
 $("#frisc-load").click(function() {
   if (_state === "stopped") {
+    var result;
+
     try {
       simulator.CPU.reset();
       breakpoints = [];
@@ -604,19 +606,19 @@ $("#frisc-load").click(function() {
       if (source.length > 0 && source[source.length-1] !== '\n') {
         source += '\n';
       }
-      var result = frisc_asm.parse(source);
+      result = frisc_asm.parse(source);
     } catch (e) {
       simulatorLog("<span class='label label-important'><b>Parsing error</b></span> on line " + e.line + " column " + e.column + " -- " + e.toString() + "");
       return;
     }
 
     try {
-      simulator.CPU._frequency = parseInt($("#frisc-freq").val());
-      simulator.MEM._size = parseInt($("#frisc-memsize").val()) * 1024;
+      simulator.CPU._frequency = parseInt($("#frisc-freq").val(), 10);
+      simulator.MEM._size = parseInt($("#frisc-memsize").val(), 10) * 1024;
       simulator.MEM.loadBinaryString(result.mem);
     } catch (e) {
       simulatorLog("<span class='label label-important'><b>Loading error</b></span>" + " -- " + e.toString() + "");
-      return
+      return;
     }
 
     simulatorLog("<span class='label label-success'><b>Input program parsed successfully.</b></span>");
@@ -676,10 +678,10 @@ $("#frisc-clear").click(function() {
 
 $("#frisc-showhidesettings").click(function() {
   if ($("#frisc-settings").is(":visible")) {
-    $('#cpuout').animate({ height: 145 }, 603, function() {;} );
+    $('#cpuout').animate({ height: 145 }, 603, function() {} );
     $("#frisc-settings").hide("slow");
   } else {
-    $('#cpuout').animate({ height: 100 }, 603, function() {;} );
+    $('#cpuout').animate({ height: 100 }, 603, function() {} );
     $("#frisc-settings").show("slow");
   }
 });
@@ -687,7 +689,7 @@ $("#frisc-showhidesettings").click(function() {
 //memorylist search
 $("#skrMemLisSearch").click(function() {
   var searcher = parseInt($("#skrMemLisSearchField").val(), 16)/4;
-  $('#frisc-memorylist').animate({scrollTop: (18*searcher)}, 1000 ,function() {;});
+  $('#frisc-memorylist').animate({scrollTop: (18*searcher)}, 1000 ,function() {});
 
   return false;
 });

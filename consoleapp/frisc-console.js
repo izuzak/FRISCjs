@@ -19,7 +19,7 @@ var debug = function(str) {
 var cpufreq = 1000;
 
 if (argv.indexOf("-cpufreq") > -1) {
-  cpufreq = parseInt(argv[argv.indexOf("-cpufreq") + 1]);
+  cpufreq = parseInt(argv[argv.indexOf("-cpufreq") + 1], 10);
   argv.splice(argv.indexOf("-cpufreq") + 1, 1);
   argv.splice(argv.indexOf("-cpufreq"), 1);
 }
@@ -27,7 +27,7 @@ if (argv.indexOf("-cpufreq") > -1) {
 var memsize = 256*1024;
 
 if (argv.indexOf("-memsize") > -1) {
-  memsize = 1024*parseInt(argv[argv.indexOf("-memsize") + 1]);
+  memsize = 1024*parseInt(argv[argv.indexOf("-memsize") + 1], 10);
   argv.splice(argv.indexOf("-memsize") + 1, 1);
   argv.splice(argv.indexOf("-memsize"), 1);
 }
@@ -169,8 +169,10 @@ function runProgram(frisc_asmsource) {
   console.error("*********************************************************");
   console.error("");
 
+  var result;
+
   try {
-    var result = asm.parse(frisc_asmsource.toString());
+    result = asm.parse(frisc_asmsource.toString());
   } catch (e) {
     console.error("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
     return;
