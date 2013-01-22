@@ -31,10 +31,15 @@ module.exports = function(grunt) {
             src: ['lib/friscjs-browser.js'],
             dest: 'lib/friscjs-browser.min.js'
         }
+    },
+
+    jsvalidate: {
+      all: ['src/friscasm.export.js', 'src/friscsim.js', 'consoleapp/frisc-console.js', 'webapp/scripts/*']
     }
   });
 
   grunt.loadNpmTasks('grunt-peg');
+  grunt.loadNpmTasks('grunt-jsvalidate');
 
-  grunt.registerTask('default', 'lint peg concat min');
+  grunt.registerTask('default', 'jsvalidate lint peg concat min');
 };
