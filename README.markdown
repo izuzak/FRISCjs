@@ -8,7 +8,7 @@ FRISCjs is a [FRISC processor](http://www.fer.hr/rasip/knjige/frisc) simulator w
 The FRISCjs simulator has two parts: a [FRISC assembler](https://github.com/izuzak/FRISCjs/blob/master/src/friscasm.peg) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](https://github.com/izuzak/FRISCjs/blob/master/src/friscsim.js) which executes machine code.
 
 Furthermore, there are two user interfaces to the simulator: a [Web application graphical interface](https://github.com/izuzak/FRISCjs/blob/master/webapp/index.html) and a [NodeJS command-line interface](https://github.com/izuzak/FRISCjs/blob/master/consoleapp/frisc-console.js).
-The Web application interface is available [here](https://izuzak.github.com/FRISCjs/webapp/) and supports many cool features like breakpoints and step-by-step execution.
+The Web application interface is available [here](http://izuzak.github.com/FRISCjs/webapp/) and supports many cool features like breakpoints and step-by-step execution.
 
 ## Usage
 
@@ -37,7 +37,7 @@ After installing the libraries, check out the [FRISCjs API docs](https://github.
 
 ### Using the simulator console and Web applications
 
-To use the Web-based simulator, launch the `webapp/index.html` page in a browser or access the on-line version at [https://izuzak.github.com/FRISCjs/webapp/](https://izuzak.github.com/FRISCjs/webapp/).
+To use the Web-based simulator, launch the `webapp/index.html` page in a browser or access the on-line version at [http://izuzak.github.com/FRISCjs/webapp/](https://izuzak.github.com/FRISCjs/webapp/).
 
 To use the console-based simulator application, clone the FRISCjs repo:
 
