@@ -1,5 +1,6 @@
 var fs = require("fs");
 var path = require("path");
+var readline = require('readline');
 var asm = require("./../lib/index.js").assembler;
 var sim = require("./../lib/index.js").simulator;
 
@@ -116,15 +117,26 @@ if (argv.length > 2) {
   console.error("");
 
   var program = "";
-  process.stdin.resume();
+
   process.stdin.setEncoding('utf8');
 
-  process.stdin.on('data', function (chunk) {
-    program += chunk;
+  var rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
   });
 
-  process.stdin.on('end', function () {
+  rl.setPrompt("");
+
+  rl.on('line', function (line) {
+    program += line + '\n';
+  });
+
+  rl.on('close', function () {
     runProgram(program);
+  });
+
+  rl.on('SIGINT', function () {
+    process.exit(0);
   });
 }
 
