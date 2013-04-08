@@ -81,3 +81,6 @@ FRISCjs is built with many open-source projects:
 ## License
 
 Licensed under the [Apache 2.0 License](https://github.com/izuzak/FRISCjs/blob/master/LICENSE.markdown).
+
+<img src="http://secure.gaug.es/track.gif?h[site_id]=5162c171f5a1f5418800004a&h[resource]=http%3A%2F%2Fgithub.com%2Fizuzak%2FFRISCjs&h[title]=FRISCjs%20(GitHub)&h[unique]=1&h[unique_hour]=1&h[unique_day]=1&h[unique_month]=1&h[unique_year]=1
+" />
