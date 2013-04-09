@@ -5,9 +5,9 @@ FRISCjs is a [FRISC processor](http://www.fer.hr/rasip/knjige/frisc) simulator w
 
 <img src="https://raw.github.com/izuzak/FRISCjs/master/friscjs-screenshot.png" />
 
-The FRISCjs simulator has two parts: a [FRISC assembler](https://github.com/izuzak/FRISCjs/blob/master/src/friscasm.peg) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](https://github.com/izuzak/FRISCjs/blob/master/src/friscsim.js) which executes machine code.
+The FRISCjs simulator has two parts: a [FRISC assembler](src/friscasm.peg) (built using PEGjs) which translates FRISC assembly code to machine code and a [FRISC CPU simulator](src/friscsim.js) which executes machine code.
 
-Furthermore, there are two user interfaces to the simulator: a [Web application graphical interface](https://github.com/izuzak/FRISCjs/blob/master/webapp/index.html) and a [NodeJS command-line interface](https://github.com/izuzak/FRISCjs/blob/master/consoleapp/frisc-console.js).
+Furthermore, there are two user interfaces to the simulator: a [Web application graphical interface](webapp/index.html) and a [NodeJS command-line interface](consoleapp/frisc-console.js).
 The Web application interface is available [here](http://izuzak.github.com/FRISCjs/webapp/) and supports many cool features like breakpoints and step-by-step execution.
 
 ## Usage
@@ -33,7 +33,7 @@ and then access the assembler and simulator:
     var asm = friscjs.assembler;
     var sim = friscjs.simulator;
 
-After installing the libraries, check out the [FRISCjs API docs](https://github.com/izuzak/FRISCjs/blob/master/API.markdown) for instructions on using them.
+After installing the libraries, check out the [FRISCjs API docs](API.markdown) for instructions on using them.
 
 ### Using the simulator console and Web applications
 
