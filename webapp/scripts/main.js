@@ -280,6 +280,7 @@ lab22 DW 54\n\
 lab20 `END\n\
 lab23 ADD R1, R2, R3\n\
 ; fds fsd';");
+  editor.container.style.lineHeight = "1.6";
   editor.resize();
   editor.renderer.setHScrollBarAlwaysVisible(false);
   changeState("stopped");
