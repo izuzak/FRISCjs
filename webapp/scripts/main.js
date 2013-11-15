@@ -1,6 +1,110 @@
 var CFGNAMES = "__friscConfigurationNames";
 var isLocalStorageAvailable = 'localStorage' in window && window.localStorage !== null;
 
+// Memory Dumping
+
+$('#skrMemDump').click(function() {
+  if (!$('#tempModalHold').length) {
+    $('body').append( ''+
+                    '<div id="tempModalHold">'+
+                      '<div class="modal fade" id="tempModal" tabindex="-1" role="dialog" aria-labelledby="tempModal" aria-hidden="true">'+
+                          '<div class="modal-dialog">'+
+                              '<div class="modal-content">'+
+                                  '<div class="modal-header">'+
+                                      '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'+
+                                      '<h4 class="modal-title" id="tempModalHeader">Modal title</h4>'+
+                                  '</div>'+
+                                  '<div class="modal-body" id="tempModalBody">'+
+                                    ' <p>One fine body&hellip;</p>'+
+                                  '</div>'+
+                                  '<div class="modal-footer" id="tempModalFooter">'+
+                                      '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>'+
+                                  '</div>'+
+                              '</div><!-- /.modal-content -->'+
+                          '</div><!-- /.modal-dialog -->'+
+                      '</div><!-- /.modal -->'+
+                    '</div>'+
+                    '');
+    $('#tempModal').on('hidden', function () {
+      $('#tempModalHold').remove();
+    });
+  }
+
+  $('#tempModalHeader').html( 'Text Memory Dump' );
+  $('#tempModalBody').html( ''+
+                            '<div>'+
+                            ' <textarea style="width:98%; min-height:250px;" id="skrMemDumpField">'+
+                            ' </textarea>'+
+                            '</div>'+
+                            '' );
+  $('#tempModalFooter').html( '<button type="button" class="btn btn-danger" data-dismiss="modal" style="float:right; margin-left:5px;">'+
+                                '<i class="icon-remove icon-white"></i> Cancle'+
+                              '</button>'+
+                              ''+
+                              '<div style="float:right; margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
+                                '<button type="button" class="btn btn-default skrMemDumpBut">DEC</button>'+
+                                '<button type="button" class="btn btn-default skrMemDumpBut active">HEX</button>'+
+                              '</div>'+
+                              ''+
+                              '<div style="float:right; margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
+                                '<button type="button" class="btn btn-default skrMemDumpBut">8</button>'+
+                                '<button type="button" class="btn btn-default skrMemDumpBut">16</button>'+
+                                '<button type="button" class="btn btn-default skrMemDumpBut active">32</button>'+
+                              '</div>' );
+
+  $('.skrMemDumpBut').click(function() {
+    var pressedBut = $(this).text();
+    var hexDec = "hex";
+    var memLen = 32;
+    // Get current configuration
+    $('.skrMemDumpBut.active').each(function(){
+      var temp = $(this).text();
+      if(temp.toLowerCase()==="hex" || temp.toLowerCase()==="dec") {
+        if (temp.toLowerCase()==="hex") hexDec = "hex";
+        else hexDec = "dec";
+      } else {
+        memLen = parseInt(temp);
+      }
+    });
+    if(pressedBut.toLowerCase()==="hex" || pressedBut.toLowerCase()==="dec") {
+      if (pressedBut.toLowerCase()==="hex") hexDec = "hex";
+      else hexDec = "dec";
+    } else {
+      memLen = parseInt(pressedBut);
+    }
+    // Update textfield
+    dumpMemoryTo('#skrMemDumpField', hexDec, memLen/8);
+  });
+
+  dumpMemoryTo('#skrMemDumpField');
+
+  $('#tempModal').modal();
+
+  return false;  
+});
+
+function dumpMemoryTo(jQuerySelector, hexDec, step, memoryWidth) {
+  // Check if parameters are defined
+  hexDec = typeof hexDec !== 'undefined' ? hexDec : 'hex';
+  step = typeof step !== 'undefined' ? step : 4;
+  memoryWidth = typeof memoryWidth !== 'undefined' ? memoryWidth : step*8;
+  // Prepare data
+  hexDec = hexDec.toLowerCase()==="hex";
+  var field = $(jQuerySelector);
+  var dump = "";
+  // Generate data
+  for (var i=0; i<simulator.MEM._memory.length; i+=step) {
+    if (hexDec) {
+      dump += formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(simulator.MEM.read(i), memoryWidth), 0).toString(16)) + '\n';
+    } else {
+      dump += simulator.MEM.read(i) + '\n';
+    }
+      
+  }
+  // Present data
+  field.text(dump);
+}
+
 function appendOption(selectSelector, optionValue, optionText) {
   var option = document.createElement('option');
   option.setAttribute('value', optionValue);
