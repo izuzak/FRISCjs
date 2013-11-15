@@ -39,7 +39,7 @@ $('#skrMemDump').click(function() {
                             '</div>'+
                             '' );
   $('#tempModalFooter').html( '<button type="button" class="btn btn-danger" data-dismiss="modal" style="float:right; margin-left:5px;">'+
-                                '<i class="icon-remove icon-white"></i> Cancle'+
+                                '<i class="icon-remove icon-white"></i> Cancel'+
                               '</button>'+
                               ''+
                               '<div style="float:right; margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
