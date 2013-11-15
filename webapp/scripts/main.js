@@ -1,5 +1,88 @@
 var CFGNAMES = "__friscConfigurationNames";
 var isLocalStorageAvailable = 'localStorage' in window && window.localStorage !== null;
+var maxMessagesLog = -1;
+
+// Memory Dumping
+
+$('#skrMemDump').click(function() {
+  if (!$('#tempModalHold').length) {
+    $('body').append( ''+
+                    '<div id="tempModalHold">'+
+                      '<div class="modal fade" id="tempModal" tabindex="-1" role="dialog" aria-labelledby="tempModal" aria-hidden="true">'+
+                          '<div class="modal-dialog">'+
+                              '<div class="modal-content">'+
+                                  '<div class="modal-header">'+
+                                      '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'+
+                                      '<h4 class="modal-title" id="tempModalHeader">Modal title</h4>'+
+                                  '</div>'+
+                                  '<div class="modal-body" id="tempModalBody">'+
+                                    ' <p>One fine body&hellip;</p>'+
+                                  '</div>'+
+                                  '<div class="modal-footer" id="tempModalFooter">'+
+                                      '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>'+
+                                  '</div>'+
+                              '</div><!-- /.modal-content -->'+
+                          '</div><!-- /.modal-dialog -->'+
+                      '</div><!-- /.modal -->'+
+                    '</div>'+
+                    '');
+    $('#tempModal').on('hidden', function () {
+      $('#tempModalHold').remove();
+    });
+  }
+
+  $('#tempModalHeader').html( 'Text Memory Dump' );
+  $('#tempModalBody').html(   ''+
+                              '<div>'+
+                                'Memory word length:'+
+                                '<div style="margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut">8</button>'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut">16</button>'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut active">32</button>'+
+                                '</div>'+
+                                ' Memory word format:'+
+                                '<div style="margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut">DEC</button>'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut active">HEX</button>'+
+                                '</div>'+
+                              '</div>'+
+                              '<div style="margin-top:15px;">'+
+                                '<button class="btn btn-primary btn-block" onclick="memDumpDownload()"><i class="icon-download icon-white"></i> Download text file</button>'+
+                              '</div>'+
+                              '' );
+  $('#tempModalFooter').html( '<button type="button" class="btn btn-danger" data-dismiss="modal" style="float:right; margin-left:5px;">'+
+                                '<i class="icon-remove icon-white"></i> Cancel'+
+                              '</button>');
+  $('#tempModal').modal();
+
+  return false;  
+});
+
+function memDumpDownload() {
+  var hexDec = true;
+  var memLen = 32;
+  var dump = "";
+  // Get configuration
+  $('.skrMemDumpBut.active').each(function(){
+    var temp = $(this).text();
+    if(temp.toLowerCase()==="hex" || temp.toLowerCase()==="dec") {
+      if (temp.toLowerCase()==="hex") hexDec = true;
+      else hexDec = false;
+    } else {
+      memLen = parseInt(temp);
+    }
+  });
+  // Build data
+  for (var i=0; i<simulator.MEM._memory.length; i+=(memLen/8)) {
+    if (hexDec) {
+      dump += formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(simulator.MEM.read(i), memLen), 0).toString(16)) + '\n';
+    } else {
+      dump += simulator.MEM.read(i) + '\n';
+    }
+  }
+  // Create data URI
+  document.location = 'data:Application/octet-stream,' + encodeURIComponent(dump);
+}
 
 function appendOption(selectSelector, optionValue, optionText) {
   var option = document.createElement('option');
@@ -286,7 +369,7 @@ lab23 ADD R1, R2, R3\n\
   changeState("stopped");
 };
 
-function simulatorLog(text, marginLeft) {
+function simulatorLog(text, marginLeft, newCycle) {
   if (typeof text !== "string") {
     text = JSON.stringify(text);
   }
@@ -295,8 +378,51 @@ function simulatorLog(text, marginLeft) {
     marginLeft = "0px";
   }
 
-  $("#cpuout").append("<div style='font-size: 9pt; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</div>");
+  if (typeof newCycle === "undefined") {
+    newCycle = false;
+  }
+
+  var classes = "";
+  if (newCycle) classes += "newInstruction";
+
+
+  $("#cpuout").append("<div style='font-size: 9pt; margin-left: " + marginLeft + "; padding: 0px;' class='" + classes + "'>" + text + "</div>");
   $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
+
+  if (maxMessagesLog > 0) {
+    var messages = $('#cpuout').children();
+    var messageOverflow = 0;
+    var delStartIndex = -1;
+    var delEndIndex = -1;
+    // Calculate num. of instructions
+    for (var i = 0; i < messages.length ; ++i ) {
+      // Get instruction
+      if ($(messages[i]).hasClass('newInstruction') && delStartIndex < 0 && delEndIndex < 0) delStartIndex = i;
+      else if ($(messages[i]).hasClass('newInstruction') && delStartIndex >= 0 && delEndIndex < 0) delEndIndex = i;
+      // Count instruction
+      if (delStartIndex >= 0 && delEndIndex >= 0) {
+        messageOverflow += 1;
+        delStartIndex = delEndIndex = -1;
+      }
+    }
+    // Calculate overflow
+    messageOverflow -= maxMessagesLog;
+    delStartIndex = delEndIndex = -1;
+    // Delete overflow
+    for (var i = 0; (messageOverflow > 0) && (i < messages.length) ; ++i ) {
+      // Get instruction
+      if (!$(messages[i]).hasClass('newInstruction') && delStartIndex < 0 && delEndIndex < 0) messages[i].remove();
+      else if ($(messages[i]).hasClass('newInstruction') && delStartIndex < 0 && delEndIndex < 0) delStartIndex = i;
+      else if ($(messages[i]).hasClass('newInstruction') && delStartIndex >= 0 && delEndIndex < 0) delEndIndex = i;
+      // Delete instruction
+      if (delStartIndex >= 0 && delEndIndex >= 0) {
+        for (var a = delStartIndex; a < delEndIndex; ++a) messages[a].remove();
+        i -= delEndIndex - delStartIndex;
+        delStartIndex = delEndIndex = -1;
+        messageOverflow--;
+      }
+    }
+  }
 }
 
 function refreshMemoryViewCurrentLine() {
@@ -551,7 +677,7 @@ simulator.CPU.onBeforeCycle = function() {
   }
 
   instructionsExecutedAfterBreak = true;
-  simulatorLog("<span class='label label-success'><b>New CPU cycle starting!</b></span>");
+  simulatorLog("<span class='label label-success'><b>New CPU cycle starting!</b></span>", 0, true);
   simulatorLog("<span class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
 };
 
@@ -617,6 +743,8 @@ $("#frisc-load").click(function() {
       simulator.CPU._frequency = parseInt($("#frisc-freq").val(), 10);
       simulator.MEM._size = parseInt($("#frisc-memsize").val(), 10) * 1024;
       simulator.MEM.loadBinaryString(result.mem);
+      maxMessagesLog = parseInt($('#skr-frisc-log-limit').val(), 10);
+      if (!$('#skr-frisc-log').prop('checked')) maxMessagesLog = -1;
     } catch (e) {
       simulatorLog("<span class='label label-important'><b>Loading error</b></span>" + " -- " + e.toString() + "");
       return;
@@ -682,7 +810,7 @@ $("#frisc-showhidesettings").click(function() {
     $('#cpuout').animate({ height: 145 }, 603, function() {} );
     $("#frisc-settings").hide("slow");
   } else {
-    $('#cpuout').animate({ height: 100 }, 603, function() {} );
+    $('#cpuout').animate({ height: 67 }, 603, function() {} );
     $("#frisc-settings").show("slow");
   }
 });
