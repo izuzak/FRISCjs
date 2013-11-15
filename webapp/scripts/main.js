@@ -32,78 +32,58 @@ $('#skrMemDump').click(function() {
   }
 
   $('#tempModalHeader').html( 'Text Memory Dump' );
-  $('#tempModalBody').html( ''+
-                            '<div>'+
-                            ' <textarea style="width:98%; min-height:250px;" id="skrMemDumpField">'+
-                            ' </textarea>'+
-                            '</div>'+
-                            '' );
+  $('#tempModalBody').html(   ''+
+                              '<div>'+
+                                'Memory word length:'+
+                                '<div style="margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut">8</button>'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut">16</button>'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut active">32</button>'+
+                                '</div>'+
+                                ' Memory word format:'+
+                                '<div style="margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut">DEC</button>'+
+                                  '<button type="button" class="btn btn-default skrMemDumpBut active">HEX</button>'+
+                                '</div>'+
+                              '</div>'+
+                              '<div style="margin-top:15px;">'+
+                                '<button class="btn btn-primary btn-block" onclick="memDumpDownload()"><i class="icon-download icon-white"></i> Download text file</button>'+
+                              '</div>'+
+                              '' );
   $('#tempModalFooter').html( '<button type="button" class="btn btn-danger" data-dismiss="modal" style="float:right; margin-left:5px;">'+
                                 '<i class="icon-remove icon-white"></i> Cancel'+
-                              '</button>'+
-                              ''+
-                              '<div style="float:right; margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
-                                '<button type="button" class="btn btn-default skrMemDumpBut">DEC</button>'+
-                                '<button type="button" class="btn btn-default skrMemDumpBut active">HEX</button>'+
-                              '</div>'+
-                              ''+
-                              '<div style="float:right; margin-left:5px;" class="btn-group" data-toggle="buttons-radio">'+
-                                '<button type="button" class="btn btn-default skrMemDumpBut">8</button>'+
-                                '<button type="button" class="btn btn-default skrMemDumpBut">16</button>'+
-                                '<button type="button" class="btn btn-default skrMemDumpBut active">32</button>'+
-                              '</div>' );
-
-  $('.skrMemDumpBut').click(function() {
-    var pressedBut = $(this).text();
-    var hexDec = "hex";
-    var memLen = 32;
-    // Get current configuration
-    $('.skrMemDumpBut.active').each(function(){
-      var temp = $(this).text();
-      if(temp.toLowerCase()==="hex" || temp.toLowerCase()==="dec") {
-        if (temp.toLowerCase()==="hex") hexDec = "hex";
-        else hexDec = "dec";
-      } else {
-        memLen = parseInt(temp);
-      }
-    });
-    if(pressedBut.toLowerCase()==="hex" || pressedBut.toLowerCase()==="dec") {
-      if (pressedBut.toLowerCase()==="hex") hexDec = "hex";
-      else hexDec = "dec";
-    } else {
-      memLen = parseInt(pressedBut);
-    }
-    // Update textfield
-    dumpMemoryTo('#skrMemDumpField', hexDec, memLen/8);
-  });
-
-  dumpMemoryTo('#skrMemDumpField');
-
+                              '</button>');
   $('#tempModal').modal();
 
   return false;  
 });
 
-function dumpMemoryTo(jQuerySelector, hexDec, step, memoryWidth) {
-  // Check if parameters are defined
-  hexDec = typeof hexDec !== 'undefined' ? hexDec : 'hex';
-  step = typeof step !== 'undefined' ? step : 4;
-  memoryWidth = typeof memoryWidth !== 'undefined' ? memoryWidth : step*8;
-  // Prepare data
-  hexDec = hexDec.toLowerCase()==="hex";
-  var field = $(jQuerySelector);
+function memDumpDownload() {
+  var hexDec = true;
+  var memLen = 32;
   var dump = "";
-  // Generate data
-  for (var i=0; i<simulator.MEM._memory.length; i+=step) {
+  // Get configuration
+  $('.skrMemDumpBut.active').each(function(){
+    var temp = $(this).text();
+    if(temp.toLowerCase()==="hex" || temp.toLowerCase()==="dec") {
+      if (temp.toLowerCase()==="hex") hexDec = true;
+      else hexDec = false;
+    } else {
+      memLen = parseInt(temp);
+    }
+  });
+  // Build data
+  for (var i=0; i<simulator.MEM._memory.length; i+=(memLen/8)) {
     if (hexDec) {
-      dump += formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(simulator.MEM.read(i), memoryWidth), 0).toString(16)) + '\n';
+      dump += formatHexNumber(friscjs.util.convertBinaryToInt(friscjs.util.convertIntToBinary(simulator.MEM.read(i), memLen), 0).toString(16)) + '\n';
     } else {
       dump += simulator.MEM.read(i) + '\n';
     }
-      
   }
-  // Present data
-  field.text(dump);
+  // Debug
+  console.log("hex: " + hexDec + " memLen: " + memLen*8);
+  // Create data URI
+  document.location = 'data:Application/octet-stream,' + encodeURIComponent(dump);
 }
 
 function appendOption(selectSelector, optionValue, optionText) {
