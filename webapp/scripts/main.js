@@ -80,8 +80,6 @@ function memDumpDownload() {
       dump += simulator.MEM.read(i) + '\n';
     }
   }
-  // Debug
-  //console.log("hex: " + hexDec + " memLen: " + memLen*8);
   // Create data URI
   document.location = 'data:Application/octet-stream,' + encodeURIComponent(dump);
 }
