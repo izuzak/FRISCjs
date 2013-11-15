@@ -369,7 +369,7 @@ lab23 ADD R1, R2, R3\n\
   changeState("stopped");
 };
 
-function simulatorLog(text, marginLeft) {
+function simulatorLog(text, marginLeft, newCycle) {
   if (typeof text !== "string") {
     text = JSON.stringify(text);
   }
@@ -378,14 +378,49 @@ function simulatorLog(text, marginLeft) {
     marginLeft = "0px";
   }
 
-  $("#cpuout").append("<div style='font-size: 9pt; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</div>");
+  if (typeof newCycle === "undefined") {
+    newCycle = false;
+  }
+
+  var classes = "";
+  if (newCycle) classes += "newInstruction";
+
+
+  $("#cpuout").append("<div style='font-size: 9pt; margin-left: " + marginLeft + "; padding: 0px;' class='" + classes + "'>" + text + "</div>");
   $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
 
   if (maxMessagesLog > 0) {
     var messages = $('#cpuout').children();
-    var messageOverflow = messages.size() - maxMessagesLog;
-    for (var i = 0; (messageOverflow > 0) && (i < messageOverflow); ++i ) {
-      messages[i].remove();
+    var messageOverflow = 0;
+    var delStartIndex = -1;
+    var delEndIndex = -1;
+    // Calculate num. of instructions
+    for (var i = 0; i < messages.length ; ++i ) {
+      // Get instruction
+      if ($(messages[i]).hasClass('newInstruction') && delStartIndex < 0 && delEndIndex < 0) delStartIndex = i;
+      else if ($(messages[i]).hasClass('newInstruction') && delStartIndex >= 0 && delEndIndex < 0) delEndIndex = i;
+      // Count instruction
+      if (delStartIndex >= 0 && delEndIndex >= 0) {
+        messageOverflow += 1;
+        delStartIndex = delEndIndex = -1;
+      }
+    }
+    // Calculate overflow
+    messageOverflow -= maxMessagesLog;
+    delStartIndex = delEndIndex = -1;
+    // Delete overflow
+    for (var i = 0; (messageOverflow > 0) && (i < messages.length) ; ++i ) {
+      // Get instruction
+      if (!$(messages[i]).hasClass('newInstruction') && delStartIndex < 0 && delEndIndex < 0) messages[i].remove();
+      else if ($(messages[i]).hasClass('newInstruction') && delStartIndex < 0 && delEndIndex < 0) delStartIndex = i;
+      else if ($(messages[i]).hasClass('newInstruction') && delStartIndex >= 0 && delEndIndex < 0) delEndIndex = i;
+      // Delete instruction
+      if (delStartIndex >= 0 && delEndIndex >= 0) {
+        for (var a = delStartIndex; a < delEndIndex; ++a) messages[a].remove();
+        i -= delEndIndex - delStartIndex;
+        delStartIndex = delEndIndex = -1;
+        messageOverflow--;
+      }
     }
   }
 }
@@ -642,7 +677,7 @@ simulator.CPU.onBeforeCycle = function() {
   }
 
   instructionsExecutedAfterBreak = true;
-  simulatorLog("<span class='label label-success'><b>New CPU cycle starting!</b></span>");
+  simulatorLog("<span class='label label-success'><b>New CPU cycle starting!</b></span>", 0, true);
   simulatorLog("<span class='label label-info'>CPU state:</span>" + " " + cpuStateToString(), "10px");
 };
 
