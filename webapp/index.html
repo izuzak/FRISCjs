@@ -219,14 +219,21 @@
               <button id="frisc-showhidesettings" type="button" class="btn btn-primary" data-toggle="button"><i class="icon-wrench icon-white"></i> Settings</button>
             </div>
             <div id="frisc-settings" style="display: none; margin-top: 15px;" class="form-inline">
-              <label for="frisc-freq" style="margin-bottom: 0px;">CPU frequency (Hz):</label>
-              <input id="frisc-freq" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="1000">
-              <label for="frisc-memsize" style="margin-bottom: 0px;">MEM size (KB):</label>
-              <input id="frisc-memsize" type="number" min="1" step="1" max="1000" class="input-mini" style="margin-bottom: 0px;" value="256">
-              <label style="margin-bottom: 0px;">Register values:</label>
-              <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
-                <button class="btn" id="regBaseRadioDec">DEC</button>
-                <button class="btn active" id="regBaseRadioHex">HEX</button>
+              <div>
+                <label for="frisc-freq" style="margin-bottom: 0px;">CPU frequency (Hz):</label>
+                <input id="frisc-freq" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="1000">
+                <label for="frisc-memsize" style="margin-bottom: 0px;">MEM size (KB):</label>
+                <input id="frisc-memsize" type="number" min="1" step="1" max="1000" class="input-mini" style="margin-bottom: 0px;" value="256">
+                <label style="margin-bottom: 0px;">Register values:</label>
+                <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
+                  <button class="btn" id="regBaseRadioDec">DEC</button>
+                  <button class="btn active" id="regBaseRadioHex">HEX</button>
+                </div>
+              </div>
+              <div style="margin-top:4px;">
+                <input type="checkbox" id="skr-frisc-log" checked> Limit log to
+                <input id="skr-frisc-log-limit" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="50">
+                lines
               </div>
             </div>
             <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 10px; color: black; height: 145px;"></div>

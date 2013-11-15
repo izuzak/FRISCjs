@@ -1,5 +1,6 @@
 var CFGNAMES = "__friscConfigurationNames";
 var isLocalStorageAvailable = 'localStorage' in window && window.localStorage !== null;
+var maxMessagesLog = -1;
 
 // Memory Dumping
 
@@ -401,6 +402,14 @@ function simulatorLog(text, marginLeft) {
 
   $("#cpuout").append("<div style='font-size: 9pt; margin-left: " + marginLeft + "; padding: 0px;'>" + text + "</div>");
   $("#cpuout").scrollTop($("#cpuout")[0].scrollHeight);
+
+  if (maxMessagesLog > 0) {
+    var messages = $('#cpuout').children();
+    var messageOverflow = messages.size() - maxMessagesLog;
+    for (var i = 0; (messageOverflow > 0) && (i < messageOverflow); ++i ) {
+      messages[i].remove();
+    }
+  }
 }
 
 function refreshMemoryViewCurrentLine() {
@@ -721,6 +730,8 @@ $("#frisc-load").click(function() {
       simulator.CPU._frequency = parseInt($("#frisc-freq").val(), 10);
       simulator.MEM._size = parseInt($("#frisc-memsize").val(), 10) * 1024;
       simulator.MEM.loadBinaryString(result.mem);
+      maxMessagesLog = parseInt($('#skr-frisc-log-limit').val(), 10);
+      if (!$('#skr-frisc-log').prop('checked')) maxMessagesLog = -1;
     } catch (e) {
       simulatorLog("<span class='label label-important'><b>Loading error</b></span>" + " -- " + e.toString() + "");
       return;
@@ -786,7 +797,7 @@ $("#frisc-showhidesettings").click(function() {
     $('#cpuout').animate({ height: 145 }, 603, function() {} );
     $("#frisc-settings").hide("slow");
   } else {
-    $('#cpuout').animate({ height: 100 }, 603, function() {} );
+    $('#cpuout').animate({ height: 67 }, 603, function() {} );
     $("#frisc-settings").show("slow");
   }
 });
