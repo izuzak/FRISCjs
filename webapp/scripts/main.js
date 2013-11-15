@@ -81,7 +81,7 @@ function memDumpDownload() {
     }
   }
   // Debug
-  console.log("hex: " + hexDec + " memLen: " + memLen*8);
+  //console.log("hex: " + hexDec + " memLen: " + memLen*8);
   // Create data URI
   document.location = 'data:Application/octet-stream,' + encodeURIComponent(dump);
 }
