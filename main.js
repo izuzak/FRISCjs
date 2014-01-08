@@ -155,13 +155,18 @@ function instructionToString(instruction) {
 }
 
 function runProgram(frisc_asmsource) {
+  frisc_asmsource = frisc_asmsource.toString();
+  if (frisc_asmsource[frisc_asmsource.length-1] != '\n') {
+    frisc_asmsource += '\n'; // the parser blows up if there's no newline at the end of input
+  }
+
   console.error("");
   console.error("*********************************************************");
   console.error("Input FRISC program:");
   console.error("*********************************************************");
   console.error("");
 
-  console.error(frisc_asmsource.toString());
+  console.error(frisc_asmsource);
 
   console.error("");
   console.error("*********************************************************");
@@ -170,7 +175,7 @@ function runProgram(frisc_asmsource) {
   console.error("");
 
   try {
-    var result = parser.parse(frisc_asmsource.toString());
+    var result = parser.parse(frisc_asmsource);
   } catch (e) { 
     console.error("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
     return;
