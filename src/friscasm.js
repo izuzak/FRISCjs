@@ -992,7 +992,7 @@ frisc_asm = (function(){
       }
       
       function parse_rinaddroff() {
-        var result0, result1, result2, result3;
+        var result0, result1, result2, result3, result4;
         var pos0, pos1;
         
         pos0 = pos;
@@ -1009,22 +1009,33 @@ frisc_asm = (function(){
         if (result0 !== null) {
           result1 = parse_register();
           if (result1 !== null) {
-            result2 = parse_numberWithoutBase();
-            if (result2 === null) {
-              result2 = "";
+            result2 = [];
+            result3 = parse_whitespace();
+            while (result3 !== null) {
+              result2.push(result3);
+              result3 = parse_whitespace();
             }
             if (result2 !== null) {
-              if (input.charCodeAt(pos) === 41) {
-                result3 = ")";
-                pos++;
-              } else {
-                result3 = null;
-                if (reportFailures === 0) {
-                  matchFailed("\")\"");
-                }
+              result3 = parse_numberWithoutBase();
+              if (result3 === null) {
+                result3 = "";
               }
               if (result3 !== null) {
-                result0 = [result0, result1, result2, result3];
+                if (input.charCodeAt(pos) === 41) {
+                  result4 = ")";
+                  pos++;
+                } else {
+                  result4 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\")\"");
+                  }
+                }
+                if (result4 !== null) {
+                  result0 = [result0, result1, result2, result3, result4];
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
               } else {
                 result0 = null;
                 pos = pos1;
@@ -1044,7 +1055,7 @@ frisc_asm = (function(){
         if (result0 !== null) {
           result0 = (function(offset, reg, val) {
               return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
-            })(pos0, result0[1], result0[2]);
+            })(pos0, result0[1], result0[3]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -3079,7 +3090,7 @@ frisc_asm = (function(){
       }
       
       function parse_numberWithoutBase() {
-        var result0, result1, result2, result3;
+        var result0, result1, result2, result3, result4;
         var pos0, pos1;
         
         pos0 = pos;
@@ -3094,40 +3105,51 @@ frisc_asm = (function(){
           }
         }
         if (result0 !== null) {
-          if (/^[0-9]/.test(input.charAt(pos))) {
-            result1 = input.charAt(pos);
-            pos++;
-          } else {
-            result1 = null;
-            if (reportFailures === 0) {
-              matchFailed("[0-9]");
-            }
+          result1 = [];
+          result2 = parse_whitespace();
+          while (result2 !== null) {
+            result1.push(result2);
+            result2 = parse_whitespace();
           }
           if (result1 !== null) {
-            result2 = [];
-            if (/^[0-9a-hA-H]/.test(input.charAt(pos))) {
-              result3 = input.charAt(pos);
+            if (/^[0-9]/.test(input.charAt(pos))) {
+              result2 = input.charAt(pos);
               pos++;
             } else {
-              result3 = null;
+              result2 = null;
               if (reportFailures === 0) {
-                matchFailed("[0-9a-hA-H]");
+                matchFailed("[0-9]");
               }
             }
-            while (result3 !== null) {
-              result2.push(result3);
+            if (result2 !== null) {
+              result3 = [];
               if (/^[0-9a-hA-H]/.test(input.charAt(pos))) {
-                result3 = input.charAt(pos);
+                result4 = input.charAt(pos);
                 pos++;
               } else {
-                result3 = null;
+                result4 = null;
                 if (reportFailures === 0) {
                   matchFailed("[0-9a-hA-H]");
                 }
               }
-            }
-            if (result2 !== null) {
-              result0 = [result0, result1, result2];
+              while (result4 !== null) {
+                result3.push(result4);
+                if (/^[0-9a-hA-H]/.test(input.charAt(pos))) {
+                  result4 = input.charAt(pos);
+                  pos++;
+                } else {
+                  result4 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("[0-9a-hA-H]");
+                  }
+                }
+              }
+              if (result3 !== null) {
+                result0 = [result0, result1, result2, result3];
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
             } else {
               result0 = null;
               pos = pos1;
@@ -3143,7 +3165,7 @@ frisc_asm = (function(){
         if (result0 !== null) {
           result0 = (function(offset, p, first, rest) {
             return (p === "-" ? -1 : 1) * parseInt( first + rest.join(""), defaultBase);
-          })(pos0, result0[0], result0[1], result0[2]);
+          })(pos0, result0[0], result0[2], result0[3]);
         }
         if (result0 === null) {
           pos = pos0;

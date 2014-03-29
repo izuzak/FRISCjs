@@ -479,7 +479,7 @@ reladdr = immaddr
 
 rinaddr = "(" value:regaddr ")" { return value; }
 
-rinaddroff = "(" reg:register val:((numberWithoutBase) / ("")) ")" {
+rinaddroff = "(" reg:register whitespace* val:((numberWithoutBase) / ("")) ")" {
       return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
     }
 
@@ -651,6 +651,6 @@ base
   }
 
 numberWithoutBase
-  = p:[+-] first:[0-9] rest:([0-9a-hA-H]*) {
+  = p:[+-] whitespace* first:[0-9] rest:([0-9a-hA-H]*) {
     return (p === "-" ? -1 : 1) * parseInt( first + rest.join(""), defaultBase);
   }
