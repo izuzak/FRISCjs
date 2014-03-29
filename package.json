@@ -35,10 +35,10 @@
   "dependencies" : {
   },
   "devDependencies": {
-    "pegjs" : ">=0.7.0",
-    "grunt-peg" : ">=0.0.1",
+    "pegjs" : "0.7.0",
+    "grunt-peg" : "0.0.1",
     "grunt-jsvalidate" : "0.1.3",
-    "grunt" : "~0.3.14"
+    "grunt" : "0.3.14"
   },
   "bundleDependencies": [],
   "licenses": [
