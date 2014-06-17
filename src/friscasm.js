@@ -588,8 +588,8 @@ frisc_asm = (function(){
         
             if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
               if (typeof o.alusrc2 !== "undefined" && o.alusrc2.type === "num") {
-                if (!canNumberBeObtainedBySignedExtendingThe20BitPrefix(o.alusrc2.value)) {
-                  var err = new Error("Number can't be obtained by sign-extending its 20-bit prefix.");
+                if (!canNumberBeObtainedBySignedExtendingThe20BitSuffix(o.alusrc2.value)) {
+                  var err = new Error("Number can't be obtained by sign-extending its lower 20 bits.");
                   err.line = linecounter;
                   err.column = 1;
                   throw err;
@@ -3373,7 +3373,7 @@ frisc_asm = (function(){
           return retVal.join("");
         }
       
-        var canNumberBeObtainedBySignedExtendingThe20BitPrefix = function(number) {
+        var canNumberBeObtainedBySignedExtendingThe20BitSuffix = function(number) {
           var bits = convertIntToBinary(number, 32).split("").reverse().join("");
       
           if ((bits[19] === "0" && bits.slice(20, 32) != "000000000000") ||
