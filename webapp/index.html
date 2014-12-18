@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="FRISCjs - FRISC processor simulator in JavaScript" />
+    <meta name="author" content="Ivan Zuzak" />
+
+    <title> FRISCjs - FRISC processor simulator in JavaScript</title>
+
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" />
+    <link rel="stylesheet" href="styles/ace-mode-frisc.css" />
+    <link rel="stylesheet" href="styles/friscjs.css" />
+  </head>
+  <body>
+    <div class="container" style="width: 1170px">
+      <h1> FRISCjs <small> FRISC processor simulator in JavaScript </small> </h1>
+      <ul class="nav nav-tabs">
+        <li class="active"><a id="frisc-sim-link" href="#frisc-sim" data-toggle="tab">Simulator</a></li>
+        <li><a href="#frisc-saveload" data-toggle="tab">Load/Save</a></li>
+        <li><a href="#frisc-usage" data-toggle="tab">Usage instructions</a></li>
+        <li><a href="#frisc-examples" data-toggle="tab">Examples</a></li>
+        <li><a href="#frisc-about" data-toggle="tab">About</a></li>
+      </ul>
+      <div class="tab-content" style="margin-bottom: 0px;">
+        <div id="frisc-saveload" class="container tab-pane" style="width: auto">
+          <div class="well">
+            <h3> Load/save and import/export FRISC configurations </h3>
+
+            <p>
+              This page enables you to save the current configuration of the simulator locally (under a specific name) so that you may load it next time you use FRISCjs.
+              Currently, a configuration consists of the FRISC assembly program defined in the editor, the CPU speed, memory size and the set of defined I/O units.
+              In the future, the configuration might be extended to include defined breakpoints, CPU state, etc.
+              Furthermore, this page enables you to export configurations in text format so that they can be shared (e.g. via e-mail) and saved externally (e.g. as a GitHub gist), and import previously exported configurations.
+              In order to save/load and import/export, the simulator must be in a stopped state.
+            </p>
+
+            <h4> Save current configuration locally </h4>
+
+            <p>
+              <form class="form-search">
+                <label class="control-label" for="frisc-cfg-save-name">Configuration name:</label>
+                <input type="text" id="frisc-cfg-save-name" class="input-medium search-query">
+                <button id="frisc-cfg-save" type="button" class="btn btn-success"><i class="icon-file icon-white"></i> Save</button>
+                <span id="frisc-cfg-save-help" class="help-inline"></span>
+              </form>
+            </p>
+
+            <h4> Load or delete existing configuration </h4>
+
+            <p>
+              <form class="form-search">
+                <label class="control-label" for="frisc-cfg-select">Select configuration:</label>
+                <select id="frisc-cfg-select" class="input-medium">
+                </select>
+                <button id="frisc-cfg-load" type="button" class="btn btn-success"><i class="icon-download-alt icon-white"></i> Load</button>
+                <button id="frisc-cfg-delete" type="button" class="btn btn-danger"><i class="icon-remove-sign icon-white"></i> Delete</button>
+                <span id="frisc-cfg-load-help" class="help-inline"></span>
+              </form>
+            </p>
+
+            <h4> Export current configuration to text </h4>
+
+            <p>
+              <form class="form-search">
+                <textarea class="input-xxlarge" id="frisc-cfg-export-text" rows="4"></textarea>
+                <button id="frisc-cfg-export" type="button" class="btn btn-success"><i class="icon-file icon-white"></i> Export</button>
+                <span id="frisc-cfg-export-help" class="help-inline"></span>
+              </form>
+            </p>
+
+            <h4> Import configuration from text as current configuration </h4>
+
+            <p>
+              <form class="form-search">
+                <textarea class="input-xxlarge" id="frisc-cfg-import-text" rows="4"></textarea>
+                <button id="frisc-cfg-import" type="button" class="btn btn-success"><i class="icon-download-alt icon-white"></i> Import</button>
+                <span id="frisc-cfg-import-help" class="help-inline"></span>
+              </form>
+            </p>
+
+          </div>
+        </div>
+        <div id="frisc-usage" class="container tab-pane" style="width: auto;">
+          <div class="well">
+            <h3> Basic usage instructions </h3>
+            <ol>
+              <li> Enter your FRISC assembler program into the textbox on the left. </li>
+              <li> Press the <b>"Settings"</b> button to define the CPU speed (in Hz, default is 1000Hz, min is 1Hz) and the memory size (in KB, default is 256KB, min is 1KB, max is 1000KB). These options can't be changed after the program is loaded. Also, select the base for displaying register status (decimal or hexadecimal, default is hex). This option can be changed even while the loaded program is being executed. </li>
+              <li> Press the <b>"Load"</b> button to parse and assemble the program, and then load it into memory. In case of parsing errors, the error message, line and column numbers will be logged to the log output screen. </li>
+              <li> After the program loads into memory, the program editor is replaced with a <b>location-by-location view of the complete memory</b>. For each location, the location address, its value in hex and dec base, and value interpreted as a FRISC instruction are shown. Furthermore, the memory view provides several advanced features:
+                <ul>
+                  <li> <b>search</b> - the search-box below the memory view provides a fast way to jump to any location.</li>
+                  <li> <b>breakpoints</b> - for each location, the memory view also provides a "Break" checkbox which will pause the CPU when it reaches that memory location. </li>
+                  <li> <b>next instruction highlight</b> - the location of the instruction that will be executed next by the CPU is highlighted. </li>
+                </ul>
+              <li> Press the <b>"Run all"</b> button to start the CPU with the defined execution speed. As the program is executing, the value of the registers is updated and the log output screen logs every executed instruction and CPU state.</li>
+              <li> Press the <b>"Pause"</b> button to pause CPU execution.</li>
+              <li> Press the <b>"Run one"</b> button to force the CPU to execute only the next instruction (step-by-step execution).</li>
+              <li> Press the <b>"Stop"</b> button to stop the CPU completely, unload the program from memory and return to defining the program in the editor. </li>
+              <li> Press the <b>"Clear log"</b> button to clear the log output screen. </li>
+            </ol>
+            <h3> IO units instructions </h3>
+            <ol>
+              <li> IO units must be defined <b>before loading a FRISC program</b> into memory. </li>
+              <li> Define a <b>unique name</b> to identify an IO unit. </li>
+              <li> Select the <b>IO unit type</b>. FRISCjs supports 4 IO unit types: Generic IO, FRISC CT, FRISC PIO and FRISC DMA. The <b>Generic IO unit</b> is a unit with no pre-defined behavior or number of memory mapped locations, and enables users to manually set the unit state at runtime. The <b>FRISC CT</b>, <b>FRISC PIO</b> and <b>FRISC DMA</b> units all have pre-defined behavior, parameters and number of memory mapped locations, and their state cannot be set manually during runtime. Multiple units of same type can be added (e.g. two FRISC CT units at the same time). </li>
+              <li> Select the <b>interrupt level</b> for the unit. Multiple units may be connected to the same interrupt, except for INT3 which is unmaskable. </li>
+              <li> Define the start of the <b>memory mapping</b> for the unit as a HEX base memory location. Writing to memory locations mapped to an IO unit will result in sending data to the IO unit, not the memory module. Similarly, reading from a memory mapped location will result in receiving data from the IO unit, not the memory module. </li>
+              <li> Define the <b>number of memory mapped 4-byte locations</b>. This number is pre-defined for standard FRISC IO units, and is configurable for Generic IO units. </li>
+              <li> Define the required parameters for some units, e.g. the frequency for FRISC CT and PIO units. </li>
+              <li> Click <b>"Add"</b> to create and display the unit. In case of errors, the error message will be logged to the log output screen. Each unit is displayed with its name, parameters, interrupt state and memory mapped locations. For each location, the address of the location and its value in decimal, hexadecimal and binary bases are shown. The interrupt state and memory mapped location values can be changed manually through the user interface for Generic IO unit types. </li>
+              <li> Each unit can be removed by clicking the <b>"X"</b> button in the upper left corner, but only while the CPU is stopped. </li>
+              <li> After adding all desired IO units, load the program into memory as described above. As the program executes, the state of the memory mapped locations and the interrupt state will <b>automatically refresh</b>. </li>
+              <li> The state of the memory mapped locations for all IO units is <b>automatically reset</b> when the CPU is stopped, as described above. </li>
+            </ol>
+          </div>
+        </div>
+        <div id="frisc-examples" class="container tab-pane" style="margin-bottom: 15px; width: auto;">
+          <div class="well">
+            <h3> Examples </h3>
+            <p> This page contains examples for using FRISCjs. Each example is given as a brief description and a link to a configuration which can be loaded using the Load/Save tab. Just copy/paste the configuration into the import box and click <b>"Import"</b>. </p>
+
+            <h4> Simple addition example </h4>
+            <p> This most basic example adds values from registers R0 and R1 and stores the result into R2. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/add_numbers.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/add_numbers.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+
+            <h4> All instructions example </h4>
+            <p> This example doesn't do anything useful, but contains every FRISC instruction. Useful for testing and debugging. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/all_instructions.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/all_instructions.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+
+            <h4> FRISC CT example </h4>
+            <p> This example uses a FRISC CT IO unit for simple counting - an in-memory counter is incremented for every 400 periods of the FRISC CT unit. The configuration contains a FRISC CT unit configured at 1000Hz. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_ct.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_ct.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+
+            <h4> FRISC PIO example </h4>
+            <p> This example uses a FRISC PIO IO unit for reading 40 data items. The configuration contains a FRISC PIO unit configured at 1000Hz. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_pio.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_pio.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+
+            <h4> FRISC DMA example </h4>
+            <p> This example uses a FRISC DMA IO unit for transferring 1000 4-byte words from an IO unit mapped on 0xFFFF3330 to memory starting from location 0x4000, using halting transfer mode. </p>
+            <ul>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_dma.json" target="_blank">Configuration</a> </li>
+              <li> <a href="https://raw.github.com/izuzak/FRISCjs/master/examples/frisc_dma.frisc" target="_blank">Input program only in a more readable format</a> </li>
+            </ul>
+          </div>
+        </div>
+        <div id="frisc-about" class="container tab-pane" style="margin-bottom: 15px; width: auto;">
+          <div class="well">
+            <h3> About </h3>
+            <p>
+              FRISCjs is a simulator of the FRISC processor written in JavaScript.
+              <a href="http://www.fer.unizg.hr/rasip/knjige/frisc">FRISC</a> is a simple, educational RISC processor developed at the <a href="http://fer.unizg.hr/en">University of Zagreb, Faculty of Electrical Engineering and Computing</a>.
+              The simulator has two parts: a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscasm.pegjs">FRISC assembler</a> (built using PEGjs) which translates FRISC assembly code to machine code and a <a href="https://github.com/izuzak/FRISCjs/blob/master/friscjs.js">FRISC CPU simulator</a> which executes machine code.
+              This Web application is a graphical interface for the simulator, while there also exists a <a href="https://github.com/izuzak/FRISCjs/blob/master/main.js">console interface which runs on NodeJS</a>.
+            </p>
+
+            <h3> Source code and bug reports </h3>
+              <p>
+                The complete source code for FRISCjs and this Web application is <a href="https://github.com/izuzak/FRISCjs">available on GitHub</a>.
+                Please use the GitHub <a href="https://github.com/izuzak/FRISCjs/issues">issue tracker</a> for reporting bugs and feature requests.
+              </p>
+            <h3> Credits and license </h3>
+              <p>
+                FRISCjs was developed by <a href="http://ivanzuzak.info">Ivan Zuzak</a>. License: <a href="https://github.com/izuzak/FRISCjs/blob/master/LICENSE.markdown">Apache 2.0.</a> Contributors: <a href="https://github.com/ibudiselic">Ivan Budiselic</a>, <a href="https://github.com/Stankec">Stanko Krtalic</a>.
+              </p>
+              <p>
+                FRISCjs is built with many open-source projects: <a href="http://pegjs.majda.cz/">PEGjs</a>, <a href="http://nodejs.org">NodeJS</a>, <a href="http://jquery.com">jQuery</a>, <a href="http://twitter.github.io/bootstrap">Bootstrap</a>, <a href="http://ace.ajax.org/">Ace</a>, <a href="https://github.com/janl/mustache.js/">Mustache</a> and <a href="https://github.com/madrobby/keymaster">Keymaster</a>.
+              </p>
+          </div>
+        </div>
+        <div id="frisc-sim" class="active container-fluid tab-pane" style="padding-left: 0px;">
+          <div id="frisc-inputdiv" class="sidebar" style="width: 450px; height: 450px; float: left;">
+          </div>
+
+          <div class="sidebar ace_editor ace-tm" id="frisc-memorylist-hold" style="width: 450px; height: 450px; display:none; float: left;">
+            <div style="width: 448px; height: 30px; display:inline-block; top:0px; border: 1px solid #dddddd; border-collapse: separate; border-radius: 4px 4px 0px 0px; background-color:#f1f1f1; padding-top:5px;">
+              <div style='display:table-cell; width:70px;  border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Location</div>
+              <div style='display:table-cell; width:70px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Value HEX</div>
+              <div style='display:table-cell; width:85px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Value DEC</div>
+              <div style='display:table-cell; width:150px; border-right: 1px solid #000000; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Instruction</div>
+              <div style='display:table-cell; width:30px; padding-left: 4px; vertical-align: middle; padding-top: 1px;'>Break</div>
+            </div>
+
+            <div id="frisc-memorylist" style="width: 448px; height: 375px; position:absolute; left:0px; top:31px; overflow: scroll; overflow-x:hidden; display:inline-block; border: 1px solid #dddddd; border-radius: 0px 0px 4px 4px;">
+            </div>
+
+            <div id="frisc-memorylist-search" style="border: 1px solid #dddddd; border-collapse: separate; border-radius: 0px 0px 4px 4px; background-color:#f1f1f1; position:absolute; bottom:0px; width: 448px; height: 35px; padding-top: 6px;">
+              <div style="padding-left: 6px;">
+                <form class="form-search">
+                  <input type="text" class="input-medium search-query" id="skrMemLisSearchField">
+                  <button type="submit" class="btn" id="skrMemLisSearch">Go to</button>
+                  <button type="submit" class="btn" id="skrMemDump">Dump memory to text</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="content" style="margin-left: 460px; height: 450px;">
+          <div id="frisc-controls" style="float: left; margin-left: 10px;">
+            <div id="frisc-cpu-controls" class="form-inline" style="width: 666px;">
+              <button id="frisc-load" type="button" class="btn btn-success"><i class="icon-download-alt icon-white"></i> Load</button>
+              <button id="frisc-execute" type="button" class="btn btn-primary"><i class="icon-fast-forward icon-white"></i> Run all</button>
+              <button id="frisc-next" type="button" class="btn btn-primary"><i class="icon-step-forward icon-white"></i> Run one</button>
+              <button id="frisc-pause" type="button" class="btn btn-primary"><i class="icon-pause icon-white"></i> Pause</button>
+              <button id="frisc-stop" type="button" class="btn btn-danger"><i class="icon-stop icon-white"></i> Stop</button>
+              <button id="frisc-clear" type="button" class="btn btn-primary"><i class="icon-remove-sign icon-white"></i> Clear log</button>
+              <button id="frisc-showhidesettings" type="button" class="btn btn-primary" data-toggle="button"><i class="icon-wrench icon-white"></i> Settings</button>
+            </div>
+            <div id="frisc-settings" style="display: none; margin-top: 15px;" class="form-inline">
+              <div>
+                <label for="frisc-freq" style="margin-bottom: 0px;">CPU frequency (Hz):</label>
+                <input id="frisc-freq" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="1000">
+                <label for="frisc-memsize" style="margin-bottom: 0px;">MEM size (KB):</label>
+                <input id="frisc-memsize" type="number" min="1" step="1" max="1000" class="input-mini" style="margin-bottom: 0px;" value="256">
+                <label style="margin-bottom: 0px;">Register values:</label>
+                <div class="btn-group" data-toggle="buttons-radio" style="display:inline-block; vertical-align: middle;">
+                  <button class="btn" id="regBaseRadioDec">DEC</button>
+                  <button class="btn active" id="regBaseRadioHex">HEX</button>
+                </div>
+              </div>
+              <div style="margin-top:4px;">
+                <input type="checkbox" id="skr-frisc-log" checked> Limit log to
+                <input id="skr-frisc-log-limit" type="number" min="1" step="1" class="input-mini" style="margin-bottom: 0px;" value="10">
+                instructions
+              </div>
+            </div>
+            <div id="cpuout" style="font-size: 10pt; font-family: courier new; background-color: #D4CDCF; width: 650px; overflow: auto; border: 1px solid #666; padding: 8px; margin-top: 10px; color: black; height: 145px;"></div>
+            <div id="cpustate" style="margin-top: 8px;" >
+              <div id="cpu_r0" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R0 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r1" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R1 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r2" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R2 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r3" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R3 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r4" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R4 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r5" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R5 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r6" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R6 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_r7" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> R7 </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_pc" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> PC </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_sr" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> SR </div>
+                <div class="cpu-reg-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_iif" class="cpu-state-div">
+                <div class="cpu-reg-label cpu-state-lab"> IIF </div>
+                <div class="cpu-reg-value cpu-state-val"> 1 </div>
+              </div>
+              <br>
+              <div id="cpu_N" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-N </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_C" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-C </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_V" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-V </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_Z" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-Z </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_EINT0" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-EINT0 </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_EINT1" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-EINT1 </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_EINT2" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-EINT2 </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+              <div id="cpu_GIE" class="cpu-state-div">
+                <div class="cpu-sr-label cpu-state-lab"> SR-GIE </div>
+                <div class="cpu-sr-value cpu-state-val"> 0 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom: 5px; width: 1170px;">
+          <legend style="margin-bottom: 15px;">IO units</legend>
+          <div class="form-inline" style="margin-bottom: 25px;">
+            <form id="ioUnitFormStatic">
+              <input class="span2" type="text" style="margin-bottom: 0px;" id="ioUnitName" required pattern="[A-Za-z_0-9]{3,}" placeholder="Enter IO unit name…">
+              <select class="span2" id="ioUnitType" required>
+                <option value="">Select unit type…</option>
+                <option value="generic">Generic IO unit</option>
+                <option value="frisc-ct">FRISC CT</option>
+                <option value="frisc-pio">FRISC PIO</option>
+                <option value="frisc-dma">FRISC DMA</option>
+              </select>
+              <select class="span2" id="ioUnitIntLevel" required>
+                <option value="">Select interrupt…</option>
+                <option value="INT0">INT0 (maskable)</option>
+                <option value="INT1">INT1 (maskable)</option>
+                <option value="INT2">INT2 (maskable)</option>
+                <option value="INT3">INT3 (unmaskable)</option>
+              </select>
+              <label> Memory mapping start addr (HEX): </label>
+              <input type="text" class="span1" id="ioUnitMemmapStart" value="0" required>
+              <label> Number of 4B locations: </label>
+              <input type="text" class="span1" id="ioUnitMemmapCount" value="0" required>
+              <button type="submit" class="btn btn-success" id="addIoUnit" value="Search"><i class="icon-plus icon-white"></i> Add</button>
+            </form>
+          </div>
+          <div class="row" id="ioUnits">
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="../lib/friscjs-browser.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+    <script src="http://madrobby.github.io/keymaster/keymaster.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/mustache.js/0.7.2/mustache.min.js"></script>
+    <script src="http://ajaxorg.github.io/ace-builds/src/ace.js"></script>
+    <script src="scripts/ace-mode-frisc.js"></script>
+    <script src="scripts/main.js"></script>
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-25513601-1']);
+      _gaq.push(['_setDomainName', 'auto']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript';
+        ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' :
+        'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+
+    <script type="text/javascript">
+      var _gauges = _gauges || [];
+      (function() {
+        var t   = document.createElement('script');
+        t.type  = 'text/javascript';
+        t.async = true;
+        t.id    = 'gauges-tracker';
+        t.setAttribute('data-site-id', '5162c171f5a1f5418800004a');
+        t.src = '//secure.gaug.es/track.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(t, s);
+      })();
+    </script>
+  </body>
+</html>

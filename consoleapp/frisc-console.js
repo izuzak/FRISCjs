@@ -1,7 +1,8 @@
 var fs = require("fs");
 var path = require("path");
-var parser = require("./friscasm.js");
-var sim = require("./friscjs.js").FRISC;
+var readline = require('readline');
+var asm = require("./../lib/index.js").assembler;
+var sim = require("./../lib/index.js").simulator;
 
 var argv = process.argv;
 var isVerboseMode = argv.indexOf("-v") > -1;
@@ -19,7 +20,7 @@ var debug = function(str) {
 var cpufreq = 1000;
 
 if (argv.indexOf("-cpufreq") > -1) {
-  cpufreq = parseInt(argv[argv.indexOf("-cpufreq") + 1]);
+  cpufreq = parseInt(argv[argv.indexOf("-cpufreq") + 1], 10);
   argv.splice(argv.indexOf("-cpufreq") + 1, 1);
   argv.splice(argv.indexOf("-cpufreq"), 1);
 }
@@ -27,7 +28,7 @@ if (argv.indexOf("-cpufreq") > -1) {
 var memsize = 256*1024;
 
 if (argv.indexOf("-memsize") > -1) {
-  memsize = 1024*parseInt(argv[argv.indexOf("-memsize") + 1]);
+  memsize = 1024*parseInt(argv[argv.indexOf("-memsize") + 1], 10);
   argv.splice(argv.indexOf("-memsize") + 1, 1);
   argv.splice(argv.indexOf("-memsize"), 1);
 }
@@ -94,7 +95,7 @@ if (argv.length > 2) {
 
   console.error("");
   console.error("*********************************************************");
-  console.error("Reading program from file: " + filename); 
+  console.error("Reading program from file: " + filename);
   console.error("*********************************************************");
   console.error("");
 
@@ -114,23 +115,34 @@ if (argv.length > 2) {
   console.error("Press CTRL+D to stop reading and execute program.");
   console.error("*********************************************************");
   console.error("");
-  
+
   var program = "";
-  process.stdin.resume();
+
   process.stdin.setEncoding('utf8');
 
-  process.stdin.on('data', function (chunk) {
-    program += chunk;
+  var rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
   });
-  
-  process.stdin.on('end', function () {
+
+  rl.setPrompt("");
+
+  rl.on('line', function (line) {
+    program += line + '\n';
+  });
+
+  rl.on('close', function () {
     runProgram(program);
+  });
+
+  rl.on('SIGINT', function () {
+    process.exit(0);
   });
 }
 
 function cpuStateToString(simulator) {
   var retVal = "";
-  
+
   for (var key in simulator.CPU._r) {
     if (key !== 'sr') {
       retVal += key + ": " + simulator.CPU._r[key].toString() + " ";
@@ -174,9 +186,11 @@ function runProgram(frisc_asmsource) {
   console.error("*********************************************************");
   console.error("");
 
+  var result;
+
   try {
-    var result = parser.parse(frisc_asmsource);
-  } catch (e) { 
+    result = asm.parse(frisc_asmsource.toString());
+  } catch (e) {
     console.error("Parsing error on line " + e.line + " column " + e.column + " -- " + e.toString());
     return;
   }
@@ -192,7 +206,7 @@ function runProgram(frisc_asmsource) {
     console.error("*********************************************************");
     console.error("");
   };
-  
+
   simulator.CPU.onBeforeCycle = function() {
     debug("");
     debug("*********************************************************");
@@ -205,11 +219,11 @@ function runProgram(frisc_asmsource) {
   simulator.CPU.onAfterCycle = function() {
     debug("## CPU state: " + cpuStateToString(simulator));
   };
-  
+
   simulator.CPU.onBeforeExecute = function(instruction) {
     debug("## Executing FRISC instruction: " + instructionToString(instruction));
   };
-  
+
   simulator.CPU.onStop = function() {
     console.error("");
     console.error("*********************************************************");
@@ -218,13 +232,13 @@ function runProgram(frisc_asmsource) {
     console.error("");
     console.log(simulator.CPU._r.r6);
   };
-  
+
   try {
     simulator.MEM.loadBinaryString(result.mem);
   } catch (e) {
     console.error("Loading error -- " + e.toString());
     return;
   }
-  
+
   simulator.CPU.run();
-} 
+}

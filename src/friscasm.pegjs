@@ -126,6 +126,27 @@
     }
   };
 
+  var convertIntToBinary = function(value, numberOfBits) {
+    var retVal = new Array(numberOfBits);
+
+    for (var i=0; i<numberOfBits; i++) {
+      retVal[numberOfBits-i-1] = (Math.pow(2, i) & value) ? 1 : 0;
+    }
+
+    return retVal.join("");
+  }
+
+  var canNumberBeObtainedBySignedExtendingThe20BitSuffix = function(number) {
+    var bits = convertIntToBinary(number, 32).split("").reverse().join("");
+
+    if ((bits[19] === "0" && bits.slice(20, 32) != "000000000000") ||
+        (bits[19] === "1" && bits.slice(20, 32) != "111111111111")) {
+      return false;
+    }
+
+    return true;
+  }
+
   var generateMachineCode = function(node) {
     if (typeof node === 'undefined' || typeof node.op === 'undefined' || typeof node.optype === 'undefined' ||
         typeof allops[node.optype] === 'undefined' || typeof allops[node.optype][node.op] === 'undefined') {
@@ -416,6 +437,22 @@ instruction
     o.curloc = curloc;
 
     if (o.op in aluops || o.op in cmpops || o.op in moveops || o.op in jmpops || o.op in rethaltops || o.op in memops || o.op in stackops) {
+      if (typeof o.alusrc2 !== "undefined" && o.alusrc2.type === "num") {
+        if (!canNumberBeObtainedBySignedExtendingThe20BitSuffix(o.alusrc2.value)) {
+          var err = new Error("Number can't be obtained by sign-extending its lower 20 bits.");
+          err.line = linecounter;
+          err.column = 1;
+          throw err;
+        }
+
+        if (o.alusrc2.value > 4294967295 || o.alusrc2.value < -2147483648) {
+          var err = new Error("Number does not fit in 32 bits.");
+          err.line = linecounter;
+          err.column = 1;
+          throw err;
+        }
+      }
+
       curloc += 4;
     } else if (o.op in orgops) {
       if (o.value < curloc) {
@@ -479,7 +516,7 @@ reladdr = immaddr
 
 rinaddr = "(" value:regaddr ")" { return value; }
 
-rinaddroff = "(" reg:register val:((numberWithoutBase) / ("")) ")" {
+rinaddroff = "(" reg:register whitespace* val:((numberWithoutBase) / ("")) ")" {
       return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
     }
 
@@ -651,6 +688,6 @@ base
   }
 
 numberWithoutBase
-  = p:[+-] first:[0-9] rest:([0-9a-hA-H]*) {
+  = p:[+-] whitespace* first:[0-9] rest:([0-9a-hA-H]*) {
     return (p === "-" ? -1 : 1) * parseInt( first + rest.join(""), defaultBase);
   }

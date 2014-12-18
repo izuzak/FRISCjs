@@ -86,11 +86,11 @@ define('ace/mode/frisc', function(require, exports, module) {
           regex : "(\\s)([`]?[a-zA-z][a-zA-Z]*)(_[a-zA-Z]*)?\\b"
         }, {
           token : "frisc_operator",
-          regex : "[,\+\-]"
+          regex : "[,+-]"
         }
       ]
     };
-  }
+  };
 
   oop.inherits(FriscHighlightRules, TextHighlightRules);
 

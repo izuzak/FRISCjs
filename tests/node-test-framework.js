@@ -95,14 +95,14 @@ assertNotEquals: function(left, right) {
   }
 },
 
-// Use this for arrays whose items can directly compared for equality. 
+// Use this for arrays whose items can directly compared for equality.
 assertValueArrayEquals: function(left, right) {
   if (!_valueArrayEquals(left, right)) {
     throw new Error(util.format("array mismatch: [", left.toString(), "] [", right.toString(), "]"));
   }
 },
 
-// Use this for arrays whose items can directly compared for equality. 
+// Use this for arrays whose items can directly compared for equality.
 assertValueArrayNotEquals: function(left, right) {
   if (_valueArrayEquals(left, right)) {
     throw new Error(util.format("arrays are equal: [", left.toString(), "] [", right.toString(), "]"));
@@ -155,6 +155,6 @@ function _valueArrayEquals(left, right) {
       return false;
     }
   }
-  
+
   return true;
 }

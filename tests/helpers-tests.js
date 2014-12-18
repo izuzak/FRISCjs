@@ -1,7 +1,7 @@
 console.log("Running " + __filename + "...");
 
 var T = require("./node-test-framework.js");
-var code = require("../friscjs.js").util;
+var code = require("./../lib/index.js").util;
 
 var tests = [
   new T.Test("convertIntToBinary values", function() {
@@ -81,7 +81,7 @@ var tests = [
     T.assertEquals(code.extend("100", 4, true), "1100");
     T.assertEquals(code.extend("100", 32, true), "11111111111111111111111111111100");
     // 20 one-bits sign extended = -1
-    T.assertEquals(code.extend("11111111111111111111", 32, true), "11111111111111111111111111111111"); 
+    T.assertEquals(code.extend("11111111111111111111", 32, true), "11111111111111111111111111111111");
   }),
   new T.Test("extend to smaller returns unchanged argument", function() {
     T.assertEquals(code.extend("11100111", 0), "11100111");
