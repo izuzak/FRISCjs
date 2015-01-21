@@ -1,8 +1,8 @@
 console.log("Running " + __filename + "...");
 
 var T = require("./node-test-framework.js");
-var FRISC = require("../friscjs.js").FRISC;
-var util = require("../friscjs.js").util;
+var FRISC = require("./../lib/index.js").simulator;
+var util = require("./../lib/index.js").util;
 
 // global test state
 var simulator;
@@ -37,7 +37,7 @@ var tests = [
     simulator.CPU._setFlag(simulator.CPU._f["V"], 0);
     simulator.CPU._setFlag(simulator.CPU._f["C"], 1);
     simulator.CPU._setFlag(simulator.CPU._f["N"], 0);
-   
+
     T.assertEquals(util.convertIntToBinary(simulator.CPU._r.sr, 11), "00101101010");
   }),
   new T.Test("Test cpu condition tester", function() {
@@ -74,7 +74,7 @@ var tests = [
 
     instruction = "01101000000101000000000000000000";
     decoded = simulator.CPU._decode(instruction);
- 
+
     T.assertEquals(decoded.op, "CMP");
     T.assertValueArrayEquals(decoded.args, ["r1", "r2"]);
 
