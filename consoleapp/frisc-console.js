@@ -240,5 +240,5 @@ function runProgram(frisc_asmsource) {
     return;
   }
 
-  simulator.CPU.run();
+  simulator.CPU.run(true); // run in "fastests" mode
 }
