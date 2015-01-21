@@ -41,7 +41,7 @@ To use the Web-based simulator, launch the `webapp/index.html` page in a browser
 
 To use the console-based simulator application, clone the FRISCjs repo:
 
-    > git clone https://github.com/izuzak/noam.git
+    > git clone https://github.com/izuzak/FRISCjs.git
 
 and then run the app with node to see the instructions:
 
