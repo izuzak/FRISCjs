@@ -516,9 +516,16 @@ reladdr = immaddr
 
 rinaddr = "(" value:regaddr ")" { return value; }
 
-rinaddroff = "(" reg:register whitespace* val:((numberWithoutBase) / ("")) ")" {
+rinaddroff = "(" whitespace* reg:register whitespace* val:((offsetdef) / ("")) ")" {
       return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
     }
+offsetdef = p:[+-] whitespace* num:number {
+    if (p === '-') {
+        return -num;
+    } else {
+        return num;
+    }
+}
 
 impaddr = regaddr
 
@@ -685,9 +692,4 @@ base
     } else if (b === "h") {
       return 16;
     }
-  }
-
-numberWithoutBase
-  = p:[+-] whitespace* first:[0-9] rest:([0-9a-hA-H]*) {
-    return (p === "-" ? -1 : 1) * parseInt( first + rest.join(""), defaultBase);
   }
