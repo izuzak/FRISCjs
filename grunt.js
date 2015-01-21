@@ -19,6 +19,14 @@ module.exports = function(grunt) {
                   'src/friscsim.js',
                   'lib/index.js'],
             dest: 'lib/friscjs-browser.js'
+        },
+        consoleapp_sim : {
+            src: ['src/friscsim.js'],
+            dest: 'consoleapp/friscsim.js'
+        },
+        consoleapp_asm : {
+            src: ['src/friscasm.js'],
+            dest: 'consoleapp/friscasm.js'
         }
     },
 

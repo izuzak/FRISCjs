@@ -1,8 +1,8 @@
 var fs = require("fs");
 var path = require("path");
 var readline = require('readline');
-var asm = require("./../lib/index.js").assembler;
-var sim = require("./../lib/index.js").simulator;
+var asm = require("./friscasm.js");
+var sim = require("./friscsim.js").FRISC;
 
 var argv = process.argv;
 var isVerboseMode = argv.indexOf("-v") > -1;
