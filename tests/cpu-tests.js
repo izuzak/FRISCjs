@@ -46,8 +46,8 @@ var tests = [
     T.assertEquals(simulator.CPU._testCond(""), true);
     T.assertEquals(simulator.CPU._testCond("_N/M"), false);
     T.assertEquals(simulator.CPU._testCond("_NN/P"), true);
-    T.assertEquals(simulator.CPU._testCond("_C/ULT"), true);
-    T.assertEquals(simulator.CPU._testCond("_NC/UGE"), false);
+    T.assertEquals(simulator.CPU._testCond("_C/UGE"), true);
+    T.assertEquals(simulator.CPU._testCond("_NC/ULT"), false);
     T.assertEquals(simulator.CPU._testCond("_V"), false);
     T.assertEquals(simulator.CPU._testCond("_NV"), true);
     T.assertEquals(simulator.CPU._testCond("_Z/EQ"), true);
