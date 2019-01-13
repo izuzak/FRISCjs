@@ -314,9 +314,9 @@ var FRISC = function() {
         result = !!(this._getFlag(this._f.N));
       } else if (cond === '_NN/P') {    // ******** NN,P        N=0
         result = !(this._getFlag(this._f.N));
-      } else if (cond === '_C/ULT') {   // ******** C,ULT       C=1
+      } else if (cond === '_C/UGE') {   // ******** C,UGE       C=1
         result = !!(this._getFlag(this._f.C));
-      } else if (cond === '_NC/UGE') {  // ******** NC,UGE      C=0
+      } else if (cond === '_NC/ULT') {  // ******** NC,ULT      C=0
         result = !(this._getFlag(this._f.C));
       } else if (cond === '_V') {       // ******** V           V=1
         result = !!(this._getFlag(this._f.V));
@@ -326,11 +326,11 @@ var FRISC = function() {
         result = !!(this._getFlag(this._f.Z));
       } else if (cond === '_NZ/NE') {   // ******** NZ,NE       Z=0
         result = !(this._getFlag(this._f.Z));
-      } else if (cond === '_ULE') {     // ******** ULE         C=1 ili Z=1
-        result = !!(this._getFlag(this._f.C)) ||
-                 !!(this._getFlag(this._f.Z));
-      } else if (cond === '_UGT') {     // ******** UGT         C=0 i Z=0
+      } else if (cond === '_ULE') {     // ******** ULE         C=0 ili Z=1
         result = !(this._getFlag(this._f.C)) ||
+                 !!(this._getFlag(this._f.Z));
+      } else if (cond === '_UGT') {     // ******** UGT         C=1 i Z=0
+        result = !!(this._getFlag(this._f.C)) &&
                  !(this._getFlag(this._f.Z));
       } else if (cond === '_SLT') {     // ******** SLT         (N xor V)=1
         result = !!(this._getFlag(this._f.N)) !==
@@ -521,6 +521,7 @@ var FRISC = function() {
 
     // Simulates the addition 'v1'+'v2'+'v3' and stores the result in the
     // register specified by 'dest' and updates flags.
+    // Leave 'dest' undefined to only get the side-effect of changing the flags.
     _ADD_three: function(v1, v2, v3, dest) {
       // the & just forces ToInt32 from ECMA-262
       // v1+v2+v3 can be represented exactly by Number as it is <=2^53
@@ -545,18 +546,18 @@ var FRISC = function() {
       this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
       this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
 
-      this._r[dest] = res;
+      if (dest) {
+        this._r[dest] = res;
+      }
     },
 
+    // Leave 'dest' undefined to only get the side-effect of changing the flags.
     _SUB_internal: function(src1, src2, carry, dest) {
-      // do the three-way add with two's complements of src2 and the carry bit
+      // Do a three-way add with two's complements of src2 and with the carry bit.
       this._ADD_three(this._r[src1],
           twosComplement(typeof src2==='number' ? src2 : this._r[src2], this._WORD_BITS),
-          twosComplement(carry, this._WORD_BITS),
+          carry,
           dest);
-      // invert the carry bit so that C=1 indicates unsigned underflow
-      // which makes it consistent with SBC
-      this._setFlag(this._f.C, 1 - this._getFlag(this._f.C));
     },
 
     _i: {
@@ -593,15 +594,12 @@ var FRISC = function() {
       },
 
       CMP: function(src1, src2) {
-        var res = this._r[src1] - (typeof src2 === 'number' ? src2 : this._r[src2]);
-
-        this._setFlag(this._f.C, (res > this._WORD_BITS) + 0);
-        this._setFlag(this._f.V, (res > this._WORD_BITS) + 0);
-        this._setFlag(this._f.N, !!(res & this._SIGN_BIT) + 0);
-        this._setFlag(this._f.Z, !(res & this._WORD_BITS) + 0);
+        // We only want the side-effect of setting the flags.
+        var dest = undefined;
+        this._SUB_internal(src1, src2, 0, dest);
       },
 
-      AND:  function(src1, src2, dest) {
+      AND: function(src1, src2, dest) {
         var res = this._r[src1] & (typeof src2 === 'number' ? src2 : this._r[src2]);
 
         this._setFlag(this._f.C, 0);
@@ -612,7 +610,7 @@ var FRISC = function() {
         this._r[dest] = res & this._WORD_BITS;
       },
 
-      OR:  function(src1, src2, dest) {
+      OR: function(src1, src2, dest) {
         var res = this._r[src1] | (typeof src2 === 'number' ? src2 : this._r[src2]);
 
         this._setFlag(this._f.C, 0);
@@ -623,7 +621,7 @@ var FRISC = function() {
         this._r[dest] = res & this._WORD_BITS;
       },
 
-      XOR:  function(src1, src2, dest) {
+      XOR: function(src1, src2, dest) {
         var res = this._r[src1] ^ (typeof src2 === 'number' ? src2 : this._r[src2]);
 
         this._setFlag(this._f.C, 0);
@@ -960,8 +958,8 @@ var FRISC = function() {
       '0000' : '',
       '0001' : '_N/M',
       '0010' : '_NN/P',
-      '0011' : '_C/ULT',
-      '0100' : '_NC/UGE',
+      '0011' : '_C/UGE',
+      '0100' : '_NC/ULT',
       '0101' : '_V',
       '0110' : '_NV',
       '0111' : '_Z/EQ',
