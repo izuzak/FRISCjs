@@ -183,6 +183,104 @@ var tests = [
   new T.Test("3 > -1", function() {
     testCondition("SGT", 3, -1, true);
   }),
+
+
+  ///////////////////////////////
+  // Unsigned comparisons with 0.
+  ///////////////////////////////
+
+  // ULT
+  new T.Test("-1 < 0", function() {
+    testCondition("ULT", -1, 0, false);
+  }),
+  new T.Test("0 < 0", function() {
+    testCondition("ULT", 0, 0, false);
+  }),
+  new T.Test("1 < 0", function() {
+    testCondition("ULT", 1, 0, false);
+  }),
+
+  // ULE
+  new T.Test("-1 <= 0", function() {
+    testCondition("ULE", -1, 0, false);
+  }),
+  new T.Test("0 <= 0", function() {
+    testCondition("ULE", 0, 0, true);
+  }),
+  new T.Test("1 <= 0", function() {
+    testCondition("ULE", 1, 0, false);
+  }),
+
+  // UGE
+  new T.Test("-1 >= 0", function() {
+    testCondition("UGE", -1, 0, true);
+  }),
+  new T.Test("0 >= 0", function() {
+    testCondition("UGE", 0, 0, true);
+  }),
+  new T.Test("1 >= 0", function() {
+    testCondition("UGE", 1, 0, true);
+  }),
+
+  // UGT
+  new T.Test("-1 > 0", function() {
+    testCondition("UGT", -1, 0, true);
+  }),
+  new T.Test("0 > 0", function() {
+    testCondition("UGT", 0, 0, false);
+  }),
+  new T.Test("1 > 0", function() {
+    testCondition("UGT", 1, 0, true);
+  }),
+
+
+  /////////////////////////////
+  // Signed comparisons with 0.
+  /////////////////////////////
+
+  // SLT
+  new T.Test("-1 < 0", function() {
+    testCondition("SLT", -1, 0, true);
+  }),
+  new T.Test("0 < 0", function() {
+    testCondition("SLT", 0, 0, false);
+  }),
+  new T.Test("1 < 0", function() {
+    testCondition("SLT", 1, 0, false);
+  }),
+
+  // SLE
+  new T.Test("-1 <= 0", function() {
+    testCondition("SLE", -1, 0, true);
+  }),
+  new T.Test("0 <= 0", function() {
+    testCondition("SLE", 0, 0, true);
+  }),
+  new T.Test("1 <= 0", function() {
+    testCondition("SLE", 1, 0, false);
+  }),
+
+  // SGE
+  new T.Test("-1 >= 0", function() {
+    testCondition("SGE", -1, 0, false);
+  }),
+  new T.Test("0 >= 0", function() {
+    testCondition("SGE", 0, 0, true);
+  }),
+  new T.Test("1 >= 0", function() {
+    testCondition("SGE", 1, 0, true);
+  }),
+
+  // SGT
+  new T.Test("-1 > 0", function() {
+    testCondition("SGT", -1, 0, false);
+  }),
+  new T.Test("0 > 0", function() {
+    testCondition("SGT", 0, 0, false);
+  }),
+  new T.Test("1 > 0", function() {
+    testCondition("SGT", 1, 0, true);
+  }),
 ];
 
 module.exports.stats = T.runTests(tests, {
