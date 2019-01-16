@@ -552,12 +552,25 @@ var FRISC = function() {
     },
 
     // Leave 'dest' undefined to only get the side-effect of changing the flags.
+    // dest <- src1 - src2 + carry
     _SUB_internal: function(src1, src2, carry, dest) {
+      var op2 = (typeof src2==='number') ? src2 : this._r[src2];
       // Do a three-way add with two's complements of src2 and with the carry bit.
       this._ADD_three(this._r[src1],
-          twosComplement(typeof src2==='number' ? src2 : this._r[src2], this._WORD_BITS),
+          twosComplement(op2, this._WORD_BITS),
           carry,
           dest);
+      if (op2 === 0) {
+        // Doing two's complement on 0 creates a carry on the MSB (the one's
+        // complement is all 1s). This is particularly important for the
+        // implementation of CMP when the second operand is 0. For example,
+        // comparing 1 with 0 must generate a carry so that the _UGE condition
+        // is recognized.
+        //
+        // TODO: Check the exact flag semantics of SBC in FRISC when the input
+        // carry is 1.
+        this._setFlag(this._f.C, 1);
+      }
     },
 
     _i: {
