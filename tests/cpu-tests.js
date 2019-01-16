@@ -130,7 +130,7 @@ var tests = [
     decoded = simulator.CPU._decode(instruction);
 
     T.assertEquals(decoded.op, "JP");
-    T.assertValueArrayEquals(decoded.args, ["_NC/UGE", "r1"]);
+    T.assertValueArrayEquals(decoded.args, ["_NC/ULT", "r1"]);
 
     instruction = "11011000010000000000000000000001";
     decoded = simulator.CPU._decode(instruction);

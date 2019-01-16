@@ -46,6 +46,7 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.utils.linefeed = '\n'; // Fix concat line endings when running on Windows.
   grunt.loadNpmTasks('grunt-peg');
   grunt.loadNpmTasks('grunt-jsvalidate');
 
