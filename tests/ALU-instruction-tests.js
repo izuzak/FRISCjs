@@ -160,13 +160,13 @@ var tests = [
     R.r0 = 123;
     R.r1 = 124;
     I.SUB("r0", "r1", "r2");
-    assertFlags({C:1, V:0});
+    assertFlags({C:0, V:0, N:1});
   }),
   new T.Test("SUB signed underflow", function() {
     R.r0 = -1234567890;
     R.r1 = 1234567890;
     I.SUB("r0", "r1", "r2");
-    assertFlags({C:0, V:1});
+    assertFlags({C:1, V:1, N:0});
   }),
   new T.Test("SUB to zero", function() {
     R.r0 = 12345;
@@ -209,7 +209,7 @@ var tests = [
     T.assertEquals(R.r2, 3);
     simulator.CPU._setFlag(F.C, 1);
     I.SBC("r0", "r1", "r2");
-    T.assertEquals(R.r2, 2);
+    T.assertEquals(R.r2, 4);
   }),
   new T.Test("AND instruction with reg", function() {
     R.r1 = util.convertBinaryToInt("01001001110000000000000000000011");

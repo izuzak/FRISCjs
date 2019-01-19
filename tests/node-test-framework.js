@@ -48,13 +48,20 @@ runTests: function(tests, cfg) {
     try {
       tests[i].run();
     } catch (err) {
-      ok = false;
-      console.log("FAILURE: " + err);
+      // TODO: fix the framework to only catch assert exceptions
+      // or add assertThrows or something similar
+      // (this special case "fixes" the test using the HALT
+      // instruction which throws an exception as part of its
+      // normal operation)
+      if (err.name !== 'Halting') {
+        ok = false;
+        console.log("FAILURE: " + err);
 
-      lines = err.stack.split("\n");
-      for (j=0; j<lines.length; j++) {
-        if (lines[j].indexOf("-tests.js") >= 0) {
-          console.log(lines[j]);
+        lines = err.stack.split("\n");
+        for (j=0; j<lines.length; j++) {
+          if (lines[j].indexOf("-tests.js") >= 0) {
+            console.log(lines[j]);
+          }
         }
       }
     }

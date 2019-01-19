@@ -92,8 +92,8 @@
     ""   : "0000",
     "N"  : "0001",   "M"   : "0001",
     "NN" : "0010",   "P"   : "0010",
-    "C"  : "0011",   "ULT" : "0011",
-    "NC" : "0100",   "UGE" : "0100",
+    "C"  : "0011",   "UGE" : "0011",
+    "NC" : "0100",   "ULT" : "0100",
     "V"  : "0101",
     "NV" : "0110",
     "Z"  : "0111",   "EQ"  : "0111",
@@ -516,9 +516,16 @@ reladdr = immaddr
 
 rinaddr = "(" value:regaddr ")" { return value; }
 
-rinaddroff = "(" reg:register whitespace* val:((numberWithoutBase) / ("")) ")" {
+rinaddroff = "(" whitespace* reg:register whitespace* val:((offsetdef) / ("")) ")" {
       return {type : "regoff", value : reg, offset : val === "" ? 0 : val };
     }
+offsetdef = p:[+-] whitespace* num:number {
+    if (p === '-') {
+        return -num;
+    } else {
+        return num;
+    }
+}
 
 impaddr = regaddr
 
@@ -685,9 +692,4 @@ base
     } else if (b === "h") {
       return 16;
     }
-  }
-
-numberWithoutBase
-  = p:[+-] whitespace* first:[0-9] rest:([0-9a-hA-H]*) {
-    return (p === "-" ? -1 : 1) * parseInt( first + rest.join(""), defaultBase);
   }
